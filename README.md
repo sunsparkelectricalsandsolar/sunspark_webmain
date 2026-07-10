@@ -20,9 +20,9 @@ npm install
 2. Create `.env` from `.env.example` and set the real values:
 
 ```bash
-DATABASE_URL="mysql://codecham_sunspark:REAL_PASSWORD@102.210.146.74:3306/codecham_sunspark"
+DATABASE_URL="database url"
 SESSION_SECRET="use-a-long-random-secret"
-NEXT_PUBLIC_SITE_URL="https://sunspark.co.ke"
+NEXT_PUBLIC_SITE_URL="public url"
 ```
 
 3. Push schema and seed setup data:
@@ -51,7 +51,7 @@ Admin login route:
 The public storefront does not link to admin. The setup seed creates:
 
 ```text
-admin@sunspark.co.ke
+admin
 Password
 ```
 
