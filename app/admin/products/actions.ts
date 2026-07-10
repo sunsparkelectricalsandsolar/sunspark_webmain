@@ -88,3 +88,16 @@ export async function updateProductAction(productId: string, formData: FormData)
   revalidatePath("/store");
   redirect("/admin/products");
 }
+
+export async function deleteProductAction(productId: string) {
+  await requireAdmin();
+
+  await prisma.product.update({
+    where: { id: productId },
+    data: { isActive: false }
+  });
+
+  revalidatePath("/");
+  revalidatePath("/store");
+  redirect("/admin/products");
+}

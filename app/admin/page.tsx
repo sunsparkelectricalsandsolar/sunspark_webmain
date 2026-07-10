@@ -28,6 +28,12 @@ export default async function AdminDashboardPage() {
           <Link className="secondary-btn" href="/admin/products">
             Manage products
           </Link>
+          <Link className="secondary-btn" href="/admin/categories">
+            Categories
+          </Link>
+          <Link className="secondary-btn" href="/admin/customers">
+            Customers
+          </Link>
         </div>
       </div>
     </section>

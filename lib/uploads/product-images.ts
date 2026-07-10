@@ -5,7 +5,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
-const maxBytes = 4 * 1024 * 1024;
+const maxBytes = 2 * 1024 * 1024;
 
 export type SavedProductImage = {
   url: string;

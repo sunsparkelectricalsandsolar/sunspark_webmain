@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/db";
 
+const queryTimeoutMs = 1500;
+
 const productInclude = {
   category: true,
   images: {
@@ -7,30 +9,63 @@ const productInclude = {
   }
 };
 
-export async function getHomeData() {
+async function withFallback<T>(query: Promise<T>, fallback: T): Promise<T> {
   try {
-    const [categories, products] = await Promise.all([
-      prisma.category.findMany({
-        where: { parentId: null, isActive: true },
-        orderBy: [{ sortOrder: "asc" }, { name: "asc" }]
-      }),
-      prisma.product.findMany({
-        where: { isActive: true, isFeatured: true },
-        include: productInclude,
-        orderBy: { updatedAt: "desc" },
-        take: 8
+    return await Promise.race([
+      query,
+      new Promise<T>((resolve) => {
+        setTimeout(() => resolve(fallback), queryTimeoutMs);
       })
     ]);
-
-    return { categories, products };
   } catch {
-    return { categories: [], products: [] };
+    return fallback;
   }
 }
 
+export async function getHomeData() {
+  const categories = await withFallback(
+    prisma.category.findMany({
+      where: { parentId: null, isActive: true },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }]
+    }),
+    []
+  );
+  const solarCategory = await withFallback(prisma.category.findUnique({ where: { slug: "solar" } }), null);
+  const products = await withFallback(
+    prisma.product.findMany({
+      where: {
+        isActive: true,
+        ...(solarCategory ? { categoryId: solarCategory.id } : { isFeatured: true })
+      },
+      include: productInclude,
+      orderBy: [{ isFeatured: "desc" }, { updatedAt: "desc" }],
+      take: 12
+    }),
+    []
+  );
+
+  return {
+    categories: categories.sort((a, b) => {
+      const order = ["solar", "electricals", "electronics"];
+      return order.indexOf(a.slug) - order.indexOf(b.slug);
+    }),
+    products
+  };
+}
+
+export async function getStoreCategories() {
+  return withFallback(
+    prisma.category.findMany({
+      where: { parentId: null, isActive: true },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }]
+    }),
+    []
+  );
+}
+
 export async function getStoreProducts(input: { q?: string; category?: string }) {
-  try {
-    return prisma.product.findMany({
+  return withFallback(
+    prisma.product.findMany({
       where: {
         isActive: true,
         ...(input.q
@@ -52,15 +87,14 @@ export async function getStoreProducts(input: { q?: string; category?: string })
       },
       include: productInclude,
       orderBy: [{ isFeatured: "desc" }, { updatedAt: "desc" }]
-    });
-  } catch {
-    return [];
-  }
+    }),
+    []
+  );
 }
 
 export async function getCategoryBySlug(slug: string) {
-  try {
-    return prisma.category.findUnique({
+  return withFallback(
+    prisma.category.findUnique({
       where: { slug },
       include: {
         products: {
@@ -73,26 +107,24 @@ export async function getCategoryBySlug(slug: string) {
           orderBy: [{ sortOrder: "asc" }, { name: "asc" }]
         }
       }
-    });
-  } catch {
-    return null;
-  }
+    }),
+    null
+  );
 }
 
 export async function getProductBySlug(slug: string) {
-  try {
-    return prisma.product.findUnique({
+  return withFallback(
+    prisma.product.findUnique({
       where: { slug },
       include: productInclude
-    });
-  } catch {
-    return null;
-  }
+    }),
+    null
+  );
 }
 
 export async function getRelatedProducts(categoryId: string, productId: string) {
-  try {
-    return prisma.product.findMany({
+  return withFallback(
+    prisma.product.findMany({
       where: {
         isActive: true,
         categoryId,
@@ -101,8 +133,7 @@ export async function getRelatedProducts(categoryId: string, productId: string) 
       include: productInclude,
       take: 4,
       orderBy: { updatedAt: "desc" }
-    });
-  } catch {
-    return [];
-  }
+    }),
+    []
+  );
 }

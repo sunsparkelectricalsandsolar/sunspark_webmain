@@ -80,6 +80,7 @@ export function ProductForm({
       <label>
         Product images
         <input name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple />
+        <small>JPEG, PNG, or WebP. Each image must be below 2MB.</small>
       </label>
       {product?.images.length ? (
         <div className="admin-image-list">

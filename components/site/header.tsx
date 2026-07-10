@@ -5,8 +5,8 @@ import { siteConfig } from "@/lib/site-config";
 const navItems = [
   { label: "Home", href: "/" },
   { label: "Store", href: "/store" },
-  { label: "Electricals", href: "/category/electricals" },
   { label: "Solar", href: "/category/solar" },
+  { label: "Electricals", href: "/category/electricals" },
   { label: "Electronics", href: "/category/electronics" },
   { label: "Account", href: "/account" }
 ];

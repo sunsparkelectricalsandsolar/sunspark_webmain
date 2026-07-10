@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import { formatMoney } from "@/lib/money";
+import { deleteProductAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +38,12 @@ export default async function AdminProductsPage() {
               <span>{formatMoney(product.priceCents)}</span>
               <span>{product.stockQuantity}</span>
               <span>{product.isActive ? "Active" : "Hidden"}</span>
-              <Link href={`/admin/products/${product.id}/edit`}>Edit</Link>
+              <span className="table-actions">
+                <Link href={`/admin/products/${product.id}/edit`}>Edit</Link>
+                <form action={deleteProductAction.bind(null, product.id)}>
+                  <button type="submit">Hide</button>
+                </form>
+              </span>
             </div>
           ))}
           {!products.length ? <p className="empty-state">No products yet. Add the first Sunspark product.</p> : null}

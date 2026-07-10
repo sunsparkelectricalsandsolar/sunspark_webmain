@@ -5,14 +5,14 @@ import { getHomeData } from "@/lib/products/queries";
 
 const categories = [
   {
-    name: "Electricals",
-    description: "Cables, switches, breakers, fittings, and installation essentials.",
-    href: "/category/electricals"
-  },
-  {
     name: "Solar",
     description: "Panels, inverters, batteries, charge controllers, and complete kits.",
     href: "/category/solar"
+  },
+  {
+    name: "Electricals",
+    description: "Cables, switches, breakers, fittings, and installation essentials.",
+    href: "/category/electricals"
   },
   {
     name: "Electronics",
@@ -45,7 +45,7 @@ export default async function HomePage() {
       <section className="section product-section">
         <div className="container">
           <div className="section-title">
-            <h3>New Products</h3>
+            <h3>Solar Products</h3>
             <div className="section-tabs">
               {displayCategories.map((category) => (
                 <Link href={`/category/${category.slug}`} key={category.slug}>
@@ -55,7 +55,7 @@ export default async function HomePage() {
             </div>
           </div>
           {products.length ? (
-            <div className="product-grid">
+            <div className="product-slider" aria-label="Solar products">
               {products.map((product) => (
                 <ProductCard product={product} key={product.id} />
               ))}
@@ -74,7 +74,7 @@ export default async function HomePage() {
             <h3>Hot Deals</h3>
             <Link href="/store">View all</Link>
           </div>
-          <div className="container product-grid">
+          <div className="container product-slider">
             {products.map((product) => (
               <ProductCard product={product} key={product.id} />
             ))}
