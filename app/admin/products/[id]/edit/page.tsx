@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { AdminLayout } from "@/components/admin/admin-layout";
 import { ProductForm } from "@/components/admin/product-form";
 import { requireAdmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
@@ -16,15 +17,11 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
   }
 
   return (
-    <section className="section">
-      <div className="container admin-shell narrow">
-        <div className="admin-heading">
-          <p className="eyebrow">Admin</p>
-          <h1>Edit Product</h1>
-        </div>
+    <AdminLayout title="Edit Product" subtitle={product.name}>
+      <div className="admin-shell narrow">
         <ProductForm action={updateProductAction.bind(null, product.id)} categories={categories} product={product} />
       </div>
-    </section>
+    </AdminLayout>
   );
 }
 

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdminLayout } from "@/components/admin/admin-layout";
 import { requireAdmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 
@@ -9,22 +10,22 @@ export default async function AdminDashboardPage() {
   const stats = await getStats();
 
   return (
-    <section className="section">
-      <div className="container admin-shell">
-        <div className="admin-heading">
-          <p className="eyebrow">Admin Dashboard</p>
-          <h1>Welcome, {admin.name}</h1>
-          <p>Manage Sunspark products, stock, orders, checkout options, and invoices.</p>
-        </div>
+    <AdminLayout
+      title={`Welcome, ${admin.name}`}
+      subtitle="Monitor Sunspark products, customers, stock, orders, checkout options, and invoices."
+      actions={
+        <Link className="primary-btn" href="/admin/products/new">
+          Add product
+        </Link>
+      }
+    >
         <div className="admin-stats">
           <Stat label="Products" value={stats.products} />
           <Stat label="Orders" value={stats.orders} />
+          <Stat label="Customers" value={stats.customers} />
           <Stat label="Low stock" value={stats.lowStock} />
         </div>
         <div className="admin-actions">
-          <Link className="primary-btn" href="/admin/products/new">
-            Add product
-          </Link>
           <Link className="secondary-btn" href="/admin/products">
             Manage products
           </Link>
@@ -35,8 +36,7 @@ export default async function AdminDashboardPage() {
             Customers
           </Link>
         </div>
-      </div>
-    </section>
+    </AdminLayout>
   );
 }
 
@@ -51,9 +51,10 @@ function Stat({ label, value }: { label: string; value: number }) {
 
 async function getStats() {
   try {
-    const [products, orders, lowStock] = await Promise.all([
+    const [products, orders, customers, lowStock] = await Promise.all([
       prisma.product.count(),
       prisma.order.count(),
+      prisma.user.count({ where: { role: "CUSTOMER" } }),
       prisma.product.count({
         where: {
           stockQuantity: {
@@ -63,8 +64,8 @@ async function getStats() {
       })
     ]);
 
-    return { products, orders, lowStock };
+    return { products, orders, customers, lowStock };
   } catch {
-    return { products: 0, orders: 0, lowStock: 0 };
+    return { products: 0, orders: 0, customers: 0, lowStock: 0 };
   }
 }

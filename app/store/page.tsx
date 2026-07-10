@@ -1,5 +1,5 @@
 import { ProductCard } from "@/components/site/product-card";
-import { getStoreProducts } from "@/lib/products/queries";
+import { getStoreCategories, getStoreProducts } from "@/lib/products/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +9,10 @@ export default async function StorePage({
   searchParams?: Promise<{ q?: string; category?: string }>;
 }) {
   const params = await searchParams;
-  const products = await getStoreProducts({ q: params?.q, category: params?.category });
+  const [products, categories] = await Promise.all([
+    getStoreProducts({ q: params?.q, category: params?.category }),
+    getStoreCategories()
+  ]);
 
   return (
     <section className="section">
@@ -26,9 +29,11 @@ export default async function StorePage({
               Category
               <select name="category" defaultValue={params?.category ?? ""}>
                 <option value="">All</option>
-                <option value="electricals">Electricals</option>
-                <option value="solar">Solar</option>
-                <option value="electronics">Electronics</option>
+                {categories.map((category) => (
+                  <option value={category.slug} key={category.id}>
+                    {category.name}
+                  </option>
+                ))}
               </select>
             </label>
             <button className="primary-btn" type="submit">

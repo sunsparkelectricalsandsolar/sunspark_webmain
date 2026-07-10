@@ -83,9 +83,19 @@ export function ProductForm({
         <small>JPEG, PNG, or WebP. Each image must be below 2MB.</small>
       </label>
       {product?.images.length ? (
-        <div className="admin-image-list">
+        <div className="admin-image-grid">
           {product.images.map((image) => (
-            <span key={image.id}>{image.url}</span>
+            <div className="admin-image-card" key={image.id}>
+              <img alt={image.alt ?? product.name} src={image.url} />
+              <label>
+                <input name="primaryImageId" type="radio" value={image.id} defaultChecked={image.isPrimary} />
+                Primary
+              </label>
+              <label>
+                <input name="deleteImageIds" type="checkbox" value={image.id} />
+                Delete
+              </label>
+            </div>
           ))}
         </div>
       ) : null}

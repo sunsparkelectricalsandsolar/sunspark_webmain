@@ -24,8 +24,12 @@ function safeExtension(file: File) {
   return "jpg";
 }
 
-export async function saveProductImages(files: File[], productName: string): Promise<SavedProductImage[]> {
-  const uploadDir = path.join(process.cwd(), "public", "uploads", "products");
+export async function saveUploadedImages(
+  files: File[],
+  name: string,
+  folder: "products" | "categories"
+): Promise<SavedProductImage[]> {
+  const uploadDir = path.join(process.cwd(), "public", "uploads", folder);
   await mkdir(uploadDir, { recursive: true });
 
   const saved: SavedProductImage[] = [];
@@ -41,10 +45,18 @@ export async function saveProductImages(files: File[], productName: string): Pro
 
     await writeFile(destination, buffer);
     saved.push({
-      url: `/uploads/products/${filename}`,
-      alt: productName
+      url: `/uploads/${folder}/${filename}`,
+      alt: name
     });
   }
 
   return saved;
+}
+
+export async function saveProductImages(files: File[], productName: string): Promise<SavedProductImage[]> {
+  return saveUploadedImages(files, productName, "products");
+}
+
+export async function saveCategoryImages(files: File[], categoryName: string): Promise<SavedProductImage[]> {
+  return saveUploadedImages(files, categoryName, "categories");
 }

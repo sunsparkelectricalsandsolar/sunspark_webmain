@@ -36,6 +36,10 @@ function getImageFiles(formData: FormData) {
   return formData.getAll("images").filter((value): value is File => value instanceof File);
 }
 
+function getDeleteImageIds(formData: FormData) {
+  return formData.getAll("deleteImageIds").map(String).filter(Boolean);
+}
+
 export async function createProductAction(formData: FormData) {
   await requireAdmin();
 
@@ -67,22 +71,35 @@ export async function updateProductAction(productId: string, formData: FormData)
 
   const input = parseProductForm(formData);
   const images = await saveProductImages(getImageFiles(formData), input.name);
+  const primaryImageId = String(formData.get("primaryImageId") ?? "");
+  const deleteImageIds = getDeleteImageIds(formData);
   const existingImages = await prisma.productImage.count({ where: { productId } });
 
-  await prisma.product.update({
-    where: { id: productId },
-    data: {
-      ...input,
-      slug: slugifyProductName(input.name),
-      images: {
-        create: images.map((image, index) => ({
-          ...image,
-          isPrimary: existingImages === 0 && index === 0,
-          sortOrder: existingImages + index
-        }))
+  await prisma.$transaction([
+    prisma.product.update({
+      where: { id: productId },
+      data: {
+        ...input,
+        slug: slugifyProductName(input.name),
+        images: {
+          create: images.map((image, index) => ({
+            ...image,
+            isPrimary: existingImages === 0 && index === 0,
+            sortOrder: existingImages + index
+          }))
+        }
       }
-    }
-  });
+    }),
+    ...(deleteImageIds.length
+      ? [prisma.productImage.deleteMany({ where: { productId, id: { in: deleteImageIds } } })]
+      : []),
+    ...(primaryImageId
+      ? [
+          prisma.productImage.updateMany({ where: { productId }, data: { isPrimary: false } }),
+          prisma.productImage.update({ where: { id: primaryImageId }, data: { isPrimary: true } })
+        ]
+      : [])
+  ]);
 
   revalidatePath("/");
   revalidatePath("/store");

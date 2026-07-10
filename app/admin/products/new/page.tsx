@@ -1,3 +1,4 @@
+import { AdminLayout } from "@/components/admin/admin-layout";
 import { ProductForm } from "@/components/admin/product-form";
 import { requireAdmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
@@ -10,15 +11,11 @@ export default async function NewProductPage() {
   const categories = await getCategories();
 
   return (
-    <section className="section">
-      <div className="container admin-shell narrow">
-        <div className="admin-heading">
-          <p className="eyebrow">Admin</p>
-          <h1>Add Product</h1>
-        </div>
+    <AdminLayout title="Add Product" subtitle="Create product details, stock, pricing, and image gallery.">
+      <div className="admin-shell narrow">
         <ProductForm action={createProductAction} categories={categories} />
       </div>
-    </section>
+    </AdminLayout>
   );
 }
 

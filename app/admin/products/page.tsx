@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdminLayout } from "@/components/admin/admin-layout";
 import { requireAdmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import { formatMoney } from "@/lib/money";
@@ -11,17 +12,15 @@ export default async function AdminProductsPage() {
   const products = await getProducts();
 
   return (
-    <section className="section">
-      <div className="container admin-shell">
-        <div className="admin-heading row">
-          <div>
-            <p className="eyebrow">Admin</p>
-            <h1>Products</h1>
-          </div>
-          <Link className="primary-btn" href="/admin/products/new">
-            Add product
-          </Link>
-        </div>
+    <AdminLayout
+      title="Products"
+      subtitle="Manage product pricing, stock, status, and images."
+      actions={
+        <Link className="primary-btn" href="/admin/products/new">
+          Add product
+        </Link>
+      }
+    >
         <div className="admin-table">
           <div className="admin-table-row heading">
             <span>Product</span>
@@ -48,8 +47,7 @@ export default async function AdminProductsPage() {
           ))}
           {!products.length ? <p className="empty-state">No products yet. Add the first Sunspark product.</p> : null}
         </div>
-      </div>
-    </section>
+    </AdminLayout>
   );
 }
 

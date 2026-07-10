@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdminLayout } from "@/components/admin/admin-layout";
 import { requireAdmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 
@@ -9,17 +10,15 @@ export default async function AdminCustomersPage() {
   const customers = await getCustomers();
 
   return (
-    <section className="section">
-      <div className="container admin-shell">
-        <div className="admin-heading row">
-          <div>
-            <p className="eyebrow">Admin</p>
-            <h1>Registered Customers</h1>
-          </div>
-          <Link className="secondary-btn" href="/admin">
-            Dashboard
-          </Link>
-        </div>
+    <AdminLayout
+      title="Registered Customers"
+      subtitle="Review customer accounts and order counts."
+      actions={
+        <Link className="secondary-btn" href="/admin">
+          Dashboard
+        </Link>
+      }
+    >
         <div className="admin-table">
           <div className="admin-table-row customer-heading">
             <span>Name</span>
@@ -39,8 +38,7 @@ export default async function AdminCustomersPage() {
           ))}
           {!customers.length ? <p className="empty-state">No registered customers yet.</p> : null}
         </div>
-      </div>
-    </section>
+    </AdminLayout>
   );
 }
 
