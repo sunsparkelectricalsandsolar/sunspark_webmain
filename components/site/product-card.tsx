@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { addToCartAction } from "@/app/cart/actions";
 import { formatMoney } from "@/lib/money";
 import { getPrimaryImage } from "@/lib/products/images";
 
@@ -49,7 +50,11 @@ export function ProductCard({ product }: { product: ProductCardProduct }) {
         <small>{product.stockQuantity > 0 ? `${product.stockQuantity} in stock` : "Out of stock"}</small>
         <div className="product-actions">
           <Link href={`/product/${product.slug}`}>View</Link>
-          <Link href={`/cart?add=${product.slug}`}>Add to cart</Link>
+          <form action={addToCartAction.bind(null, product.slug)}>
+            <button disabled={product.stockQuantity <= 0} type="submit">
+              Add to cart
+            </button>
+          </form>
         </div>
       </div>
     </article>

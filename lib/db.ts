@@ -1,13 +1,13 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
 };
 
-const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL ?? "postgresql://sunspark:sunspark@localhost:5432/sunspark"
-});
+const adapter = new PrismaMariaDb(
+  process.env.DATABASE_URL ?? "mysql://codecham_sunspark:YOUR_DATABASE_PASSWORD@102.210.146.74:3306/codecham_sunspark"
+);
 
 export const prisma = globalForPrisma.prisma ?? new PrismaClient({ adapter });
 

@@ -15,12 +15,12 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
-    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/adapter-mariadb": "^7.8.0",
     "@prisma/client": "latest",
     "bcryptjs": "latest",
     "clsx": "latest",
+    "mariadb": "^3.5.3",
     "next": "latest",
-    "pg": "^8.22.0",
     "react": "latest",
     "react-dom": "latest",
     "zod": "latest"

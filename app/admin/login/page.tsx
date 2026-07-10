@@ -23,11 +23,11 @@ export default function AdminLoginPage({ searchParams }: { searchParams?: Promis
     <section className="section auth-section">
       <div className="auth-card">
         <h1>Admin Login</h1>
-        <p>Initial setup uses admin@sunspark.co.ke and Password. Change it before launch.</p>
+        <p>Sign in to manage products, orders, stock, invoices, and checkout settings.</p>
         <form action={adminLoginAction} className="stack-form">
           <label>
             Email
-            <input name="email" type="email" defaultValue="admin@sunspark.co.ke" required />
+            <input name="email" type="email" required />
           </label>
           <label>
             Password

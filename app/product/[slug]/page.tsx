@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { addToCartAndRedirectAction } from "@/app/cart/actions";
+import { addWishlistAction } from "@/app/wishlist/actions";
 import { ProductCard } from "@/components/site/product-card";
 import { ProductGallery } from "@/components/site/product-gallery";
 import { formatMoney } from "@/lib/money";
@@ -35,12 +37,16 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             </p>
             {product.shortDescription ? <p>{product.shortDescription}</p> : null}
             <div className="hero-actions">
-              <Link className="primary-btn" href={`/cart?add=${product.slug}`}>
-                Add to cart
-              </Link>
-              <Link className="secondary-btn" href={`/wishlist?add=${product.slug}`}>
-                Wishlist
-              </Link>
+              <form action={addToCartAndRedirectAction.bind(null, product.slug)}>
+                <button className="primary-btn" disabled={product.stockQuantity <= 0} type="submit">
+                  Add to cart
+                </button>
+              </form>
+              <form action={addWishlistAction.bind(null, product.slug)}>
+                <button className="secondary-btn" type="submit">
+                  Wishlist
+                </button>
+              </form>
             </div>
           </div>
         </div>

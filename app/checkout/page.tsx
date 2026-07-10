@@ -1,0 +1,64 @@
+import { checkoutAction } from "@/app/checkout/actions";
+import { getCart } from "@/lib/cart/cart-service";
+import { formatMoney } from "@/lib/money";
+
+export const dynamic = "force-dynamic";
+
+export default async function CheckoutPage() {
+  const cart = await getCart();
+
+  return (
+    <section className="section">
+      <div className="container checkout-layout">
+        <div>
+          <div className="section-title">
+            <h3>Checkout</h3>
+          </div>
+          <form action={checkoutAction} className="admin-form">
+            <label>
+              Name
+              <input name="customerName" required />
+            </label>
+            <label>
+              Email
+              <input name="customerEmail" type="email" required />
+            </label>
+            <label>
+              Phone
+              <input name="customerPhone" />
+            </label>
+            <label>
+              Delivery note
+              <textarea name="deliveryNote" rows={4} />
+            </label>
+            <label>
+              Payment method
+              <select name="paymentMethod" defaultValue="WHATSAPP">
+                <option value="WHATSAPP">WhatsApp checkout</option>
+                <option value="MPESA">M-Pesa</option>
+              </select>
+            </label>
+            <button className="primary-btn" disabled={!cart.items.length} type="submit">
+              Place order
+            </button>
+          </form>
+        </div>
+        <aside className="order-summary">
+          <h2>Order Summary</h2>
+          {cart.items.map((item) => (
+            <div className="summary-line" key={item.product.id}>
+              <span>
+                {item.product.name} x{item.quantity}
+              </span>
+              <strong>{formatMoney(item.lineTotalCents)}</strong>
+            </div>
+          ))}
+          <div className="summary-line total">
+            <span>Total</span>
+            <strong>{formatMoney(cart.subtotalCents)}</strong>
+          </div>
+        </aside>
+      </div>
+    </section>
+  );
+}

@@ -461,24 +461,115 @@ textarea {
   margin: 8px -14px -14px;
 }
 
-.product-actions a {
+.product-actions a,
+.product-actions button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
   min-height: 44px;
   border: 0;
   border-radius: 0;
   font-weight: 700;
+  cursor: pointer;
 }
 
 .product-actions a:first-child {
   display: none;
 }
 
-.product-actions a:last-child {
+.product-actions form:last-child button {
   border-color: var(--spark);
   background: var(--spark);
   color: #fff;
+}
+
+.product-actions button:disabled {
+  background: var(--muted);
+  cursor: not-allowed;
+}
+
+.checkout-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 28px;
+  align-items: start;
+}
+
+.order-summary {
+  border: 1px solid var(--line);
+  padding: 20px;
+  background: #fff;
+}
+
+.order-summary h2 {
+  margin-top: 0;
+}
+
+.summary-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.summary-line.total {
+  font-size: 18px;
+}
+
+.cart-list-page {
+  display: grid;
+  gap: 12px;
+}
+
+.cart-row {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr) 130px 120px;
+  gap: 16px;
+  align-items: center;
+  border: 1px solid var(--line);
+  padding: 12px;
+}
+
+.cart-thumb {
+  position: relative;
+  aspect-ratio: 1;
+  background: var(--soft);
+}
+
+.cart-thumb img {
+  object-fit: contain;
+  padding: 8px;
+}
+
+.cart-row h2 {
+  margin: 0 0 6px;
+  font-size: 16px;
+}
+
+.cart-qty {
+  display: flex;
+  gap: 6px;
+}
+
+.cart-qty input {
+  width: 64px;
+  border: 1px solid var(--line);
+  padding: 8px;
+}
+
+.cart-qty button {
+  border: 1px solid var(--line);
+  background: #fff;
+  cursor: pointer;
+}
+
+.invoice-box {
+  border: 1px solid var(--line);
+  padding: 24px;
+  background: #fff;
 }
 
 .empty-products {
@@ -764,9 +855,19 @@ textarea {
   }
 
   .admin-stats,
+  .checkout-layout,
   .form-grid.two,
   .form-grid.three {
     grid-template-columns: 1fr;
+  }
+
+  .cart-row {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+
+  .cart-row > strong,
+  .cart-qty {
+    grid-column: 2;
   }
 }
 

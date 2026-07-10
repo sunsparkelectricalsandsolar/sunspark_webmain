@@ -23,7 +23,7 @@ export function Header() {
           </div>
           <div className="contact-links right">
             <span>{siteConfig.currency}</span>
-            <Link href="/admin">Admin</Link>
+            <Link href="/account">My Account</Link>
           </div>
         </div>
       </div>
