@@ -16,6 +16,10 @@ async function loginAction(formData: FormData) {
   }
 
   await setSession({ id: user.id, email: user.email, name: user.name, role: user.role });
+  if (user.role === "ADMIN") {
+    redirect("/admin");
+  }
+
   redirect("/account");
 }
 

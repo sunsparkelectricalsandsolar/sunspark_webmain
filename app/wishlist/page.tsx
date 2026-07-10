@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { ProductCard } from "@/components/site/product-card";
+import { preventAdminShopping } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import { getWishlistSlugs } from "@/lib/wishlist/wishlist-service";
 
 export const dynamic = "force-dynamic";
 
 export default async function WishlistPage() {
+  await preventAdminShopping();
   const slugs = await getWishlistSlugs();
   const products = await getProducts(slugs);
 

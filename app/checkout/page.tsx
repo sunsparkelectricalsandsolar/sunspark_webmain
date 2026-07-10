@@ -1,10 +1,12 @@
 import { checkoutAction } from "@/app/checkout/actions";
+import { preventAdminShopping } from "@/lib/auth/guards";
 import { getCart } from "@/lib/cart/cart-service";
 import { formatMoney } from "@/lib/money";
 
 export const dynamic = "force-dynamic";
 
 export default async function CheckoutPage() {
+  await preventAdminShopping();
   const cart = await getCart();
 
   return (

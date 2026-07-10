@@ -4,10 +4,12 @@ import { updateCartAction } from "@/app/cart/actions";
 import { formatMoney } from "@/lib/money";
 import { getPrimaryImage } from "@/lib/products/images";
 import { getCart } from "@/lib/cart/cart-service";
+import { preventAdminShopping } from "@/lib/auth/guards";
 
 export const dynamic = "force-dynamic";
 
 export default async function CartPage() {
+  await preventAdminShopping();
   const cart = await getCart();
 
   return (

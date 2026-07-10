@@ -3,11 +3,13 @@
 import { redirect } from "next/navigation";
 import { PaymentMethod } from "@prisma/client";
 import { buildWhatsAppCheckoutUrl } from "@/lib/checkout/whatsapp";
+import { preventAdminShopping } from "@/lib/auth/guards";
 import { formatMoney } from "@/lib/money";
 import { createOrderFromCart } from "@/lib/orders/order-service";
 import { siteConfig } from "@/lib/site-config";
 
 export async function checkoutAction(formData: FormData) {
+  await preventAdminShopping();
   const paymentMethod = String(formData.get("paymentMethod") ?? "WHATSAPP") as PaymentMethod;
   const order = await createOrderFromCart({
     customerName: String(formData.get("customerName") ?? "").trim(),

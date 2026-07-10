@@ -12,7 +12,9 @@ async function main() {
     where: { email: siteConfig.email },
     update: {
       name: "Sunspark Admin",
-      role: UserRole.ADMIN
+      passwordHash,
+      role: UserRole.ADMIN,
+      phone: siteConfig.phone
     },
     create: {
       name: "Sunspark Admin",
