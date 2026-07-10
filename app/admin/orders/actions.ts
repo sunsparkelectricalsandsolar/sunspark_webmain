@@ -8,6 +8,7 @@ import { prisma } from "@/lib/db";
 
 export async function updateOrderAction(orderId: string, formData: FormData) {
   await requireAdmin();
+  const returnTo = String(formData.get("returnTo") ?? "/admin/orders");
 
   await prisma.order.update({
     where: { id: orderId },
@@ -19,5 +20,5 @@ export async function updateOrderAction(orderId: string, formData: FormData) {
 
   revalidatePath("/admin/orders");
   revalidatePath("/admin/payments");
-  redirect("/admin/orders");
+  redirect(returnTo.startsWith("/admin/payments") ? "/admin/payments" : "/admin/orders");
 }

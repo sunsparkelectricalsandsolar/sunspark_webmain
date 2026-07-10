@@ -59,7 +59,7 @@ export async function getHomeData() {
           where: { isActive: true },
           include: productInclude,
           orderBy: [{ isFeatured: "desc" }, { updatedAt: "desc" }],
-          take: 12
+          take: 24
         }
       },
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }]

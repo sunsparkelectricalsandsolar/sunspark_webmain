@@ -13,6 +13,12 @@ export default async function AdminSettingsPage() {
   return (
     <AdminLayout title="Settings" subtitle="Business identity, contact links, checkout methods, and payment availability.">
       <form action={updateSettingsAction} className="admin-form">
+        <div className="admin-note">
+          <strong>Google Merchant feed</strong>
+          <a href="/google-merchant.xml" rel="noreferrer" target="_blank">
+            /google-merchant.xml
+          </a>
+        </div>
         <div className="form-grid two">
           <label>
             Business name

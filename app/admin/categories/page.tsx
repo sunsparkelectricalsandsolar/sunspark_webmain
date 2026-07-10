@@ -5,12 +5,26 @@ import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminCategoriesPage() {
+export default async function AdminCategoriesPage({
+  searchParams
+}: {
+  searchParams?: Promise<{ q?: string; status?: string }>;
+}) {
   await requireAdmin();
-  const categories = await getCategories();
+  const params = await searchParams;
+  const categories = await getCategories({ q: params?.q, status: params?.status });
 
   return (
     <AdminLayout title="Categories" subtitle="Categories added here show on the homepage and can hold products immediately.">
+        <form action="/admin/categories" className="admin-filter">
+          <input name="q" defaultValue={params?.q ?? ""} placeholder="Search categories..." />
+          <select name="status" defaultValue={params?.status ?? ""}>
+            <option value="">All status</option>
+            <option value="active">Active</option>
+            <option value="hidden">Hidden</option>
+          </select>
+          <button type="submit">Filter</button>
+        </form>
         <form action={createCategoryAction} className="admin-form category-admin-form" encType="multipart/form-data">
           <div className="form-grid three">
             <label>
@@ -96,10 +110,24 @@ export default async function AdminCategoriesPage() {
   );
 }
 
-async function getCategories() {
+async function getCategories(input: { q?: string; status?: string }) {
+  const q = input.q?.trim();
   try {
     return prisma.category.findMany({
-      where: { parentId: null },
+      where: {
+        parentId: null,
+        ...(q
+          ? {
+              OR: [
+                { name: { contains: q } },
+                { description: { contains: q } },
+                { slug: { contains: q } }
+              ]
+            }
+          : {}),
+        ...(input.status === "active" ? { isActive: true } : {}),
+        ...(input.status === "hidden" ? { isActive: false } : {})
+      },
       include: { images: { orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }, { createdAt: "asc" }] } },
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }]
     });

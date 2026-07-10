@@ -23,6 +23,14 @@ const categories = [
 
 export const dynamic = "force-dynamic";
 
+function chunkProducts<T>(products: T[], size: number) {
+  const rows: T[][] = [];
+  for (let index = 0; index < products.length; index += size) {
+    rows.push(products.slice(index, index + size));
+  }
+  return rows;
+}
+
 export default async function HomePage() {
   const { categories: dbCategories, categorySections, products } = await getHomeData();
   const displayCategories = dbCategories.length
@@ -50,11 +58,13 @@ export default async function HomePage() {
                 <h3>{category.name} Products</h3>
                 <Link href={`/category/${category.slug}`}>View all</Link>
               </div>
-              <div className="product-slider" aria-label={`${category.name} products`}>
-                {category.products.map((product) => (
-                  <ProductCard product={product} key={product.id} />
-                ))}
-              </div>
+              {chunkProducts(category.products, 12).map((row, index) => (
+                <div className="product-slider product-slider-row" aria-label={`${category.name} products row ${index + 1}`} key={index}>
+                  {row.map((product) => (
+                    <ProductCard product={product} key={product.id} />
+                  ))}
+                </div>
+              ))}
             </div>
           </section>
         ))

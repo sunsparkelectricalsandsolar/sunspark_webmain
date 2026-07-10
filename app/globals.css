@@ -808,6 +808,37 @@ textarea {
   padding: 28px;
 }
 
+.admin-filter {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) repeat(2, minmax(150px, 220px)) auto;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 14px;
+}
+
+.admin-filter input,
+.admin-filter select {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+
+.admin-filter button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 6px;
+  background: #111827;
+  color: #fff;
+  font-weight: 800;
+  padding: 0 18px;
+  cursor: pointer;
+}
+
 .admin-shell {
   display: grid;
   gap: 24px;
@@ -900,6 +931,18 @@ textarea {
   border-radius: 8px;
   background: #fff;
   padding: 22px;
+}
+
+.admin-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--soft);
+  padding: 12px 14px;
+  flex-wrap: wrap;
 }
 
 .admin-form label,
@@ -1002,6 +1045,33 @@ textarea {
 }
 
 @media (max-width: 860px) {
+  .admin-page {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-sidebar {
+    position: relative;
+    min-height: 0;
+  }
+
+  .admin-sidebar nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-topbar {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 20px 16px;
+  }
+
+  .admin-content {
+    padding: 16px;
+  }
+
+  .admin-filter {
+    grid-template-columns: 1fr;
+  }
+
   .top-header-inner,
   .footer-grid,
   .hero-grid {

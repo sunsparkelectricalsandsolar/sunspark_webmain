@@ -17,6 +17,10 @@ export const metadata: Metadata = {
     url: siteConfig.url,
     siteName: "Sunspark Electrical and Solar",
     images: [{ url: "/logo.jpg", width: 1200, height: 630 }]
+  },
+  icons: {
+    icon: "/logo.jpg",
+    apple: "/logo.jpg"
   }
 };
 

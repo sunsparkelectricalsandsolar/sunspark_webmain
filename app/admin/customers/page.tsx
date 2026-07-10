@@ -5,9 +5,14 @@ import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminCustomersPage() {
+export default async function AdminCustomersPage({
+  searchParams
+}: {
+  searchParams?: Promise<{ q?: string }>;
+}) {
   await requireAdmin();
-  const customers = await getCustomers();
+  const params = await searchParams;
+  const customers = await getCustomers(params?.q);
 
   return (
     <AdminLayout
@@ -19,6 +24,10 @@ export default async function AdminCustomersPage() {
         </Link>
       }
     >
+        <form action="/admin/customers" className="admin-filter">
+          <input name="q" defaultValue={params?.q ?? ""} placeholder="Search name, email, phone..." />
+          <button type="submit">Search</button>
+        </form>
         <div className="admin-table">
           <div className="admin-table-row customer-heading">
             <span>Name</span>
@@ -42,10 +51,22 @@ export default async function AdminCustomersPage() {
   );
 }
 
-async function getCustomers() {
+async function getCustomers(q?: string) {
+  const term = q?.trim();
   try {
     return prisma.user.findMany({
-      where: { role: "CUSTOMER" },
+      where: {
+        role: "CUSTOMER",
+        ...(term
+          ? {
+              OR: [
+                { name: { contains: term } },
+                { email: { contains: term } },
+                { phone: { contains: term } }
+              ]
+            }
+          : {})
+      },
       orderBy: { createdAt: "desc" },
       include: {
         _count: {
