@@ -20,6 +20,7 @@
     "@prisma/client": "latest",
     "bcryptjs": "latest",
     "clsx": "latest",
+    "dotenv": "^17.4.2",
     "mariadb": "^3.5.3",
     "next": "latest",
     "react": "latest",
