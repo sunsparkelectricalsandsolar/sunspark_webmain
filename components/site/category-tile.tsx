@@ -8,9 +8,9 @@ export type CategoryTileCategory = {
 
 export function CategoryTile({ category }: { category: CategoryTileCategory }) {
   return (
-    <Link className="category-tile" href={`/category/${category.slug}`}>
+    <Link className="category-tile shop-tile" href={`/category/${category.slug}`}>
       <span>{category.name}</span>
-      <small>{category.description ?? "Browse Sunspark products in this category."}</small>
+      <small>Shop now</small>
     </Link>
   );
 }

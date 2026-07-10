@@ -30,7 +30,7 @@ export function Header() {
       <div className="main-header">
         <div className="container main-header-inner">
           <Link className="logo-link" href="/" aria-label="Sunspark home">
-            <Image src="/logo.jpg" alt="Sunspark Electrical and Solar" width={168} height={72} priority />
+            <Image src="/logo.jpg" alt="Sunspark Electrical and Solar" width={140} height={64} priority />
           </Link>
           <form className="header-search" action="/store">
             <select name="category" aria-label="Product category">

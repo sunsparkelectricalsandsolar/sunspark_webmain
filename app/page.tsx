@@ -25,57 +25,54 @@ export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const { categories: dbCategories, products } = await getHomeData();
+  const displayCategories = dbCategories.length
+    ? dbCategories
+    : categories.map((category) => ({
+        name: category.name,
+        slug: category.name.toLowerCase(),
+        description: category.description
+      }));
 
   return (
     <>
-      <section className="hero">
-        <div className="container hero-grid">
-          <div className="hero-copy">
-            <p className="eyebrow">Nairobi CBD • KSH pricing • WhatsApp orders</p>
-            <h1>Sunspark Electrical and Solar</h1>
-            <p>
-              Shop electricals, electronics, and solar products from Downtown Tower, Duruma Road.
-              Built for installers, homes, offices, and businesses that need dependable gear.
-            </p>
-            <div className="hero-actions">
-              <Link className="primary-btn" href="/store">
-                Shop products
-              </Link>
-              <Link className="secondary-btn" href="/checkout">
-                Checkout
-              </Link>
-            </div>
-          </div>
-          <div className="hero-panel" aria-label="Sunspark product categories">
-            {categories.map((category) => (
-              <Link className="category-card" href={category.href} key={category.name}>
-                <span>{category.name}</span>
-                <small>{category.description}</small>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
       <section className="section">
-        <div className="container section-heading">
-          <h2>Featured Categories</h2>
-          <p>Start with the main Sunspark departments. Products will appear here from the admin dashboard.</p>
-        </div>
-        <div className="container category-grid">
-          {(dbCategories.length ? dbCategories : categories.map((category) => ({
-            name: category.name,
-            slug: category.name.toLowerCase(),
-            description: category.description
-          }))).map((category) => (
+        <div className="container category-grid shop-grid">
+          {displayCategories.map((category) => (
             <CategoryTile category={category} key={category.slug} />
           ))}
         </div>
       </section>
+      <section className="section product-section">
+        <div className="container">
+          <div className="section-title">
+            <h3>New Products</h3>
+            <div className="section-tabs">
+              {displayCategories.map((category) => (
+                <Link href={`/category/${category.slug}`} key={category.slug}>
+                  {category.name}
+                </Link>
+              ))}
+            </div>
+          </div>
+          {products.length ? (
+            <div className="product-grid">
+              {products.map((product) => (
+                <ProductCard product={product} key={product.id} />
+              ))}
+            </div>
+          ) : (
+            <div className="empty-products">
+              <h2>Products coming soon</h2>
+              <p>Use the admin dashboard to add Sunspark products and stock.</p>
+            </div>
+          )}
+        </div>
+      </section>
       {products.length ? (
-        <section className="section soft-section">
-          <div className="container section-heading">
-            <h2>Featured Products</h2>
-            <p>Fresh products managed from the Sunspark admin dashboard.</p>
+        <section className="section">
+          <div className="container section-title">
+            <h3>Hot Deals</h3>
+            <Link href="/store">View all</Link>
           </div>
           <div className="container product-grid">
             {products.map((product) => (
