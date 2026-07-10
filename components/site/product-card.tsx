@@ -1,0 +1,57 @@
+import Image from "next/image";
+import Link from "next/link";
+import { formatMoney } from "@/lib/money";
+import { getPrimaryImage } from "@/lib/products/images";
+
+type ProductCardImage = {
+  url: string;
+  alt: string | null;
+  isPrimary: boolean;
+};
+
+export type ProductCardProduct = {
+  name: string;
+  slug: string;
+  sku: string;
+  shortDescription: string | null;
+  priceCents: number;
+  compareAtCents: number | null;
+  stockQuantity: number;
+  isHotDeal: boolean;
+  images: ProductCardImage[];
+  category: {
+    name: string;
+  };
+};
+
+export function ProductCard({ product }: { product: ProductCardProduct }) {
+  const image = getPrimaryImage(product.images);
+
+  return (
+    <article className="product-card">
+      <Link className="product-image" href={`/product/${product.slug}`}>
+        {image ? (
+          <Image src={image.url} alt={image.alt ?? product.name} fill sizes="(max-width: 700px) 50vw, 25vw" />
+        ) : (
+          <span>No image</span>
+        )}
+        {product.isHotDeal ? <strong className="badge">Hot deal</strong> : null}
+      </Link>
+      <div className="product-body">
+        <p>{product.category.name}</p>
+        <h2>
+          <Link href={`/product/${product.slug}`}>{product.name}</Link>
+        </h2>
+        <div className="price-row">
+          <strong>{formatMoney(product.priceCents)}</strong>
+          {product.compareAtCents ? <span>{formatMoney(product.compareAtCents)}</span> : null}
+        </div>
+        <small>{product.stockQuantity > 0 ? `${product.stockQuantity} in stock` : "Out of stock"}</small>
+        <div className="product-actions">
+          <Link href={`/product/${product.slug}`}>View</Link>
+          <Link href={`/cart?add=${product.slug}`}>Add to cart</Link>
+        </div>
+      </div>
+    </article>
+  );
+}

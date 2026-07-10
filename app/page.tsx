@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { CategoryTile } from "@/components/site/category-tile";
+import { ProductCard } from "@/components/site/product-card";
+import { getHomeData } from "@/lib/products/queries";
 
 const categories = [
   {
@@ -18,7 +21,11 @@ const categories = [
   }
 ];
 
-export default function HomePage() {
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  const { categories: dbCategories, products } = await getHomeData();
+
   return (
     <>
       <section className="hero">
@@ -54,7 +61,29 @@ export default function HomePage() {
           <h2>Featured Categories</h2>
           <p>Start with the main Sunspark departments. Products will appear here from the admin dashboard.</p>
         </div>
+        <div className="container category-grid">
+          {(dbCategories.length ? dbCategories : categories.map((category) => ({
+            name: category.name,
+            slug: category.name.toLowerCase(),
+            description: category.description
+          }))).map((category) => (
+            <CategoryTile category={category} key={category.slug} />
+          ))}
+        </div>
       </section>
+      {products.length ? (
+        <section className="section soft-section">
+          <div className="container section-heading">
+            <h2>Featured Products</h2>
+            <p>Fresh products managed from the Sunspark admin dashboard.</p>
+          </div>
+          <div className="container product-grid">
+            {products.map((product) => (
+              <ProductCard product={product} key={product.id} />
+            ))}
+          </div>
+        </section>
+      ) : null}
     </>
   );
 }
