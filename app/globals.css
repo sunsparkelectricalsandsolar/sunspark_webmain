@@ -259,6 +259,62 @@ textarea {
   font-size: 18px;
 }
 
+.auth-section {
+  min-height: 60vh;
+  display: grid;
+  place-items: center;
+}
+
+.auth-card,
+.account-panel {
+  width: min(100%, 460px);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 24px;
+}
+
+.auth-card h1 {
+  margin: 0 0 8px;
+}
+
+.stack-form {
+  display: grid;
+  gap: 14px;
+  margin: 20px 0;
+}
+
+.stack-form label {
+  display: grid;
+  gap: 6px;
+  font-weight: 700;
+}
+
+.stack-form input,
+.stack-form textarea,
+.stack-form select {
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0 12px;
+}
+
+.form-error {
+  color: #b91c1c;
+  font-weight: 700;
+}
+
+.account-grid {
+  display: grid;
+  grid-template-columns: 1fr minmax(260px, 360px);
+  gap: 24px;
+}
+
+.account-panel {
+  display: grid;
+  gap: 12px;
+}
+
 @media (max-width: 860px) {
   .top-header-inner,
   .main-header-inner,
@@ -288,6 +344,10 @@ textarea {
 
   .header-actions {
     justify-content: space-between;
+  }
+
+  .account-grid {
+    grid-template-columns: 1fr;
   }
 }
 
