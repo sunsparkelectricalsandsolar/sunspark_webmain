@@ -139,8 +139,8 @@ export const siteConfig = {
   name: "Sunspark Electrical and Solar",
   url: "https://sunspark.co.ke",
   currency: "KSH",
-  phone: "0703586522",
-  whatsappPhone: "254703586522",
+  phone: "0703586562",
+  whatsappPhone: "254703586562",
   email: "admin@sunspark.co.ke",
   facebookUrl: "https://www.facebook.com/profile.php?id=61589534876668",
   location: "Nairobi CBD, Duruma Road, Downtown Tower, second floor, shop number 8",
@@ -510,14 +510,14 @@ import { buildWhatsAppCheckoutUrl } from "@/lib/checkout/whatsapp";
 describe("buildWhatsAppCheckoutUrl", () => {
   it("builds a prefilled WhatsApp order message", () => {
     const url = buildWhatsAppCheckoutUrl({
-      phone: "254703586522",
+      phone: "254703586562",
       orderNumber: "SUN-1001",
       customerName: "Jane Doe",
       totalLabel: "KSH 12,500.00",
       items: [{ name: "Solar Panel", quantity: 1 }]
     });
 
-    expect(url).toContain("https://wa.me/254703586522");
+    expect(url).toContain("https://wa.me/254703586562");
     expect(decodeURIComponent(url)).toContain("SUN-1001");
     expect(decodeURIComponent(url)).toContain("Solar Panel x1");
   });

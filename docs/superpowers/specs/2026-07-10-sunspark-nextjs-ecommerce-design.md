@@ -11,7 +11,7 @@ Rebuild the existing static Electro-style e-commerce template into a production-
 - Business name: Sunspark Electrical and Solar.
 - Domain target: sunspark.co.ke.
 - Currency: KSH.
-- WhatsApp/phone: 0703586522.
+- WhatsApp/phone: 0703586562.
 - Admin email: admin@sunspark.co.ke.
 - Default admin password for initial setup: Password.
 - Facebook: https://www.facebook.com/profile.php?id=61589534876668.
@@ -114,7 +114,7 @@ Checkout methods:
 - WhatsApp checkout.
 - M-Pesa checkout.
 
-The admin can enable or disable each checkout method. WhatsApp checkout can launch a prefilled WhatsApp message to 0703586522 with customer/order details. M-Pesa should be implemented behind a clean payment-provider interface so Daraja credentials can be added safely when available.
+The admin can enable or disable each checkout method. WhatsApp checkout can launch a prefilled WhatsApp message to 0703586562 with customer/order details. M-Pesa should be implemented behind a clean payment-provider interface so Daraja credentials can be added safely when available.
 
 ### Orders and Invoices
 
