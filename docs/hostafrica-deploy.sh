@@ -92,7 +92,9 @@ fi
 
 if [ -f "$NODE_ENV_DIR/bin/activate" ]; then
   # shellcheck source=/dev/null
+  set +u
   source "$NODE_ENV_DIR/bin/activate"
+  set -u
 fi
 
 export NODE_ENV=production
