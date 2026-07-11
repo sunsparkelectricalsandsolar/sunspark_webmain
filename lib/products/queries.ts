@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { getDefaultCategory } from "@/lib/products/default-categories";
 
 const queryTimeoutMs = 1500;
 
@@ -136,7 +137,7 @@ export async function getStoreProducts(input: { q?: string; category?: string })
 }
 
 export async function getCategoryBySlug(slug: string) {
-  return withFallback(
+  const category = await withFallback(
     prisma.category.findUnique({
       where: { slug },
       include: {
@@ -154,6 +155,22 @@ export async function getCategoryBySlug(slug: string) {
     }),
     null
   );
+
+  if (category) return category;
+
+  const fallbackCategory = getDefaultCategory(slug);
+
+  return fallbackCategory
+    ? {
+        id: `default-${fallbackCategory.slug}`,
+        name: fallbackCategory.name,
+        slug: fallbackCategory.slug,
+        description: fallbackCategory.description,
+        images: [],
+        products: [],
+        children: []
+      }
+    : null;
 }
 
 export async function getProductBySlug(slug: string) {
