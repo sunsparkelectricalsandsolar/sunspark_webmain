@@ -3,6 +3,8 @@ import Link from "next/link";
 import { addToCartAction } from "@/app/cart/actions";
 import { formatMoney } from "@/lib/money";
 import { getPrimaryImage } from "@/lib/products/images";
+import { sellingUnitLabel } from "@/lib/products/units";
+import type { SellingUnit } from "@prisma/client";
 
 type ProductCardImage = {
   url: string;
@@ -17,6 +19,7 @@ export type ProductCardProduct = {
   shortDescription: string | null;
   priceCents: number;
   compareAtCents: number | null;
+  sellingUnit: SellingUnit;
   stockQuantity: number;
   isHotDeal: boolean;
   images: ProductCardImage[];
@@ -57,7 +60,7 @@ export function ProductCard({ product }: { product: ProductCardProduct }) {
           <Link href={`/product/${product.slug}`}>{product.name}</Link>
         </h2>
         <div className="price-row">
-          <strong>{formatMoney(product.priceCents)}</strong>
+          <strong>{formatMoney(product.priceCents)} <small>/{sellingUnitLabel(product.sellingUnit ?? "UNIT")}</small></strong>
           {product.compareAtCents ? <span>{formatMoney(product.compareAtCents)}</span> : null}
         </div>
         <small>{product.stockQuantity > 0 ? `${product.stockQuantity} in stock` : "Out of stock"}</small>

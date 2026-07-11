@@ -23,6 +23,7 @@ export function ProductForm({
         <label>
           SKU
           <input name="sku" defaultValue={product?.sku ?? ""} required />
+          <small>Internal stock code, for example CAB-2.5-BLU-100.</small>
         </label>
       </div>
       <label>
@@ -57,6 +58,21 @@ export function ProductForm({
             step="0.01"
             defaultValue={product?.compareAtCents ? product.compareAtCents / 100 : ""}
           />
+        </label>
+        <label>
+          Selling unit
+          <select defaultValue={product?.sellingUnit ?? "UNIT"} name="sellingUnit">
+            <option value="UNIT">Unit / piece</option>
+            <option value="METRE">Metre</option>
+            <option value="ROLL">Roll</option>
+            <option value="CARTON">Carton</option>
+            <option value="BOX">Box</option>
+            <option value="PACK">Pack</option>
+            <option value="PAIR">Pair</option>
+            <option value="SET">Set</option>
+            <option value="LITRE">Litre</option>
+            <option value="KILOGRAM">Kilogram</option>
+          </select>
         </label>
       </div>
       <div className="form-grid two">

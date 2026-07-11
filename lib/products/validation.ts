@@ -8,6 +8,7 @@ export const productInputSchema = z.object({
   description: z.string().trim().optional(),
   priceCents: z.coerce.number().int().min(0),
   compareAtCents: z.coerce.number().int().min(0).optional(),
+  sellingUnit: z.enum(["UNIT", "METRE", "ROLL", "CARTON", "BOX", "PACK", "PAIR", "SET", "LITRE", "KILOGRAM"]).default("UNIT"),
   stockQuantity: z.coerce.number().int().min(0),
   lowStockThreshold: z.coerce.number().int().min(0).default(3),
   isActive: z.coerce.boolean().default(false),

@@ -320,6 +320,11 @@ textarea {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  opacity: 1;
+}
+
+.category-tile-media.is-carousel img,
+.product-image-stack img {
   opacity: 0;
   animation: imageFade 7.2s infinite;
 }
@@ -329,7 +334,7 @@ textarea {
   position: absolute;
   inset: 0 auto 0 0;
   width: 82%;
-  background: rgba(17, 24, 39, 0.78);
+  background: rgba(12, 60, 116, 0.84);
   clip-path: polygon(0 0, 76% 0, 48% 100%, 0 100%);
 }
 
@@ -357,8 +362,11 @@ textarea {
 }
 
 .category-tile-copy strong {
-  font-size: 18px;
-  font-weight: 800;
+  color: #fff;
+  font-size: 27px;
+  font-weight: 900;
+  line-height: 1.05;
+  text-transform: uppercase;
 }
 
 .category-tile-copy small {

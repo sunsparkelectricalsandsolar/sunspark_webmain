@@ -21,6 +21,7 @@ function parseProductForm(formData: FormData) {
     description: String(formData.get("description") ?? "").trim() || undefined,
     priceCents: amountToCents(formData.get("priceKsh")),
     compareAtCents: formData.get("compareAtKsh") ? amountToCents(formData.get("compareAtKsh")) : undefined,
+    sellingUnit: formData.get("sellingUnit"),
     stockQuantity: formData.get("stockQuantity"),
     lowStockThreshold: formData.get("lowStockThreshold"),
     isActive: formData.get("isActive") === "on",

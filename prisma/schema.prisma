@@ -72,6 +72,19 @@ model Category {
   images      CategoryImage[]
 }
 
+enum SellingUnit {
+  UNIT
+  METRE
+  ROLL
+  CARTON
+  BOX
+  PACK
+  PAIR
+  SET
+  LITRE
+  KILOGRAM
+}
+
 model CategoryImage {
   id         String   @id @default(cuid())
   categoryId String
@@ -94,6 +107,7 @@ model Product {
   description      String?
   priceCents       Int
   compareAtCents   Int?
+  sellingUnit      SellingUnit     @default(UNIT)
   stockQuantity    Int             @default(0)
   lowStockThreshold Int            @default(3)
   isActive         Boolean         @default(true)

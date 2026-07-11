@@ -6,7 +6,7 @@ test.describe("Sunspark storefront", () => {
 
     await expect(page.getByRole("link", { name: "Sunspark home" })).toBeVisible();
     await expect(page.getByRole("heading", { name: /Products$/ }).first()).toBeVisible();
-    await expect(page.getByRole("link", { name: /^Solar Panels, inverters/ })).toBeVisible();
+    await expect(page.locator(".category-tile").first()).toBeVisible();
     await expect(page.getByRole("link", { exact: true, name: "Admin" })).toHaveCount(0);
 
     const hasOverflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);

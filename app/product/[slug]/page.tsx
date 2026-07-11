@@ -8,6 +8,7 @@ import { ProductGallery } from "@/components/site/product-gallery";
 import { formatMoney } from "@/lib/money";
 import { absoluteUrl, productUrl } from "@/lib/merchant/feed";
 import { getPrimaryImage } from "@/lib/products/images";
+import { sellingUnitLabel } from "@/lib/products/units";
 import { getProductBySlug, getProductCompanions, getRelatedProducts } from "@/lib/products/queries";
 import { siteConfig } from "@/lib/site-config";
 
@@ -90,7 +91,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             <h1>{product.name}</h1>
             <p className="sku">SKU: {product.sku}</p>
             <div className="detail-price">
-              <strong>{formatMoney(product.priceCents)}</strong>
+              <strong>{formatMoney(product.priceCents)} / {sellingUnitLabel(product.sellingUnit ?? "UNIT")}</strong>
               {product.compareAtCents ? <span>{formatMoney(product.compareAtCents)}</span> : null}
             </div>
             <p className={product.stockQuantity > 0 ? "stock ok" : "stock out"}>
