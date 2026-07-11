@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { adminLogoutAction } from "@/app/admin/logout-action";
 
 const adminLinks = [
   { href: "/admin", label: "Dashboard" },
@@ -11,8 +12,7 @@ const adminLinks = [
   { href: "/admin/payments", label: "Payments" },
   { href: "/admin/campaigns", label: "Campaigns" },
   { href: "/admin/customers", label: "Customers" },
-  { href: "/admin/settings", label: "Settings" },
-  { href: "/", label: "View Store" }
+  { href: "/admin/settings", label: "Settings" }
 ];
 
 export function AdminLayout({
@@ -40,6 +40,9 @@ export function AdminLayout({
             </Link>
           ))}
         </nav>
+        <form action={adminLogoutAction} className="admin-logout">
+          <button type="submit">Log out</button>
+        </form>
       </aside>
       <div className="admin-main">
         <header className="admin-topbar">

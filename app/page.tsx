@@ -50,25 +50,24 @@ export default async function HomePage() {
           ))}
         </div>
       </section>
-      {categorySections.length ? (
-        categorySections.map((category) => (
+      {categorySections.map((category) => (
           <section className="section product-section" key={category.id}>
             <div className="container">
               <div className="section-title">
                 <h3>{category.name} Products</h3>
                 <Link href={`/category/${category.slug}`}>View all</Link>
               </div>
-              {chunkProducts(category.products, 12).map((row, index) => (
+              {category.products.length ? chunkProducts(category.products, 12).map((row, index) => (
                 <div className="product-slider product-slider-row" aria-label={`${category.name} products row ${index + 1}`} key={index}>
                   {row.map((product) => (
                     <ProductCard product={product} key={product.id} />
                   ))}
                 </div>
-              ))}
+              )) : <div className="category-empty"><span>New products are being added.</span><Link href={`/category/${category.slug}`}>Browse category</Link></div>}
             </div>
           </section>
-        ))
-      ) : (
+        ))}
+      {!categorySections.length ? (
         <section className="section product-section">
           <div className="container">
             <div className="section-title">
@@ -95,7 +94,7 @@ export default async function HomePage() {
             )}
           </div>
         </section>
-      )}
+      ) : null}
     </>
   );
 }

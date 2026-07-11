@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type SaleProduct = {
   id: string;
@@ -25,9 +25,21 @@ export function WalkInSaleForm({
 }) {
   const [lines, setLines] = useState<SaleLine[]>([]);
   const [selectedProductId, setSelectedProductId] = useState(products[0]?.id ?? "");
+  const [productQuery, setProductQuery] = useState("");
   const [formError, setFormError] = useState("");
   const productById = useMemo(() => new Map(products.map((product) => [product.id, product])), [products]);
+  const matchingProducts = useMemo(() => {
+    const query = productQuery.trim().toLowerCase();
+    if (!query) return products;
+    return products.filter((product) => `${product.name} ${product.sku}`.toLowerCase().includes(query));
+  }, [productQuery, products]);
   const total = lines.reduce((sum, line) => sum + (productById.get(line.productId)?.priceCents ?? 0) * line.quantity, 0);
+
+  useEffect(() => {
+    if (!matchingProducts.some((product) => product.id === selectedProductId)) {
+      setSelectedProductId(matchingProducts[0]?.id ?? "");
+    }
+  }, [matchingProducts, selectedProductId]);
 
   function addLine() {
     const product = productById.get(selectedProductId);
@@ -61,9 +73,17 @@ export function WalkInSaleForm({
       <section className="sale-panel">
         <div className="sale-panel-heading"><h2>Products</h2><p>Only products with stock are shown.</p></div>
         <div className="sale-product-picker">
-          <select aria-label="Select product" onChange={(event) => setSelectedProductId(event.target.value)} value={selectedProductId}>
-            {products.map((product) => <option key={product.id} value={product.id}>{product.name} ({product.stockQuantity} available)</option>)}
-          </select>
+          <label className="sale-search-field">
+            <span>Find product</span>
+            <input aria-label="Search walk-in products" onChange={(event) => setProductQuery(event.target.value)} placeholder="Search by product name or SKU" type="search" value={productQuery} />
+          </label>
+          <label className="sale-select-field">
+            <span>Select product</span>
+            <select aria-label="Select product" onChange={(event) => setSelectedProductId(event.target.value)} value={selectedProductId}>
+              {matchingProducts.map((product) => <option key={product.id} value={product.id}>{product.name} ({product.stockQuantity} available)</option>)}
+              {!matchingProducts.length ? <option value="">No matching products</option> : null}
+            </select>
+          </label>
           <button className="secondary-btn" onClick={addLine} type="button">Add item</button>
         </div>
         <div className="sale-lines" aria-live="polite">

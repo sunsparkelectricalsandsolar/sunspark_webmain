@@ -8,7 +8,7 @@ import { ProductGallery } from "@/components/site/product-gallery";
 import { formatMoney } from "@/lib/money";
 import { absoluteUrl, productUrl } from "@/lib/merchant/feed";
 import { getPrimaryImage } from "@/lib/products/images";
-import { getProductBySlug, getRelatedProducts } from "@/lib/products/queries";
+import { getProductBySlug, getProductCompanions, getRelatedProducts } from "@/lib/products/queries";
 import { siteConfig } from "@/lib/site-config";
 
 export const dynamic = "force-dynamic";
@@ -50,7 +50,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     notFound();
   }
 
-  const related = await getRelatedProducts(product.categoryId, product.id);
+  const [related, companions] = await Promise.all([
+    getRelatedProducts(product.categoryId, product.id),
+    getProductCompanions(product.categoryId, product.id)
+  ]);
   const productSchema = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -125,6 +128,19 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               {related.map((item) => (
                 <ProductCard product={item} key={item.id} />
               ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
+      {companions.length ? (
+        <section className="section soft-section">
+          <div className="container">
+            <div className="section-heading">
+              <p className="eyebrow">Complete your setup</p>
+              <h2>Often bought with</h2>
+            </div>
+            <div className="product-slider" aria-label="Often bought with">
+              {companions.map((item) => <ProductCard product={item} key={item.id} />)}
             </div>
           </div>
         </section>

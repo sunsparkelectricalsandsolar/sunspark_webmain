@@ -30,6 +30,10 @@ export function CategoryForm({
         Customer-facing description
         <textarea defaultValue={category?.description ?? ""} name="description" rows={3} />
       </label>
+      <label className="check-label form-switch">
+        <input defaultChecked={category?.isActive ?? true} name="isActive" type="checkbox" />
+        <span><strong>Show on storefront</strong><small>Visible on the homepage and in customer navigation.</small></span>
+      </label>
       <label>
         {isEditing ? "Add more category images" : "Category images"}
         <input accept="image/jpeg,image/png,image/webp" multiple name="images" type="file" />

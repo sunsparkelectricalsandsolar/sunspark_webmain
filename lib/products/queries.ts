@@ -78,7 +78,6 @@ export async function getHomeData() {
         const order = ["solar", "electricals", "electronics"];
         return order.indexOf(a.slug) - order.indexOf(b.slug);
       })
-      .filter((category) => category.products.length)
   };
 }
 
@@ -172,6 +171,22 @@ export async function getRelatedProducts(categoryId: string, productId: string) 
       include: productInclude,
       take: 4,
       orderBy: { updatedAt: "desc" }
+    }),
+    []
+  );
+}
+
+export async function getProductCompanions(categoryId: string, productId: string) {
+  return withFallback(
+    prisma.product.findMany({
+      where: {
+        isActive: true,
+        id: { not: productId },
+        categoryId: { not: categoryId }
+      },
+      include: productInclude,
+      take: 4,
+      orderBy: [{ isFeatured: "desc" }, { isHotDeal: "desc" }, { updatedAt: "desc" }]
     }),
     []
   );
