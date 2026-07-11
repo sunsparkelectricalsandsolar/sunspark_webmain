@@ -12,6 +12,20 @@ export type SavedProductImage = {
   alt: string;
 };
 
+export function getImageUploadError(files: File[]) {
+  const invalidFile = files.find((file) => file.size && (!allowedTypes.has(file.type) || file.size > maxBytes));
+
+  if (!invalidFile) {
+    return null;
+  }
+
+  if (!allowedTypes.has(invalidFile.type)) {
+    return "Images must be JPEG, PNG, or WebP.";
+  }
+
+  return "Each image must be smaller than 2 MB.";
+}
+
 function safeExtension(file: File) {
   if (file.type === "image/png") {
     return "png";

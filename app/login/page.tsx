@@ -9,10 +9,11 @@ async function loginAction(formData: FormData) {
 
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
+  const next = safeCustomerPath(String(formData.get("next") ?? ""));
   const user = await prisma.user.findUnique({ where: { email } });
 
   if (!user || !(await verifyPassword(password, user.passwordHash))) {
-    redirect("/login?error=invalid");
+    redirect(`/login?error=invalid${next ? `&next=${encodeURIComponent(next)}` : ""}`);
   }
 
   await setSession({ id: user.id, email: user.email, name: user.name, role: user.role });
@@ -20,16 +21,19 @@ async function loginAction(formData: FormData) {
     redirect("/admin");
   }
 
-  redirect("/account");
+  redirect(next || "/account");
 }
 
-export default function LoginPage({ searchParams }: { searchParams?: Promise<{ error?: string }> }) {
+export default async function LoginPage({ searchParams }: { searchParams?: Promise<{ error?: string; next?: string }> }) {
+  const params = await searchParams;
+  const next = safeCustomerPath(params?.next ?? "");
   return (
     <section className="section auth-section">
       <div className="auth-card">
         <h1>Customer Login</h1>
         <p>Sign in to manage orders, invoices, cart, and wishlist.</p>
         <form action={loginAction} className="stack-form">
+          {next ? <input name="next" type="hidden" value={next} /> : null}
           <label>
             Email
             <input name="email" type="email" required />
@@ -42,14 +46,13 @@ export default function LoginPage({ searchParams }: { searchParams?: Promise<{ e
             Sign in
           </button>
         </form>
-        <AuthError searchParams={searchParams} />
+        {params?.error ? <p className="form-error" role="alert">Invalid email or password.</p> : null}
         <Link href="/register">Create an account</Link>
       </div>
     </section>
   );
 }
 
-async function AuthError({ searchParams }: { searchParams?: Promise<{ error?: string }> }) {
-  const params = await searchParams;
-  return params?.error ? <p className="form-error">Invalid email or password.</p> : null;
+function safeCustomerPath(value: string) {
+  return value.startsWith("/") && !value.startsWith("//") && !value.startsWith("/admin") ? value : "";
 }

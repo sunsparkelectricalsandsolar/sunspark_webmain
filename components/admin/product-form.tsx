@@ -14,7 +14,7 @@ export function ProductForm({
   product?: ProductWithImages | null;
 }) {
   return (
-    <form action={action} className="admin-form" encType="multipart/form-data">
+    <form action={action} className="admin-form">
       <div className="form-grid two">
         <label>
           Product name

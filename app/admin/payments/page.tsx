@@ -30,6 +30,7 @@ export default async function AdminPaymentsPage({
           <option value="">All methods</option>
           <option value="WHATSAPP">WhatsApp</option>
           <option value="MPESA">M-Pesa</option>
+          <option value="CASH">Cash</option>
         </select>
         <select name="paymentStatus" defaultValue={params?.paymentStatus ?? ""}>
           <option value="">All payment status</option>

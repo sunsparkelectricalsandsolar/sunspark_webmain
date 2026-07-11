@@ -5,6 +5,7 @@ const adminLinks = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/products", label: "Products" },
   { href: "/admin/products/new", label: "Add Product" },
+  { href: "/admin/walk-in-sale", label: "Walk-in Sale" },
   { href: "/admin/categories", label: "Categories" },
   { href: "/admin/orders", label: "Orders" },
   { href: "/admin/payments", label: "Payments" },

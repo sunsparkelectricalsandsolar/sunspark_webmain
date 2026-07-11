@@ -21,8 +21,10 @@ export function CategoryTile({ category }: { category: CategoryTileCategory }) {
           ))}
         </span>
       ) : null}
-      <span>{category.name}</span>
-      <small>Shop now</small>
+      <span className="category-tile-copy">
+        <strong>{category.name}</strong>
+        <small>{category.description ?? "Explore Sunspark products"}</small>
+      </span>
     </Link>
   );
 }

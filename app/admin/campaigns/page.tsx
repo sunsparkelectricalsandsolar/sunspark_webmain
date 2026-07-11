@@ -25,7 +25,7 @@ export default async function AdminCampaignsPage({
         </select>
         <button type="submit">Filter</button>
       </form>
-      <form action={createCampaignAction} className="admin-form" encType="multipart/form-data">
+      <form action={createCampaignAction} className="admin-form">
         <div className="form-grid three">
           <label>
             Title
@@ -48,7 +48,7 @@ export default async function AdminCampaignsPage({
       </form>
       <div className="category-admin-list">
         {campaigns.map((campaign) => (
-          <form action={updateCampaignAction.bind(null, campaign.id)} className="admin-form" encType="multipart/form-data" key={campaign.id}>
+          <form action={updateCampaignAction.bind(null, campaign.id)} className="admin-form" key={campaign.id}>
             <div className="form-grid three">
               <label>
                 Title

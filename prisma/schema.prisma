@@ -23,6 +23,7 @@ enum OrderStatus {
 enum PaymentMethod {
   WHATSAPP
   MPESA
+  CASH
 }
 
 enum PaymentStatus {

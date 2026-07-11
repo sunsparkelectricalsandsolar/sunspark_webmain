@@ -32,6 +32,9 @@ export default async function AdminDashboardPage() {
           <Link className="secondary-btn" href="/admin/categories">
             Categories
           </Link>
+          <Link className="secondary-btn" href="/admin/walk-in-sale">
+            Walk-in sale
+          </Link>
           <Link className="secondary-btn" href="/admin/customers">
             Customers
           </Link>
