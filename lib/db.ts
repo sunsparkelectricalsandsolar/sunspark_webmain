@@ -6,7 +6,7 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 const adapter = new PrismaMariaDb(
-  process.env.DATABASE_URL ?? "mysql://codecham_sunspark:YOUR_DATABASE_PASSWORD@102.210.146.74:3306/codecham_sunspark"
+  process.env.DATABASE_URL ?? "mysql://root@localhost:3306/sunspark"
 );
 
 export const prisma = globalForPrisma.prisma ?? new PrismaClient({ adapter });
