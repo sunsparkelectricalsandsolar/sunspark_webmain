@@ -13,6 +13,7 @@ function orderNumber() {
 export async function createWalkInSaleAction(formData: FormData) {
   await requireAdmin("/admin/walk-in-sale");
   const customerName = String(formData.get("customerName") ?? "").trim();
+  const customerEmail = String(formData.get("customerEmail") ?? "").trim() || null;
   const customerPhone = String(formData.get("customerPhone") ?? "").trim() || null;
   const paymentMethod = String(formData.get("paymentMethod") ?? "CASH");
   const productIds = formData.getAll("productId").map(String);
@@ -42,14 +43,14 @@ export async function createWalkInSaleAction(formData: FormData) {
       data: {
         orderNumber: orderNumberValue,
         customerName,
-        customerEmail: `walkin-${orderNumberValue.toLowerCase()}@sunspark.co.ke`,
+        customerEmail: customerEmail ?? `walkin-${orderNumberValue.toLowerCase()}@sunspark.co.ke`,
         customerPhone,
         subtotalCents: totalCents,
         totalCents,
         paymentMethod: paymentMethod as PaymentMethod,
         paymentStatus: "PAID",
         status: "COMPLETED",
-        items: { create: items.map(({ product, quantity, totalCents: itemTotal }) => ({ productId: product.id, productName: product.name, sku: product.sku, unitCents: product.priceCents, quantity, totalCents: itemTotal })) },
+        items: { create: items.map(({ product, quantity, totalCents: itemTotal }) => ({ productId: product.id, productName: product.name, sku: product.sku, unitCents: product.priceCents, costCents: product.costCents, quantity, totalCents: itemTotal })) },
         invoice: { create: { invoiceNumber: `INV-${orderNumberValue}` } }
       }
     });

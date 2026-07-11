@@ -15,12 +15,14 @@ function amountToCents(value: FormDataEntryValue | null) {
 function parseProductForm(formData: FormData) {
   return productInputSchema.parse({
     name: formData.get("name"),
-    sku: formData.get("sku"),
+    sku: String(formData.get("sku") ?? "").trim() || undefined,
+    brand: String(formData.get("brand") ?? "").trim() || undefined,
     categoryId: formData.get("categoryId"),
     shortDescription: String(formData.get("shortDescription") ?? "").trim() || undefined,
     description: String(formData.get("description") ?? "").trim() || undefined,
     priceCents: amountToCents(formData.get("priceKsh")),
     compareAtCents: formData.get("compareAtKsh") ? amountToCents(formData.get("compareAtKsh")) : undefined,
+    costCents: formData.get("costKsh") ? amountToCents(formData.get("costKsh")) : 0,
     sellingUnit: formData.get("sellingUnit"),
     stockQuantity: formData.get("stockQuantity"),
     lowStockThreshold: formData.get("lowStockThreshold"),

@@ -22,8 +22,8 @@ export function ProductForm({
         </label>
         <label>
           SKU
-          <input name="sku" defaultValue={product?.sku ?? ""} required />
-          <small>Internal stock code, for example CAB-2.5-BLU-100.</small>
+          <input name="sku" defaultValue={product?.sku ?? ""} />
+          <small>Optional internal stock code, for example CAB-2.5-BLU-100.</small>
         </label>
       </div>
       <label>
@@ -58,6 +58,15 @@ export function ProductForm({
             step="0.01"
             defaultValue={product?.compareAtCents ? product.compareAtCents / 100 : ""}
           />
+        </label>
+        <label>
+          Brand
+          <input name="brand" defaultValue={product?.brand ?? ""} placeholder="Optional, for example Schneider" />
+        </label>
+        <label>
+          Buying cost (KSH, admin only)
+          <input name="costKsh" type="number" min="0" step="0.01" defaultValue={product ? product.costCents / 100 : ""} />
+          <small>Never shown to customers. Customer-facing discounts use the Compare at price instead.</small>
         </label>
         <label>
           Selling unit

@@ -29,6 +29,16 @@ export default async function AdminSettingsPage() {
             <input name="email" defaultValue={settings.site?.email ?? siteConfig.email} />
           </label>
         </div>
+        <details>
+          <summary>Daily report delivery</summary>
+          <div className="form-grid two">
+            <label>Recipient email<input name="reportRecipient" type="email" defaultValue={settings.reports?.recipient ?? settings.site?.email ?? siteConfig.email} /></label>
+            <label>Send time<input name="reportTime" type="time" defaultValue={settings.reports?.reportTime ?? "20:00"} /></label>
+          </div>
+          <label>Weekdays (1 Monday to 7 Sunday)<input name="reportWeekdays" defaultValue={settings.reports?.weekdays ?? "1,2,3,4,5"} /></label>
+          <label className="check-label"><input name="reportEnabled" type="checkbox" defaultChecked={settings.reports?.enabled ?? false} />Enable automatic daily report</label>
+          <small>Automatic delivery requires the HostAfrica cron job and SMTP details during deployment.</small>
+        </details>
         <div className="form-grid two">
           <label>
             Phone
@@ -69,12 +79,13 @@ export default async function AdminSettingsPage() {
 
 async function getSettings() {
   try {
-    const [site, checkout] = await Promise.all([
+    const [site, checkout, reports] = await Promise.all([
       prisma.siteSettings.findUnique({ where: { id: "default" } }),
-      prisma.checkoutSettings.findUnique({ where: { id: "default" } })
+      prisma.checkoutSettings.findUnique({ where: { id: "default" } }),
+      prisma.reportSettings.findUnique({ where: { id: "default" } })
     ]);
-    return { site, checkout };
+    return { site, checkout, reports };
   } catch {
-    return { site: null, checkout: null };
+    return { site: null, checkout: null, reports: null };
   }
 }

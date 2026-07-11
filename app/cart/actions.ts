@@ -8,12 +8,13 @@ import { addCartItem, updateCartItem } from "@/lib/cart/cart-service";
 export async function addToCartAction(slug: string) {
   await preventAdminShopping();
   await addCartItem(slug, 1);
-  revalidatePath("/cart");
+  revalidatePath("/", "layout");
 }
 
 export async function addToCartAndRedirectAction(slug: string) {
   await preventAdminShopping();
   await addCartItem(slug, 1);
+  revalidatePath("/", "layout");
   redirect("/cart");
 }
 
@@ -23,5 +24,5 @@ export async function updateCartAction(formData: FormData) {
   const quantity = Number(formData.get("quantity") ?? 0);
 
   await updateCartItem(slug, Number.isFinite(quantity) ? quantity : 0);
-  revalidatePath("/cart");
+  revalidatePath("/", "layout");
 }

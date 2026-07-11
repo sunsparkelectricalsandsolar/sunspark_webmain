@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 type SaleProduct = {
   id: string;
   name: string;
-  sku: string;
+  sku: string | null;
   priceCents: number;
   stockQuantity: number;
 };
@@ -18,10 +18,12 @@ function money(cents: number) {
 
 export function WalkInSaleForm({
   action,
-  products
+  products,
+  submitLabel = "Complete sale"
 }: {
   action: (formData: FormData) => Promise<void>;
   products: SaleProduct[];
+  submitLabel?: string;
 }) {
   const [lines, setLines] = useState<SaleLine[]>([]);
   const [selectedProductId, setSelectedProductId] = useState(products[0]?.id ?? "");
@@ -66,6 +68,7 @@ export function WalkInSaleForm({
           <label>Customer name<input name="customerName" placeholder="Walk-in customer" required /></label>
           <label>Phone number<input name="customerPhone" inputMode="tel" placeholder="Optional" /></label>
         </div>
+        <label>Email address<input name="customerEmail" placeholder="Optional - useful for emailed invoices" type="email" /></label>
         <label>Payment method
           <select defaultValue="CASH" name="paymentMethod"><option value="CASH">Cash</option><option value="MPESA">M-Pesa</option></select>
         </label>
@@ -102,7 +105,7 @@ export function WalkInSaleForm({
         </div>
       </section>
       {formError ? <p className="admin-feedback error" role="alert">{formError}</p> : null}
-      <div className="sale-total"><span>Total</span><strong>{money(total)}</strong><button className="primary-btn" disabled={!lines.length} type="submit">Complete sale</button></div>
+      <div className="sale-total"><span>Total</span><strong>{money(total)}</strong><button className="primary-btn" disabled={!lines.length} type="submit">{submitLabel}</button></div>
     </form>
   );
 }

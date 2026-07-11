@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { siteConfig } from "@/lib/site-config";
+import { getCart } from "@/lib/cart/cart-service";
 
 const navItems = [
   { label: "Home", href: "/" },
@@ -11,7 +12,9 @@ const navItems = [
   { label: "Account", href: "/account" }
 ];
 
-export function Header() {
+export async function Header() {
+  const cart = await getCart();
+  const cartCount = cart.items.reduce((total, item) => total + item.quantity, 0);
   return (
     <header>
       <div className="top-header">
@@ -44,7 +47,7 @@ export function Header() {
           </form>
           <nav className="header-actions" aria-label="Shop actions">
             <Link href="/wishlist">Wishlist</Link>
-            <Link href="/cart">Cart</Link>
+            <Link className="cart-link" href="/cart">Cart <span aria-label={`${cartCount} items in cart`}>{cartCount}</span></Link>
           </nav>
         </div>
       </div>

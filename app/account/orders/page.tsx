@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export default async function OrdersPage() {
   const user = await requireCustomer();
-  const orders = await getOrders(user.email);
+  const orders = await getOrders(user.id, user.email);
 
   return (
     <section className="section">
@@ -31,9 +31,9 @@ export default async function OrdersPage() {
   );
 }
 
-async function getOrders(email: string) {
+async function getOrders(userId: string, email: string) {
   try {
-    return prisma.order.findMany({ where: { customerEmail: email }, orderBy: { createdAt: "desc" } });
+    return prisma.order.findMany({ where: { OR: [{ userId }, { userId: null, customerEmail: email }] }, orderBy: { createdAt: "desc" } });
   } catch {
     return [];
   }

@@ -32,7 +32,7 @@ function chunkProducts<T>(products: T[], size: number) {
 }
 
 export default async function HomePage() {
-  const { categories: dbCategories, categorySections, products } = await getHomeData();
+  const { categories: dbCategories, categorySections, products, brands } = await getHomeData();
   const displayCategories = dbCategories.length
     ? dbCategories
     : categories.map((category) => ({
@@ -50,6 +50,7 @@ export default async function HomePage() {
           ))}
         </div>
       </section>
+      {brands.length ? <section className="section brand-section"><div className="container"><div className="section-title"><h3>Shop by Brand</h3><Link href="/store">View all</Link></div><div className="brand-list">{brands.map((brand) => <Link href={`/store?q=${encodeURIComponent(brand)}`} key={brand}>{brand}</Link>)}</div></div></section> : null}
       {categorySections.map((category) => (
           <section className="section product-section" key={category.id}>
             <div className="container">

@@ -62,7 +62,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     sku: product.sku,
     brand: {
       "@type": "Brand",
-      name: siteConfig.name
+      name: product.brand || siteConfig.name
     },
     category: product.category.name,
     description: product.description || product.shortDescription || product.name,
@@ -88,6 +88,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           <ProductGallery images={product.images} name={product.name} />
           <div className="product-summary">
             <p className="eyebrow">{product.category.name}</p>
+            {product.brand ? <p className="product-brand">{product.brand}</p> : null}
             <h1>{product.name}</h1>
             <p className="sku">SKU: {product.sku}</p>
             <div className="detail-price">

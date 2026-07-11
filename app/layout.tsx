@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Footer } from "@/components/site/footer";
 import { Header } from "@/components/site/header";
+import { CampaignModal } from "@/components/site/campaign-modal";
+import { SupportChat } from "@/components/site/support-chat";
+import { prisma } from "@/lib/db";
 import { siteConfig } from "@/lib/site-config";
 import "./globals.css";
 
@@ -24,13 +27,16 @@ export const metadata: Metadata = {
   }
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const campaigns = await prisma.campaign.findMany({ where: { isActive: true }, select: { id: true, title: true, description: true, imageUrl: true }, orderBy: { updatedAt: "desc" }, take: 3 }).catch(() => []);
   return (
     <html lang="en">
       <body>
         <Header />
         <main>{children}</main>
         <Footer />
+        <CampaignModal campaigns={campaigns} />
+        <SupportChat />
       </body>
     </html>
   );

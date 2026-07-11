@@ -11,7 +11,8 @@ export type MerchantProduct = {
   id: string;
   name: string;
   slug: string;
-  sku: string;
+  sku: string | null;
+  brand: string | null;
   shortDescription: string | null;
   description: string | null;
   priceCents: number;
@@ -73,7 +74,7 @@ export function buildMerchantFeed(products: MerchantProduct[]) {
       <g:availability>${product.stockQuantity > 0 ? "in_stock" : "out_of_stock"}</g:availability>
       <g:price>${merchantPrice(product.priceCents)}</g:price>
       <g:condition>new</g:condition>
-      <g:brand>${xml(siteConfig.name)}</g:brand>
+      <g:brand>${xml(product.brand || siteConfig.name)}</g:brand>
       <g:product_type>${xml(product.category.name)}</g:product_type>
     </item>`;
   });

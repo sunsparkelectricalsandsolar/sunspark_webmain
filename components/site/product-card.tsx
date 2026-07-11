@@ -15,7 +15,7 @@ type ProductCardImage = {
 export type ProductCardProduct = {
   name: string;
   slug: string;
-  sku: string;
+  sku: string | null;
   shortDescription: string | null;
   priceCents: number;
   compareAtCents: number | null;

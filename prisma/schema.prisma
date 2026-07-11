@@ -85,6 +85,12 @@ enum SellingUnit {
   KILOGRAM
 }
 
+enum DraftInvoiceStatus {
+  DRAFT
+  COMPLETED
+  CANCELLED
+}
+
 model CategoryImage {
   id         String   @id @default(cuid())
   categoryId String
@@ -102,11 +108,13 @@ model Product {
   id               String          @id @default(cuid())
   name             String
   slug             String          @unique
-  sku              String          @unique
+  sku              String?         @unique
+  brand            String?
   shortDescription String?
   description      String?
   priceCents       Int
   compareAtCents   Int?
+  costCents        Int             @default(0)
   sellingUnit      SellingUnit     @default(UNIT)
   stockQuantity    Int             @default(0)
   lowStockThreshold Int            @default(3)
@@ -123,6 +131,7 @@ model Product {
   cartItems        CartItem[]
   orderItems       OrderItem[]
   stockMovements   StockMovement[]
+  draftInvoiceItems DraftInvoiceItem[]
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 
@@ -196,6 +205,7 @@ model Order {
   paymentStatus  PaymentStatus @default(UNPAID)
   items          OrderItem[]
   invoice        Invoice?
+  draftInvoice   DraftInvoice?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
@@ -212,6 +222,7 @@ model OrderItem {
   productName String
   sku         String?
   unitCents   Int
+  costCents   Int      @default(0)
   quantity    Int
   totalCents  Int
 }
@@ -253,6 +264,50 @@ model StockMovement {
   createdAt DateTime          @default(now())
 
   @@index([productId, createdAt])
+}
+
+model ReportSettings {
+  id          String  @id @default("default")
+  enabled     Boolean @default(false)
+  recipient   String
+  reportTime  String  @default("20:00")
+  weekdays    String  @default("1,2,3,4,5")
+  timezone    String  @default("Africa/Nairobi")
+  updatedAt   DateTime @updatedAt
+}
+
+model DraftInvoice {
+  id            String             @id @default(cuid())
+  reference     String             @unique
+  customerName  String
+  customerEmail String?
+  customerPhone String?
+  paymentMethod PaymentMethod      @default(CASH)
+  status        DraftInvoiceStatus @default(DRAFT)
+  subtotalCents Int
+  totalCents    Int
+  orderId       String?            @unique
+  order         Order?             @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  items         DraftInvoiceItem[]
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  @@index([status, createdAt])
+  @@index([customerName])
+}
+
+model DraftInvoiceItem {
+  id              String       @id @default(cuid())
+  draftInvoiceId  String
+  draftInvoice    DraftInvoice @relation(fields: [draftInvoiceId], references: [id], onDelete: Cascade)
+  productId       String
+  product         Product      @relation(fields: [productId], references: [id])
+  productName     String
+  sku             String?
+  unitCents       Int
+  costCents       Int          @default(0)
+  quantity        Int
+  totalCents      Int
 }
 
 model Campaign {

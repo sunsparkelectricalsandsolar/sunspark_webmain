@@ -66,6 +66,10 @@ export async function getHomeData() {
     }),
     []
   );
+  const brands = await withFallback(
+    prisma.product.findMany({ where: { isActive: true, brand: { not: null } }, select: { brand: true }, distinct: ["brand"], orderBy: { brand: "asc" }, take: 12 }),
+    []
+  );
 
   return {
     categories: categories.sort((a, b) => {
@@ -77,7 +81,8 @@ export async function getHomeData() {
       .sort((a, b) => {
         const order = ["solar", "electricals", "electronics"];
         return order.indexOf(a.slug) - order.indexOf(b.slug);
-      })
+      }),
+    brands: brands.flatMap((item) => item.brand ? [item.brand] : [])
   };
 }
 
@@ -109,6 +114,7 @@ export async function getStoreProducts(input: { q?: string; category?: string })
                   { seoTitle: { contains: term } },
                   { seoDescription: { contains: term } },
                   { seoKeywords: { contains: term } },
+                  { brand: { contains: term } },
                   { category: { name: { contains: term } } }
                 ]
               }))

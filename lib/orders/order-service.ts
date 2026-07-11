@@ -3,6 +3,7 @@ import "server-only";
 import { PaymentMethod } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { clearCart, getCart } from "@/lib/cart/cart-service";
+import { getSession } from "@/lib/auth/session";
 
 export type CheckoutInput = {
   customerName: string;
@@ -25,10 +26,12 @@ export async function createOrderFromCart(input: CheckoutInput) {
 
   const orderNumber = makeOrderNumber();
   const invoiceNumber = `INV-${orderNumber}`;
+  const session = await getSession();
 
   const order = await prisma.order.create({
     data: {
       orderNumber,
+      userId: session?.role === "CUSTOMER" ? session.id : undefined,
       customerName: input.customerName,
       customerEmail: input.customerEmail,
       customerPhone: input.customerPhone,
@@ -42,6 +45,7 @@ export async function createOrderFromCart(input: CheckoutInput) {
           productName: item.product.name,
           sku: item.product.sku,
           unitCents: item.product.priceCents,
+          costCents: item.product.costCents,
           quantity: item.quantity,
           totalCents: item.lineTotalCents
         }))
