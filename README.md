@@ -73,14 +73,24 @@ On hosting, make sure the uploads directory is writable and backed up. For large
 
 From the GitHub repo:
 
+The repository includes `.cpanel.yml` for a cPanel Git deployment. It deliberately does not seed production data.
+
+In cPanel's Node.js Application screen, set the application root to `sunspark`, use Node 20, set `NODE_ENV=production`, and configure the startup command as `npm start`.
+
+For a manual SSH deployment:
+
 ```bash
-npm install
-npm run prisma:generate
-npm run db:push
-npm run seed
+source ~/nodevenv/sunspark/20/bin/activate
+unset NODE_ENV
+export NODE_ENV=production NPM_CONFIG_PRODUCTION=false
+rm -rf .next
+npm ci --include=dev
+npx prisma generate
+npx prisma db push
 npm run build
-npm start
 ```
+
+Do not put `NODE_ENV` in `.env`; cPanel's application environment should provide it. The build uses Webpack and one worker to work around cPanel's external `node_modules` symlink and process limit.
 
 Required environment variables on HostAfrica:
 
