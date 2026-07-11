@@ -18,16 +18,42 @@ IMPORT_SQL="${IMPORT_SQL:-}"
 timestamp="$(date +%Y%m%d-%H%M%S)"
 backup_dir="$BACKUP_ROOT/sunspark-$timestamp"
 
+copy_dir_contents() {
+  source_dir="$1"
+  target_dir="$2"
+  mkdir -p "$target_dir"
+
+  if command -v rsync >/dev/null 2>&1; then
+    rsync -a "$source_dir"/ "$target_dir"/
+    return
+  fi
+
+  if command -v tar >/dev/null 2>&1; then
+    (cd "$source_dir" && tar cf - .) | (cd "$target_dir" && tar xf -)
+    return
+  fi
+
+  cp -a "$source_dir"/. "$target_dir"/
+}
+
 echo "==> Sunspark deploy started at $timestamp"
 mkdir -p "$BACKUP_ROOT"
 
 if [ -d "$APP_DIR" ]; then
   echo "==> Backing up current app to $backup_dir"
   mkdir -p "$backup_dir"
-  rsync -a \
-    --exclude node_modules \
-    --exclude .next/cache \
-    "$APP_DIR"/ "$backup_dir"/
+  if command -v rsync >/dev/null 2>&1; then
+    rsync -a \
+      --exclude node_modules \
+      --exclude .next/cache \
+      "$APP_DIR"/ "$backup_dir"/
+  else
+    mkdir -p "$backup_dir"
+    (cd "$APP_DIR" && tar \
+      --exclude ./node_modules \
+      --exclude ./.next/cache \
+      -cf - .) | (cd "$backup_dir" && tar xf -)
+  fi
 fi
 
 if [ ! -d "$APP_DIR/.git" ]; then
@@ -45,7 +71,7 @@ if [ ! -d "$APP_DIR/.git" ]; then
 
   if [ -d "$old_dir/public/uploads" ]; then
     mkdir -p "$APP_DIR/public/uploads"
-    rsync -a "$old_dir/public/uploads"/ "$APP_DIR/public/uploads"/
+    copy_dir_contents "$old_dir/public/uploads" "$APP_DIR/public/uploads"
   fi
 else
   echo "==> Pulling latest code from $BRANCH"
