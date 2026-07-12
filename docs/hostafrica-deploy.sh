@@ -123,6 +123,13 @@ export NODE_ENV=production
 export NPM_CONFIG_PRODUCTION=false
 export NEXT_TELEMETRY_DISABLED=1
 
+if [ -f "$APP_DIR/.env" ]; then
+  set -a
+  # shellcheck source=/dev/null
+  source "$APP_DIR/.env"
+  set +a
+fi
+
 rm -rf .next
 
 if [ "$INSTALL_DEPS" = "1" ] || [ ! -e "$APP_DIR/node_modules/.package-lock.json" ]; then
