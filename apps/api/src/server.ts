@@ -660,6 +660,173 @@ app.patch("/admin/orders/:id", asyncRoute(async (request, response) => {
   response.json({ ok: true });
 }));
 
+function documentReference(kind: "INVOICE" | "QUOTATION") {
+  const prefix = kind === "QUOTATION" ? "QUO" : "INV-DRAFT";
+  return `${prefix}-${Date.now().toString().slice(-8)}-${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
+}
+
+app.get("/admin/draft-documents", asyncRoute(async (request, response) => {
+  const q = String(request.query.q ?? "").trim();
+  const where: string[] = [];
+  const values: unknown[] = [];
+
+  if (q) {
+    where.push("(reference LIKE ? OR customer_name LIKE ? OR customer_email LIKE ? OR customer_phone LIKE ?)");
+    values.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`);
+  }
+
+  const documents = await query<Record<string, unknown>>(
+    `SELECT id, reference, kind, status, order_id AS orderId, customer_name AS customerName,
+      customer_email AS customerEmail, customer_phone AS customerPhone, payment_method AS paymentMethod,
+      subtotal_cents AS subtotalCents, total_cents AS totalCents, created_at AS createdAt, updated_at AS updatedAt
+     FROM draft_documents
+     ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
+     ORDER BY updated_at DESC
+     LIMIT 100`,
+    values
+  );
+  const ids = documents.map((document) => String(document.id));
+  const items = ids.length
+    ? await query<Record<string, unknown>>(
+        `SELECT id, document_id AS documentId, product_id AS productId, product_name AS productName,
+          sku, unit_cents AS unitCents, cost_cents AS costCents, quantity, total_cents AS totalCents
+         FROM draft_document_items WHERE document_id IN (${ids.map(() => "?").join(",")})`,
+        ids
+      )
+    : [];
+
+  response.json(documents.map((document) => ({ ...document, items: items.filter((item) => item.documentId === document.id) })));
+}));
+
+app.get("/admin/draft-documents/:id", asyncRoute(async (request, response) => {
+  const documents = await query<Record<string, unknown>>(
+    `SELECT id, reference, kind, status, order_id AS orderId, customer_name AS customerName,
+      customer_email AS customerEmail, customer_phone AS customerPhone, payment_method AS paymentMethod,
+      subtotal_cents AS subtotalCents, total_cents AS totalCents, created_at AS createdAt, updated_at AS updatedAt
+     FROM draft_documents WHERE id = ? LIMIT 1`,
+    [request.params.id]
+  );
+  if (!documents[0]) throw new HttpError(404, "Document not found.");
+  const items = await query<Record<string, unknown>>(
+    `SELECT id, document_id AS documentId, product_id AS productId, product_name AS productName,
+      sku, unit_cents AS unitCents, cost_cents AS costCents, quantity, total_cents AS totalCents
+     FROM draft_document_items WHERE document_id = ?`,
+    [request.params.id]
+  );
+  response.json({ ...documents[0], items });
+}));
+
+app.post("/admin/draft-documents", asyncRoute(async (request, response) => {
+  const input = z.object({
+    kind: z.enum(["INVOICE", "QUOTATION"]),
+    customerName: z.string().min(2),
+    customerEmail: z.string().optional().nullable(),
+    customerPhone: z.string().optional().nullable(),
+    paymentMethod: z.enum(["WHATSAPP", "MPESA", "CASH"]).default("CASH"),
+    items: z.array(z.object({ productId: z.string(), quantity: z.number().int().positive() })).min(1)
+  }).parse(request.body);
+  const productIds = [...new Set(input.items.map((item) => item.productId))];
+  const rows = await query<ProductRow>(
+    `SELECT * FROM products WHERE is_active = TRUE AND id IN (${productIds.map(() => "?").join(",")})`,
+    productIds
+  );
+  if (rows.length !== productIds.length) throw new HttpError(400, "One or more selected products are unavailable.");
+  const products = new Map(rows.map((row) => [row.id, row]));
+  const documentId = id("doc");
+  let totalCents = 0;
+
+  await transaction(async (connection) => {
+    const lines = input.items.map((item) => {
+      const product = products.get(item.productId);
+      if (!product) throw new HttpError(400, "One or more selected products are unavailable.");
+      const lineTotal = product.price_cents * item.quantity;
+      totalCents += lineTotal;
+      return { product, quantity: item.quantity, lineTotal };
+    });
+
+    await connection.query(
+      `INSERT INTO draft_documents
+       (id, reference, kind, customer_name, customer_email, customer_phone, payment_method, subtotal_cents, total_cents)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        documentId,
+        documentReference(input.kind),
+        input.kind,
+        input.customerName,
+        input.customerEmail ?? null,
+        input.customerPhone ?? null,
+        input.paymentMethod,
+        totalCents,
+        totalCents
+      ]
+    );
+
+    for (const line of lines) {
+      await connection.query(
+        `INSERT INTO draft_document_items
+         (id, document_id, product_id, product_name, sku, unit_cents, cost_cents, quantity, total_cents)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [id("dit"), documentId, line.product.id, line.product.name, line.product.sku, line.product.price_cents, line.product.cost_cents, line.quantity, line.lineTotal]
+      );
+    }
+  });
+
+  response.status(201).json({ id: documentId });
+}));
+
+app.post("/admin/draft-documents/:id/finalize", asyncRoute(async (request, response) => {
+  const documentRows = await query<Record<string, unknown>>("SELECT * FROM draft_documents WHERE id = ? LIMIT 1", [request.params.id]);
+  const document = documentRows[0];
+  if (!document || document.status !== "DRAFT") throw new HttpError(400, "This invoice is already finalized or unavailable.");
+  if (document.kind !== "INVOICE") throw new HttpError(400, "Quotations do not update stock.");
+  const items = await query<Record<string, unknown>>("SELECT * FROM draft_document_items WHERE document_id = ?", [request.params.id]);
+  if (!items.length) throw new HttpError(400, "This invoice has no items.");
+
+  const order = await transaction(async (connection) => {
+    const productIds = items.map((item) => String(item.product_id));
+    const products = await connection.query(`SELECT * FROM products WHERE is_active = TRUE AND id IN (${productIds.map(() => "?").join(",")})`, productIds) as ProductRow[];
+    if (products.length !== items.length) throw new HttpError(400, "One or more selected products are unavailable.");
+    const productMap = new Map(products.map((product) => [product.id, product]));
+    for (const item of items) {
+      const product = productMap.get(String(item.product_id));
+      if (!product || product.stock_quantity < Number(item.quantity)) throw new HttpError(400, "Stock changed before finalization.");
+    }
+
+    const orderId = id("ord");
+    const orderNumber = `SUN-${Date.now().toString().slice(-8)}`;
+    await connection.query(
+      `INSERT INTO orders
+       (id, order_number, customer_name, customer_email, customer_phone, payment_method, payment_status, status, subtotal_cents, total_cents)
+       VALUES (?, ?, ?, ?, ?, ?, 'PENDING', 'CONFIRMED', ?, ?)`,
+      [
+        orderId,
+        orderNumber,
+        document.customer_name,
+        document.customer_email ?? `invoice-${orderNumber.toLowerCase()}@sunsparkelectricals.co.ke`,
+        document.customer_phone ?? null,
+        document.payment_method,
+        document.subtotal_cents,
+        document.total_cents
+      ]
+    );
+
+    for (const item of items) {
+      await connection.query(
+        `INSERT INTO order_items (id, order_id, product_id, product_name, sku, unit_cents, cost_cents, quantity, total_cents)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [id("itm"), orderId, item.product_id, item.product_name, item.sku, item.unit_cents, item.cost_cents, item.quantity, item.total_cents]
+      );
+      await connection.query("UPDATE products SET stock_quantity = stock_quantity - ? WHERE id = ?", [item.quantity, item.product_id]);
+    }
+
+    await connection.query("INSERT INTO invoices (id, order_id, invoice_number) VALUES (?, ?, ?)", [id("inv"), orderId, `INV-${orderNumber}`]);
+    await connection.query("UPDATE draft_documents SET status = 'COMPLETED', order_id = ? WHERE id = ?", [orderId, request.params.id]);
+    return { id: orderId };
+  });
+
+  response.json(order);
+}));
+
 const authSchema = z.object({
   email: z.string().email().transform((value) => value.toLowerCase()),
   password: z.string().min(1)

@@ -169,3 +169,36 @@ CREATE TABLE IF NOT EXISTS site_settings (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS draft_documents (
+  id VARCHAR(64) PRIMARY KEY,
+  reference VARCHAR(64) NOT NULL UNIQUE,
+  kind VARCHAR(32) NOT NULL DEFAULT 'INVOICE',
+  status VARCHAR(32) NOT NULL DEFAULT 'DRAFT',
+  order_id VARCHAR(64) NULL,
+  customer_name VARCHAR(191) NOT NULL,
+  customer_email VARCHAR(191) NULL,
+  customer_phone VARCHAR(64) NULL,
+  payment_method VARCHAR(32) NOT NULL DEFAULT 'CASH',
+  subtotal_cents INT NOT NULL DEFAULT 0,
+  total_cents INT NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX draft_documents_kind_status_idx (kind, status),
+  INDEX draft_documents_order_idx (order_id),
+  CONSTRAINT draft_documents_order_fk FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS draft_document_items (
+  id VARCHAR(64) PRIMARY KEY,
+  document_id VARCHAR(64) NOT NULL,
+  product_id VARCHAR(64) NOT NULL,
+  product_name VARCHAR(191) NOT NULL,
+  sku VARCHAR(191) NULL,
+  unit_cents INT NOT NULL,
+  cost_cents INT NOT NULL DEFAULT 0,
+  quantity INT NOT NULL,
+  total_cents INT NOT NULL,
+  CONSTRAINT draft_document_items_document_fk FOREIGN KEY (document_id) REFERENCES draft_documents(id) ON DELETE CASCADE,
+  CONSTRAINT draft_document_items_product_fk FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

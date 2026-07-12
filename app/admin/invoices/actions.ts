@@ -3,6 +3,7 @@
 import type { DraftInvoiceKind } from "@/lib/types";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { apiFetch, ApiError } from "@/lib/api/client";
 import { requireAdmin } from "@/lib/auth/guards";
 
 function requestedItems(formData: FormData) {
@@ -21,8 +22,25 @@ function requestedItems(formData: FormData) {
 async function createSalesDocument(formData: FormData, kind: DraftInvoiceKind) {
   await requireAdmin("/admin/invoices");
   const customerName = String(formData.get("customerName") ?? "").trim();
+  const customerEmail = String(formData.get("customerEmail") ?? "").trim() || null;
+  const customerPhone = String(formData.get("customerPhone") ?? "").trim() || null;
+  const paymentMethod = String(formData.get("paymentMethod") ?? "CASH");
   const requested = requestedItems(formData);
   if (customerName.length < 2 || !requested) redirect(`/admin/invoices?error=details&tab=${kind.toLowerCase()}`);
+  await apiFetch("/admin/draft-documents", {
+    method: "POST",
+    body: JSON.stringify({
+      kind,
+      customerName,
+      customerEmail,
+      customerPhone,
+      paymentMethod,
+      items: [...requested.entries()].map(([productId, quantity]) => ({ productId, quantity }))
+    })
+  }).catch((error: unknown) => {
+    if (error instanceof ApiError) redirect(`/admin/invoices?error=items&tab=${kind.toLowerCase()}`);
+    throw error;
+  });
   revalidatePath("/admin/invoices");
   redirect(`/admin/invoices?notice=${kind === "QUOTATION" ? "quotation" : "created"}`);
 }
@@ -37,6 +55,10 @@ export async function createQuotationAction(formData: FormData) {
 
 export async function finalizeDraftInvoiceAction(draftId: string) {
   await requireAdmin("/admin/invoices");
-  void draftId;
-  redirect("/admin/invoices?error=finalize");
+  const order = await apiFetch<{ id: string }>(`/admin/draft-documents/${draftId}/finalize`, { method: "POST" }).catch((error: unknown) => {
+    if (error instanceof ApiError) redirect("/admin/invoices?error=stock");
+    throw error;
+  });
+  revalidatePath("/"); revalidatePath("/store"); revalidatePath("/admin/invoices"); revalidatePath("/admin/orders"); revalidatePath("/admin/products");
+  redirect(`/admin/walk-in-sale/${order.id}/receipt`);
 }

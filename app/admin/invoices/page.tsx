@@ -3,7 +3,7 @@ import { AdminLayout } from "@/components/admin/admin-layout";
 import { WalkInSaleForm } from "@/components/admin/walk-in-sale-form";
 import { PendingButton } from "@/components/ui/pending-button";
 import { requireAdmin } from "@/lib/auth/guards";
-import { apiFetch } from "@/lib/api/client";
+import { apiFetch, toQueryString } from "@/lib/api/client";
 import { formatMoney } from "@/lib/money";
 import { createDraftInvoiceAction, createQuotationAction, finalizeDraftInvoiceAction } from "./actions";
 import type { Product } from "@/lib/types";
@@ -58,6 +58,5 @@ export default async function InvoicesPage({ searchParams }: { searchParams?: Pr
 
 async function getInvoices(q?: string): Promise<DraftDocument[]> {
   const terms = q?.trim().split(/\s+/).filter(Boolean) ?? [];
-  void terms;
-  return [];
+  return apiFetch<DraftDocument[]>(`/admin/draft-documents${toQueryString({ q: terms.join(" ") })}`).catch(() => []);
 }
