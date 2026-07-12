@@ -4,6 +4,7 @@ import cors from "cors";
 import express from "express";
 import { z } from "zod";
 import { execute, query, transaction } from "./db.js";
+import { sendEmail } from "./email.js";
 import { env } from "./env.js";
 import { id, slugify } from "./id.js";
 import { HttpError, asyncRoute, errorHandler } from "./response.js";
@@ -883,7 +884,20 @@ app.post("/auth/forgot-password", asyncRoute(async (request, response) => {
       "INSERT INTO password_reset_tokens (id, user_id, token_hash, expires_at) VALUES (?, ?, ?, ?)",
       [id("rst"), rows[0].id, hashToken(token), expires]
     );
-    console.log(`Password reset link for ${email}: ${env("FRONTEND_ORIGIN", "http://localhost:3000")}/reset-password?token=${token}`);
+    const resetUrl = `${env("FRONTEND_ORIGIN", "http://localhost:3000")}/reset-password?token=${encodeURIComponent(token)}`;
+    await sendEmail({
+      to: email,
+      subject: "Reset your Sunspark password",
+      text: `Use this link to reset your Sunspark password. It expires in 1 hour: ${resetUrl}`,
+      html: `
+        <div style="font-family:Arial,sans-serif;line-height:1.5;color:#172033">
+          <h2 style="margin:0 0 12px">Reset your Sunspark password</h2>
+          <p>Use the button below to set a new password. This link expires in 1 hour.</p>
+          <p><a href="${resetUrl}" style="display:inline-block;background:#0f65c8;color:#fff;padding:12px 18px;border-radius:6px;text-decoration:none">Reset password</a></p>
+          <p>If you did not request this, you can safely ignore this email.</p>
+        </div>
+      `
+    });
   }
 
   response.json({ ok: true });
