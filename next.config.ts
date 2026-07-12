@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "node:path";
 
 const nextConfig: NextConfig = {
   output: "standalone",
@@ -19,6 +20,13 @@ const nextConfig: NextConfig = {
         hostname: "sunspark.co.ke"
       }
     ]
+  },
+  webpack(config) {
+    config.resolve.alias = {
+      ...(config.resolve.alias ?? {}),
+      "@": path.resolve(__dirname)
+    };
+    return config;
   }
 };
 
