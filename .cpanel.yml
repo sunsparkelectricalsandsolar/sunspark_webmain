@@ -1,6 +1,6 @@
 deployment:
   tasks:
-    - /bin/bash -lc 'source "$HOME/nodevenv/sunspark/20/bin/activate" && export NODE_ENV=production NPM_CONFIG_PRODUCTION=false && rm -rf .next && npm ci --include=dev'
+    - /bin/bash -lc 'source "$HOME/nodevenv/sunspark/20/bin/activate" && export NODE_ENV=production NPM_CONFIG_PRODUCTION=false && rm -rf .next && npm ci --omit=dev --no-audit --no-fund'
     - /bin/bash -lc 'source "$HOME/nodevenv/sunspark/20/bin/activate" && export NODE_ENV=production && npx prisma generate'
     - /bin/bash -lc 'source "$HOME/nodevenv/sunspark/20/bin/activate" && export NODE_ENV=production && npx prisma db push'
     - /bin/bash -lc 'source "$HOME/nodevenv/sunspark/20/bin/activate" && export NODE_ENV=production && npm run build'

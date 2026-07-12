@@ -120,9 +120,9 @@ repair_cloudlinux_node_modules
 export NODE_ENV=production
 export NPM_CONFIG_PRODUCTION=false
 
-echo "==> Installing locked dependencies"
+echo "==> Installing production/build dependencies"
 rm -rf .next
-npm ci --include=dev
+npm ci --omit=dev --no-audit --no-fund
 
 echo "==> Preparing Prisma"
 node -e 'require.resolve("dotenv/config"); console.log("dotenv/config ok")'
