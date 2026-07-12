@@ -4,23 +4,24 @@ Run this from the HostAfrica SSH terminal after code has been pushed to GitHub:
 
 ```bash
 cd ~/sunspark
-git fetch origin main
-git checkout main
-git pull --ff-only origin main
+bash docs/hostafrica-deploy.sh
+```
 
-source "$HOME/nodevenv/sunspark/20/bin/activate"
-export NODE_ENV=production
-export NPM_CONFIG_PRODUCTION=false
+The normal deploy command skips `npm install` because that is the step HostAfrica/CloudLinux often kills.
 
-rm -rf .next
+Run this only when `package.json` or `package-lock.json` changed:
+
+```bash
+cd ~/sunspark
+INSTALL_DEPS=1 bash docs/hostafrica-deploy.sh
+```
+
+For the current update that added password reset email, run the `INSTALL_DEPS=1` version once. After that, use the normal command unless dependencies change again.
+
+That uses the lowest-memory install command:
+
+```bash
 npm install --omit=dev --no-audit --no-fund --legacy-peer-deps --prefer-offline --maxsockets=1
-npx prisma generate
-npx prisma db push
-npm run seed
-npm run build
-
-mkdir -p tmp
-touch tmp/restart.txt
 ```
 
 Admin seed:

@@ -5,8 +5,8 @@ set -Eeuo pipefail
 # Run this on SSH as the cPanel user:
 #   bash ~/sunspark/docs/hostafrica-deploy.sh
 #
-# If ~/sunspark is not yet a Git checkout, the script backs it up, clones the
-# GitHub repo into the same path, restores .env and public/uploads, then builds.
+# Normal updates intentionally avoid npm install because CloudLinux shared
+# hosting can kill that step. Use INSTALL_DEPS=1 only when package.json changes.
 
 APP_DIR="${APP_DIR:-$HOME/sunspark}"
 REPO_URL="${REPO_URL:-https://github.com/muchirifloy/sunspark.git}"
@@ -14,6 +14,8 @@ BRANCH="${BRANCH:-main}"
 NODE_ENV_DIR="${NODE_ENV_DIR:-$HOME/nodevenv/sunspark/20}"
 BACKUP_ROOT="${BACKUP_ROOT:-$HOME/backups}"
 IMPORT_SQL="${IMPORT_SQL:-}"
+INSTALL_DEPS="${INSTALL_DEPS:-0}"
+BACKUP_APP="${BACKUP_APP:-0}"
 
 timestamp="$(date +%Y%m%d-%H%M%S)"
 backup_dir="$BACKUP_ROOT/sunspark-$timestamp"
@@ -57,7 +59,7 @@ repair_cloudlinux_node_modules() {
 echo "==> Sunspark deploy started at $timestamp"
 mkdir -p "$BACKUP_ROOT"
 
-if [ -d "$APP_DIR" ]; then
+if [ "$BACKUP_APP" = "1" ] && [ -d "$APP_DIR" ]; then
   echo "==> Backing up current app to $backup_dir"
   mkdir -p "$backup_dir"
   if command -v rsync >/dev/null 2>&1; then
@@ -119,10 +121,16 @@ repair_cloudlinux_node_modules
 
 export NODE_ENV=production
 export NPM_CONFIG_PRODUCTION=false
+export NEXT_TELEMETRY_DISABLED=1
 
-echo "==> Installing production/build dependencies"
 rm -rf .next
-npm install --omit=dev --no-audit --no-fund --legacy-peer-deps --prefer-offline --maxsockets=1
+
+if [ "$INSTALL_DEPS" = "1" ] || [ ! -e "$APP_DIR/node_modules/.package-lock.json" ]; then
+  echo "==> Installing production/build dependencies"
+  npm install --omit=dev --no-audit --no-fund --legacy-peer-deps --prefer-offline --maxsockets=1
+else
+  echo "==> Skipping npm install. Use INSTALL_DEPS=1 bash docs/hostafrica-deploy.sh after package changes."
+fi
 
 echo "==> Preparing Prisma"
 node -e 'require.resolve("dotenv/config"); console.log("dotenv/config ok")'
