@@ -133,7 +133,6 @@ else
 fi
 
 echo "==> Preparing Prisma"
-node -e 'require.resolve("dotenv/config"); console.log("dotenv/config ok")'
 npx prisma generate
 npx prisma db push
 npm run seed
