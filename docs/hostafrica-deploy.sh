@@ -45,12 +45,6 @@ repair_cloudlinux_node_modules() {
     return
   fi
 
-  if [ -e "$APP_DIR/node_modules" ] && [ ! -L "$APP_DIR/node_modules" ]; then
-    broken_modules="$BACKUP_ROOT/node_modules-$timestamp"
-    echo "==> Moving non-symlink node_modules to $broken_modules"
-    mv "$APP_DIR/node_modules" "$broken_modules"
-  fi
-
   if [ ! -e "$APP_DIR/node_modules" ]; then
     echo "==> Linking CloudLinux node_modules virtualenv"
     ln -s "$modules_target" "$APP_DIR/node_modules"
@@ -133,11 +127,11 @@ fi
 
 rm -rf .next
 
-if [ "$INSTALL_DEPS" = "1" ] || [ ! -e "$APP_DIR/node_modules/.package-lock.json" ]; then
+if [ "$INSTALL_DEPS" = "1" ]; then
   echo "==> Installing production/build dependencies"
   npm install --omit=dev --no-audit --no-fund --legacy-peer-deps --prefer-offline --maxsockets=1
 else
-  echo "==> Skipping npm install. Use INSTALL_DEPS=1 bash docs/hostafrica-deploy.sh after package changes."
+  echo "==> Skipping npm install. Use INSTALL_DEPS=1 only when you intentionally want dependency install."
 fi
 
 if [ "$RUN_PRISMA" = "1" ]; then
