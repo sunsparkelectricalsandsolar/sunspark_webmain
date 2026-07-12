@@ -46,8 +46,15 @@ export async function Header() {
             <button type="submit">Search</button>
           </form>
           <nav className="header-actions" aria-label="Shop actions">
-            <Link href="/wishlist">Wishlist</Link>
-            <Link className="cart-link" href="/cart">Cart <span aria-label={`${cartCount} items in cart`}>{cartCount}</span></Link>
+            <Link className="icon-link wishlist-link" href="/wishlist" aria-label="Wishlist">
+              <span aria-hidden="true">♡</span>
+              <strong>Wishlist</strong>
+            </Link>
+            <Link className="icon-link cart-link" href="/cart" aria-label={`${cartCount} items in cart`}>
+              <span aria-hidden="true">▣</span>
+              <strong>Cart</strong>
+              <em aria-hidden="true">{cartCount}</em>
+            </Link>
           </nav>
         </div>
       </div>

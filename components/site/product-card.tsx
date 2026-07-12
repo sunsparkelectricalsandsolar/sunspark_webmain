@@ -55,7 +55,6 @@ export function ProductCard({ product }: { product: ProductCardProduct }) {
         {product.isHotDeal ? <strong className="badge">Hot deal</strong> : null}
       </Link>
       <div className="product-body">
-        <p>{product.category.name}</p>
         <h2>
           <Link href={`/product/${product.slug}`}>{product.name}</Link>
         </h2>

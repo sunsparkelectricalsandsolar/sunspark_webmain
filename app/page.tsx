@@ -26,7 +26,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <section className="section">
+      <section className="section category-section">
         <div className="container category-grid shop-grid">
           {displayCategories.map((category) => (
             <CategoryTile category={category} key={category.slug} />
