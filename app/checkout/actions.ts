@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { PaymentMethod } from "@prisma/client";
+import { PaymentMethod } from "@/lib/generated/prisma";
 import { buildWhatsAppCheckoutUrl } from "@/lib/checkout/whatsapp";
 import { preventAdminShopping } from "@/lib/auth/guards";
 import { formatMoney } from "@/lib/money";

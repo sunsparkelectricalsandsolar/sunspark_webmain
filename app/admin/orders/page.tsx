@@ -1,5 +1,5 @@
 import { AdminLayout } from "@/components/admin/admin-layout";
-import { OrderStatus, PaymentStatus } from "@prisma/client";
+import { OrderStatus, PaymentStatus } from "@/lib/generated/prisma";
 import { requireAdmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import { formatMoney } from "@/lib/money";

@@ -1,4 +1,4 @@
-import type { UserRole } from "@prisma/client";
+import type { UserRole } from "@/lib/generated/prisma";
 
 export function canShop(role: UserRole | undefined) {
   return role !== "ADMIN";

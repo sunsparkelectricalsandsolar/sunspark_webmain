@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import { UserRole } from "@prisma/client";
+import { UserRole } from "../lib/generated/prisma";
 import { prisma } from "../lib/db";
 import { loadEnvFile } from "../lib/env";
 import { siteConfig } from "../lib/site-config";

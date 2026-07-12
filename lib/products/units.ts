@@ -1,4 +1,4 @@
-import type { SellingUnit } from "@prisma/client";
+import type { SellingUnit } from "@/lib/generated/prisma";
 
 const labels: Record<SellingUnit, string> = {
   UNIT: "unit",

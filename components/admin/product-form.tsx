@@ -1,4 +1,4 @@
-import type { Category, Product, ProductImage } from "@prisma/client";
+import type { Category, Product, ProductImage } from "@/lib/generated/prisma";
 import { PendingButton } from "@/components/ui/pending-button";
 
 type ProductWithImages = Product & {

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { PaymentMethod } from "@prisma/client";
+import { PaymentMethod } from "@/lib/generated/prisma";
 import { prisma } from "@/lib/db";
 import { clearCart, getCart } from "@/lib/cart/cart-service";
 import { getSession } from "@/lib/auth/session";

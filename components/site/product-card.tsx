@@ -5,7 +5,7 @@ import { PendingButton } from "@/components/ui/pending-button";
 import { formatMoney } from "@/lib/money";
 import { getPrimaryImage } from "@/lib/products/images";
 import { sellingUnitLabel } from "@/lib/products/units";
-import type { SellingUnit } from "@prisma/client";
+import type { SellingUnit } from "@/lib/generated/prisma";
 
 type ProductCardImage = {
   url: string;

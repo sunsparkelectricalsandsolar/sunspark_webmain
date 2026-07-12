@@ -2,7 +2,7 @@ import "server-only";
 
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
-import type { UserRole } from "@prisma/client";
+import type { UserRole } from "@/lib/generated/prisma";
 
 const cookieName = "sunspark_session";
 

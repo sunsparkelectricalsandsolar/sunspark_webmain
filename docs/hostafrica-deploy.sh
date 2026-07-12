@@ -16,6 +16,7 @@ BACKUP_ROOT="${BACKUP_ROOT:-$HOME/backups}"
 IMPORT_SQL="${IMPORT_SQL:-}"
 INSTALL_DEPS="${INSTALL_DEPS:-0}"
 BACKUP_APP="${BACKUP_APP:-0}"
+RUN_PRISMA="${RUN_PRISMA:-0}"
 
 timestamp="$(date +%Y%m%d-%H%M%S)"
 backup_dir="$BACKUP_ROOT/sunspark-$timestamp"
@@ -139,9 +140,13 @@ else
   echo "==> Skipping npm install. Use INSTALL_DEPS=1 bash docs/hostafrica-deploy.sh after package changes."
 fi
 
-echo "==> Preparing Prisma"
-npx prisma generate
-npx prisma db push
+if [ "$RUN_PRISMA" = "1" ]; then
+  echo "==> Running Prisma schema sync"
+  npx prisma db push
+else
+  echo "==> Skipping Prisma CLI. Generated client is committed in lib/generated/prisma."
+fi
+
 npm run seed
 
 if [ -n "$IMPORT_SQL" ]; then

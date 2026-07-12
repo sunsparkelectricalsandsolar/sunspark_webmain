@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { Category, CategoryImage } from "@prisma/client";
+import type { Category, CategoryImage } from "@/lib/generated/prisma";
 import { PendingButton } from "@/components/ui/pending-button";
 
 type CategoryWithImages = Category & { images: CategoryImage[] };

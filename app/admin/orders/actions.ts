@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { OrderStatus, PaymentStatus } from "@prisma/client";
+import { OrderStatus, PaymentStatus } from "@/lib/generated/prisma";
 import { requireAdmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 
