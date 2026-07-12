@@ -17,6 +17,7 @@ IMPORT_SQL="${IMPORT_SQL:-}"
 INSTALL_DEPS="${INSTALL_DEPS:-0}"
 BACKUP_APP="${BACKUP_APP:-0}"
 RUN_PRISMA="${RUN_PRISMA:-0}"
+RUN_SEED="${RUN_SEED:-0}"
 
 timestamp="$(date +%Y%m%d-%H%M%S)"
 backup_dir="$BACKUP_ROOT/sunspark-$timestamp"
@@ -141,7 +142,12 @@ else
   echo "==> Skipping Prisma CLI. Generated client is committed in lib/generated/prisma."
 fi
 
-npm run seed
+if [ "$RUN_SEED" = "1" ]; then
+  echo "==> Running seed"
+  npm run seed
+else
+  echo "==> Skipping seed. Use RUN_SEED=1 only when initial admin/settings seed is needed."
+fi
 
 if [ -n "$IMPORT_SQL" ]; then
   if [ ! -f "$IMPORT_SQL" ]; then
