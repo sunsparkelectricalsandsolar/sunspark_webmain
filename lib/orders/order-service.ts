@@ -10,6 +10,10 @@ export type CheckoutInput = {
   customerEmail: string;
   customerPhone?: string;
   deliveryNote?: string;
+  deliveryLocation?: string;
+  deliveryMapUrl?: string;
+  deliveryLatitude?: string;
+  deliveryLongitude?: string;
   paymentMethod: PaymentMethod;
 };
 
@@ -36,6 +40,10 @@ export async function createOrderFromCart(input: CheckoutInput) {
       customerEmail: input.customerEmail,
       customerPhone: input.customerPhone,
       deliveryNote: input.deliveryNote,
+      deliveryLocation: input.deliveryLocation,
+      deliveryMapUrl: input.deliveryMapUrl,
+      deliveryLatitude: input.deliveryLatitude,
+      deliveryLongitude: input.deliveryLongitude,
       paymentMethod: input.paymentMethod,
       subtotalCents: cart.subtotalCents,
       totalCents: cart.subtotalCents,

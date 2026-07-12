@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { PendingButton } from "@/components/ui/pending-button";
 
 type SaleProduct = {
   id: string;
@@ -105,7 +106,7 @@ export function WalkInSaleForm({
         </div>
       </section>
       {formError ? <p className="admin-feedback error" role="alert">{formError}</p> : null}
-      <div className="sale-total"><span>Total</span><strong>{money(total)}</strong><button className="primary-btn" disabled={!lines.length} type="submit">{submitLabel}</button></div>
+      <div className="sale-total"><span>Total</span><strong>{money(total)}</strong><PendingButton disabled={!lines.length} pendingText={`${submitLabel.replace(/^Create /, "Creating ").replace(/^Complete /, "Completing ")}...`}>{submitLabel}</PendingButton></div>
     </form>
   );
 }

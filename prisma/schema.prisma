@@ -91,6 +91,11 @@ enum DraftInvoiceStatus {
   CANCELLED
 }
 
+enum DraftInvoiceKind {
+  INVOICE
+  QUOTATION
+}
+
 model CategoryImage {
   id         String   @id @default(cuid())
   categoryId String
@@ -198,6 +203,10 @@ model Order {
   customerEmail  String
   customerPhone  String?
   deliveryNote   String?
+  deliveryLocation String?
+  deliveryMapUrl   String?
+  deliveryLatitude String?
+  deliveryLongitude String?
   subtotalCents  Int
   totalCents     Int
   status         OrderStatus   @default(PENDING)
@@ -279,6 +288,7 @@ model ReportSettings {
 model DraftInvoice {
   id            String             @id @default(cuid())
   reference     String             @unique
+  kind          DraftInvoiceKind   @default(INVOICE)
   customerName  String
   customerEmail String?
   customerPhone String?
@@ -293,6 +303,7 @@ model DraftInvoice {
   updatedAt     DateTime           @updatedAt
 
   @@index([status, createdAt])
+  @@index([kind, status])
   @@index([customerName])
 }
 

@@ -16,6 +16,10 @@ export async function checkoutAction(formData: FormData) {
     customerEmail: String(formData.get("customerEmail") ?? "").trim(),
     customerPhone: String(formData.get("customerPhone") ?? "").trim(),
     deliveryNote: String(formData.get("deliveryNote") ?? "").trim(),
+    deliveryLocation: String(formData.get("deliveryLocation") ?? "").trim(),
+    deliveryMapUrl: String(formData.get("deliveryMapUrl") ?? "").trim(),
+    deliveryLatitude: String(formData.get("deliveryLatitude") ?? "").trim(),
+    deliveryLongitude: String(formData.get("deliveryLongitude") ?? "").trim(),
     paymentMethod
   });
 
@@ -25,6 +29,8 @@ export async function checkoutAction(formData: FormData) {
         phone: siteConfig.whatsappPhone,
         orderNumber: order.orderNumber,
         customerName: order.customerName,
+        deliveryLocation: order.deliveryLocation ?? undefined,
+        deliveryMapUrl: order.deliveryMapUrl ?? undefined,
         totalLabel: formatMoney(order.totalCents),
         items: order.items.map((item) => ({ name: item.productName, quantity: item.quantity }))
       })

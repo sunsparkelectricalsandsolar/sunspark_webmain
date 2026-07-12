@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { PendingButton } from "@/components/ui/pending-button";
 import { prisma } from "@/lib/db";
 import { verifyPassword } from "@/lib/auth/password";
 import { setSession } from "@/lib/auth/session";
@@ -42,9 +43,7 @@ export default async function LoginPage({ searchParams }: { searchParams?: Promi
             Password
             <input name="password" type="password" required />
           </label>
-          <button className="primary-btn" type="submit">
-            Sign in
-          </button>
+          <PendingButton pendingText="Signing in...">Sign in</PendingButton>
         </form>
         {params?.error ? <p className="form-error" role="alert">Invalid email or password.</p> : null}
         <Link href="/register">Create an account</Link>

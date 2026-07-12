@@ -25,7 +25,7 @@ export default async function AdminOrdersPage({
   return (
     <AdminLayout title="Orders" subtitle="Review order checks, fulfillment status, and payment state.">
       <form action="/admin/orders" className="admin-filter">
-        <input name="q" defaultValue={params?.q ?? ""} placeholder="Search order, customer, email, phone..." />
+        <input name="q" defaultValue={params?.q ?? ""} placeholder="Search order, customer, email, phone, location..." />
         <select name="status" defaultValue={params?.status ?? ""}>
           <option value="">All order status</option>
           <option value="PENDING">Pending</option>
@@ -58,7 +58,12 @@ export default async function AdminOrdersPage({
           <form action={updateOrderAction.bind(null, order.id)} className="admin-table-row order-admin-row" key={order.id}>
             <input name="returnTo" type="hidden" value="/admin/orders" />
             <strong>{order.orderNumber}</strong>
-            <span>{order.customerName}<br /><small>{order.customerPhone ?? order.customerEmail}</small></span>
+            <span>
+              {order.customerName}<br />
+              <small>{order.customerPhone ?? order.customerEmail}</small>
+              {order.deliveryLocation ? <small>{order.deliveryLocation}</small> : null}
+              {order.deliveryMapUrl ? <a className="table-link" href={order.deliveryMapUrl} rel="noreferrer" target="_blank">Map</a> : null}
+            </span>
             <span>{formatMoney(order.totalCents)}</span>
             <select name="paymentStatus" defaultValue={order.paymentStatus}>
               <option value="UNPAID">Unpaid</option>
@@ -96,7 +101,9 @@ async function getOrders(input: { q?: string; status?: string; paymentStatus?: s
                   { orderNumber: { contains: term } },
                   { customerName: { contains: term } },
                   { customerEmail: { contains: term } },
-                  { customerPhone: { contains: term } }
+                  { customerPhone: { contains: term } },
+                  { deliveryLocation: { contains: term } },
+                  { deliveryMapUrl: { contains: term } }
                 ]
               }))
             }

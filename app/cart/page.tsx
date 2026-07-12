@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { updateCartAction } from "@/app/cart/actions";
+import { PendingButton } from "@/components/ui/pending-button";
 import { formatMoney } from "@/lib/money";
 import { getPrimaryImage } from "@/lib/products/images";
 import { getCart } from "@/lib/cart/cart-service";
@@ -39,7 +40,7 @@ export default async function CartPage() {
                     <form action={updateCartAction} className="cart-qty">
                       <input name="slug" type="hidden" value={item.product.slug} />
                       <input min="0" name="quantity" type="number" defaultValue={item.quantity} />
-                      <button type="submit">Update</button>
+                      <PendingButton className="" pendingText="Updating...">Update</PendingButton>
                     </form>
                     <strong>{formatMoney(item.lineTotalCents)}</strong>
                   </article>

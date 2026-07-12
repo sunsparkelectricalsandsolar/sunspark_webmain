@@ -5,6 +5,7 @@ import { addToCartAndRedirectAction } from "@/app/cart/actions";
 import { addWishlistAction } from "@/app/wishlist/actions";
 import { ProductCard } from "@/components/site/product-card";
 import { ProductGallery } from "@/components/site/product-gallery";
+import { PendingButton } from "@/components/ui/pending-button";
 import { formatMoney } from "@/lib/money";
 import { absoluteUrl, productUrl } from "@/lib/merchant/feed";
 import { getPrimaryImage } from "@/lib/products/images";
@@ -101,14 +102,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             {product.shortDescription ? <p>{product.shortDescription}</p> : null}
             <div className="hero-actions">
               <form action={addToCartAndRedirectAction.bind(null, product.slug)}>
-                <button className="primary-btn" disabled={product.stockQuantity <= 0} type="submit">
-                  Add to cart
-                </button>
+                <PendingButton disabled={product.stockQuantity <= 0} pendingText="Adding...">Add to cart</PendingButton>
               </form>
               <form action={addWishlistAction.bind(null, product.slug)}>
-                <button className="secondary-btn" type="submit">
-                  Wishlist
-                </button>
+                <PendingButton className="secondary-btn" pendingText="Saving...">Wishlist</PendingButton>
               </form>
             </div>
           </div>

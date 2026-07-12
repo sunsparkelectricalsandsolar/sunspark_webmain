@@ -1,10 +1,9 @@
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { PrintReceiptButton } from "@/components/admin/print-receipt-button";
+import { SalesDocument } from "@/components/admin/sales-document";
 import { requireAdmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
-import { formatMoney } from "@/lib/money";
 
 export const dynamic = "force-dynamic";
 
@@ -17,15 +16,19 @@ export default async function WalkInReceiptPage({ params }: { params: Promise<{ 
   const title = order.paymentStatus === "PAID" ? "Receipt" : "Invoice";
 
   return <AdminLayout title="Sale Complete" subtitle="The sale is recorded, stock is updated, and the document is ready.">
-    <div className="receipt-actions"><PrintReceiptButton /></div>
-    <article className="receipt" id="walk-in-receipt">
-      <header className="receipt-header"><Image alt="Sunspark Electrical and Solar" height={48} priority src="/logo.jpg" width={110} /><span>{title}</span></header>
-      <div className="receipt-meta"><span>{order.invoice?.invoiceNumber}</span><span>{order.createdAt.toLocaleString("en-KE")}</span></div>
-      <div className="receipt-customer"><strong>{order.customerName}</strong>{order.customerPhone ? <span>{order.customerPhone}</span> : null}<span>{paymentLabel} | {order.paymentStatus === "PAID" ? "Paid" : "Awaiting payment"}</span></div>
-      <div className="receipt-items">
-        {order.items.map((item) => <div key={item.id}><span>{item.productName} <small>x{item.quantity}</small></span><strong>{formatMoney(item.totalCents)}</strong></div>)}
-      </div>
-      <footer><span>Total</span><strong>{formatMoney(order.totalCents)}</strong></footer>
-    </article>
+    <div className="receipt-actions"><PrintReceiptButton label={`Print ${title.toLowerCase()}`} /></div>
+    <SalesDocument
+      customerEmail={order.customerEmail}
+      customerName={order.customerName}
+      customerPhone={order.customerPhone}
+      date={order.createdAt}
+      items={order.items}
+      kind={title.toUpperCase() as "RECEIPT" | "INVOICE"}
+      number={order.invoice?.invoiceNumber}
+      paymentLabel={paymentLabel}
+      statusLabel={order.paymentStatus === "PAID" ? "Paid" : "Awaiting payment"}
+      subtotalCents={order.subtotalCents}
+      totalCents={order.totalCents}
+    />
   </AdminLayout>;
 }

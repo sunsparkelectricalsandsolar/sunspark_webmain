@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { siteConfig } from "@/lib/site-config";
 import { getCart } from "@/lib/cart/cart-service";
+import { siteConfig } from "@/lib/site-config";
 
 const navItems = [
   { label: "Home", href: "/" },
@@ -15,6 +15,7 @@ const navItems = [
 export async function Header() {
   const cart = await getCart();
   const cartCount = cart.items.reduce((total, item) => total + item.quantity, 0);
+
   return (
     <header>
       <div className="top-header">
@@ -32,33 +33,33 @@ export async function Header() {
       </div>
       <div className="main-header">
         <div className="container main-header-inner">
-          <Link className="logo-link" href="/" aria-label="Sunspark home">
-            <Image src="/logo.jpg" alt="Sunspark Electrical and Solar" width={140} height={64} priority />
+          <Link aria-label="Sunspark home" className="logo-link" href="/">
+            <Image alt="Sunspark Electrical and Solar" height={54} priority src="/logo.jpg" width={118} />
           </Link>
-          <form className="header-search" action="/store">
-            <select name="category" aria-label="Product category">
+          <form action="/store" className="header-search">
+            <select aria-label="Product category" name="category">
               <option value="">All Categories</option>
               <option value="electricals">Electricals</option>
               <option value="solar">Solar</option>
               <option value="electronics">Electronics</option>
             </select>
-            <input name="q" placeholder="Search products" aria-label="Search products" />
-            <button type="submit">Search</button>
+            <input aria-label="Search products" name="q" placeholder="Search products" />
+            <button aria-label="Search products" type="submit">Go</button>
           </form>
-          <nav className="header-actions" aria-label="Shop actions">
-            <Link className="icon-link wishlist-link" href="/wishlist" aria-label="Wishlist">
-              <span aria-hidden="true">♡</span>
+          <nav aria-label="Shop actions" className="header-actions">
+            <Link aria-label="Wishlist" className="icon-link wishlist-link" href="/wishlist">
+              <span aria-hidden="true">W</span>
               <strong>Wishlist</strong>
             </Link>
-            <Link className="icon-link cart-link" href="/cart" aria-label={`${cartCount} items in cart`}>
-              <span aria-hidden="true">▣</span>
+            <Link aria-label={`${cartCount} items in cart`} className="icon-link cart-link" href="/cart">
+              <span aria-hidden="true">C</span>
               <strong>Cart</strong>
               <em aria-hidden="true">{cartCount}</em>
             </Link>
           </nav>
         </div>
       </div>
-      <nav className="navigation" aria-label="Main navigation">
+      <nav aria-label="Main navigation" className="navigation">
         <div className="container nav-scroll">
           {navItems.map((item) => (
             <Link href={item.href} key={item.href}>

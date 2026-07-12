@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
+import { PrintReceiptButton } from "@/components/admin/print-receipt-button";
+import { SalesDocument } from "@/components/admin/sales-document";
 import { getOrderInvoice } from "@/lib/invoices/invoice-service";
-import { formatMoney } from "@/lib/money";
 
 export const dynamic = "force-dynamic";
 
@@ -17,27 +18,21 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       <div className="container invoice-page">
         <div className="section-title">
           <h3>Invoice {order.invoice?.invoiceNumber}</h3>
-          <button className="secondary-btn" type="button" onClick={undefined}>
-            Print
-          </button>
+          <PrintReceiptButton label="Print invoice" />
         </div>
-        <div className="invoice-box">
-          <p>{order.orderNumber}</p>
-          <h1>{order.customerName}</h1>
-          <p>{order.customerEmail}</p>
-          {order.items.map((item) => (
-            <div className="summary-line" key={item.id}>
-              <span>
-                {item.productName} x{item.quantity}
-              </span>
-              <strong>{formatMoney(item.totalCents)}</strong>
-            </div>
-          ))}
-          <div className="summary-line total">
-            <span>Total</span>
-            <strong>{formatMoney(order.totalCents)}</strong>
-          </div>
-        </div>
+        <SalesDocument
+          customerEmail={order.customerEmail}
+          customerName={order.customerName}
+          customerPhone={order.customerPhone}
+          date={order.createdAt}
+          items={order.items}
+          kind="INVOICE"
+          number={order.invoice?.invoiceNumber ?? order.orderNumber}
+          paymentLabel={order.paymentMethod}
+          statusLabel={order.paymentStatus}
+          subtotalCents={order.subtotalCents}
+          totalCents={order.totalCents}
+        />
       </div>
     </section>
   );

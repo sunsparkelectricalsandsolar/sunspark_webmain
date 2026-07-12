@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
+import { siteConfig } from "@/lib/site-config";
 
 export async function updateSettingsAction(formData: FormData) {
   await requireAdmin();
@@ -46,8 +47,8 @@ export async function updateSettingsAction(formData: FormData) {
 
   await prisma.reportSettings.upsert({
     where: { id: "default" },
-    update: { enabled: formData.get("reportEnabled") === "on", recipient: String(formData.get("reportRecipient") ?? ""), reportTime: String(formData.get("reportTime") ?? "20:00"), weekdays: String(formData.get("reportWeekdays") ?? "1,2,3,4,5") },
-    create: { id: "default", enabled: formData.get("reportEnabled") === "on", recipient: String(formData.get("reportRecipient") ?? ""), reportTime: String(formData.get("reportTime") ?? "20:00"), weekdays: String(formData.get("reportWeekdays") ?? "1,2,3,4,5"), timezone: "Africa/Nairobi" }
+    update: { enabled: formData.get("reportEnabled") === "on", recipient: siteConfig.reportEmail, reportTime: String(formData.get("reportTime") ?? "20:00"), weekdays: String(formData.get("reportWeekdays") ?? "1,2,3,4,5") },
+    create: { id: "default", enabled: formData.get("reportEnabled") === "on", recipient: siteConfig.reportEmail, reportTime: String(formData.get("reportTime") ?? "20:00"), weekdays: String(formData.get("reportWeekdays") ?? "1,2,3,4,5"), timezone: "Africa/Nairobi" }
   });
 
   revalidatePath("/");

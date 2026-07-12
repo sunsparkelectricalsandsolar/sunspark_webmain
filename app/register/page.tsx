@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { PendingButton } from "@/components/ui/pending-button";
 import { prisma } from "@/lib/db";
 import { hashPassword } from "@/lib/auth/password";
 import { setSession } from "@/lib/auth/session";
@@ -46,9 +47,7 @@ export default function RegisterPage({ searchParams }: { searchParams?: Promise<
             Password
             <input name="password" type="password" minLength={8} required />
           </label>
-          <button className="primary-btn" type="submit">
-            Register
-          </button>
+          <PendingButton pendingText="Creating account...">Register</PendingButton>
         </form>
         <RegisterError searchParams={searchParams} />
       </div>

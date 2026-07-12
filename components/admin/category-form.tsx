@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Category, CategoryImage } from "@prisma/client";
+import { PendingButton } from "@/components/ui/pending-button";
 
 type CategoryWithImages = Category & { images: CategoryImage[] };
 
@@ -57,7 +58,7 @@ export function CategoryForm({
         </div>
       ) : null}
       <div className="admin-form-actions">
-        <button className="primary-btn" type="submit">{isEditing ? "Save changes" : "Create category"}</button>
+        <PendingButton pendingText={isEditing ? "Saving changes..." : "Creating category..."}>{isEditing ? "Save changes" : "Create category"}</PendingButton>
         {cancelHref ? <Link className="secondary-btn" href={cancelHref}>Cancel</Link> : null}
       </div>
     </form>

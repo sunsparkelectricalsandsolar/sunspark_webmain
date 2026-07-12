@@ -8,11 +8,11 @@ set -Eeuo pipefail
 # If ~/sunspark is not yet a Git checkout, the script backs it up, clones the
 # GitHub repo into the same path, restores .env and public/uploads, then builds.
 
-APP_DIR="${APP_DIR:-/home/codecham/sunspark}"
+APP_DIR="${APP_DIR:-$HOME/sunspark}"
 REPO_URL="${REPO_URL:-https://github.com/muchirifloy/sunspark.git}"
 BRANCH="${BRANCH:-main}"
-NODE_ENV_DIR="${NODE_ENV_DIR:-/home/codecham/nodevenv/sunspark/20}"
-BACKUP_ROOT="${BACKUP_ROOT:-/home/codecham/backups}"
+NODE_ENV_DIR="${NODE_ENV_DIR:-$HOME/nodevenv/sunspark/20}"
+BACKUP_ROOT="${BACKUP_ROOT:-$HOME/backups}"
 IMPORT_SQL="${IMPORT_SQL:-}"
 
 timestamp="$(date +%Y%m%d-%H%M%S)"

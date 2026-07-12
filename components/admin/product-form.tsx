@@ -1,4 +1,5 @@
 import type { Category, Product, ProductImage } from "@prisma/client";
+import { PendingButton } from "@/components/ui/pending-button";
 
 type ProductWithImages = Product & {
   images: ProductImage[];
@@ -153,9 +154,7 @@ export function ProductForm({
           <input name="seoKeywords" defaultValue={product?.seoKeywords ?? ""} />
         </label>
       </details>
-      <button className="primary-btn" type="submit">
-        Save product
-      </button>
+      <PendingButton pendingText="Saving product...">Save product</PendingButton>
     </form>
   );
 }

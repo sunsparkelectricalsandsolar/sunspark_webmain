@@ -7,7 +7,7 @@ set -Eeuo pipefail
 #
 # The SQL file should be data-only. Do not use this for customer/order dumps.
 
-APP_DIR="${APP_DIR:-/home/codecham/sunspark}"
+APP_DIR="${APP_DIR:-$HOME/sunspark}"
 CATALOG_SQL="${CATALOG_SQL:-$HOME/sunspark-catalog-refresh.sql}"
 
 if [ ! -f "$APP_DIR/.env" ]; then

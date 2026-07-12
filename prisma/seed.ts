@@ -9,16 +9,17 @@ async function main() {
   const passwordHash = await bcrypt.hash("Password", 12);
 
   await prisma.user.upsert({
-    where: { email: siteConfig.email },
+    where: { email: siteConfig.adminEmail },
     update: {
       name: "Sunspark Admin",
+      email: siteConfig.adminEmail,
       passwordHash,
       role: UserRole.ADMIN,
       phone: siteConfig.phone
     },
     create: {
       name: "Sunspark Admin",
-      email: siteConfig.email,
+      email: siteConfig.adminEmail,
       passwordHash,
       role: UserRole.ADMIN,
       phone: siteConfig.phone
@@ -87,6 +88,25 @@ async function main() {
       facebookUrl: siteConfig.facebookUrl,
       mapUrl: siteConfig.mapUrl,
       location: siteConfig.location
+    }
+  });
+
+  await prisma.reportSettings.upsert({
+    where: { id: "default" },
+    update: {
+      enabled: false,
+      recipient: siteConfig.reportEmail,
+      reportTime: "20:00",
+      weekdays: "1,2,3,4,5",
+      timezone: "Africa/Nairobi"
+    },
+    create: {
+      id: "default",
+      enabled: false,
+      recipient: siteConfig.reportEmail,
+      reportTime: "20:00",
+      weekdays: "1,2,3,4,5",
+      timezone: "Africa/Nairobi"
     }
   });
 }

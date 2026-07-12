@@ -1,4 +1,5 @@
 import { AdminLayout } from "@/components/admin/admin-layout";
+import { PendingButton } from "@/components/ui/pending-button";
 import { requireAdmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import { siteConfig } from "@/lib/site-config";
@@ -32,7 +33,7 @@ export default async function AdminSettingsPage() {
         <details>
           <summary>Daily report delivery</summary>
           <div className="form-grid two">
-            <label>Recipient email<input name="reportRecipient" type="email" defaultValue={settings.reports?.recipient ?? settings.site?.email ?? siteConfig.email} /></label>
+            <label>Recipient email<input name="reportRecipient" type="email" value={siteConfig.reportEmail} readOnly /></label>
             <label>Send time<input name="reportTime" type="time" defaultValue={settings.reports?.reportTime ?? "20:00"} /></label>
           </div>
           <label>Weekdays (1 Monday to 7 Sunday)<input name="reportWeekdays" defaultValue={settings.reports?.weekdays ?? "1,2,3,4,5"} /></label>
@@ -71,7 +72,7 @@ export default async function AdminSettingsPage() {
             M-Pesa checkout enabled
           </label>
         </div>
-        <button className="primary-btn" type="submit">Save settings</button>
+        <PendingButton pendingText="Saving settings...">Save settings</PendingButton>
       </form>
     </AdminLayout>
   );

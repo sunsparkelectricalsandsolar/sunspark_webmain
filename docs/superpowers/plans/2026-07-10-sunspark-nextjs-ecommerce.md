@@ -137,11 +137,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 ```ts
 export const siteConfig = {
   name: "Sunspark Electrical and Solar",
-  url: "https://sunspark.co.ke",
+  url: "https://sunsparkelectricals.co.ke",
   currency: "KSH",
   phone: "0703586562",
   whatsappPhone: "254703586562",
-  email: "admin@sunspark.co.ke",
+  email: "support@sunsparkelectricals.co.ke",
   facebookUrl: "https://www.facebook.com/profile.php?id=61589534876668",
   location: "Nairobi CBD, Duruma Road, Downtown Tower, second floor, shop number 8",
   mapUrl: "https://www.bing.com/maps/default.aspx?v=2&pc=FACEBK&mid=8100"
@@ -233,7 +233,7 @@ Use enum roles `ADMIN` and `CUSTOMER`; create models `User`, `Category`, `Produc
 
 `prisma/seed.ts` creates:
 
-- Admin user `admin@sunspark.co.ke` with password `Password` hashed by bcrypt.
+- Admin user `admin@sunsparkelectricals.co.ke` with password `Password` hashed by bcrypt.
 - Categories `Electricals`, `Electronics`, and `Solar`.
 - Site settings for Sunspark contacts.
 - Checkout settings with WhatsApp enabled and M-Pesa disabled until credentials are configured.
@@ -591,7 +591,7 @@ git commit -m "feat: add cart wishlist checkout and invoices"
 
 - [ ] **Step 1: Add sitemap and robots**
 
-Generate static routes plus active category and product URLs. Allow normal crawling and point to `https://sunspark.co.ke/sitemap.xml`.
+Generate static routes plus active category and product URLs. Allow normal crawling and point to `https://sunsparkelectricals.co.ke/sitemap.xml`.
 
 - [ ] **Step 2: Add event tracking helper**
 

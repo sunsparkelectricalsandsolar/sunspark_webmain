@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { addToCartAction } from "@/app/cart/actions";
+import { PendingButton } from "@/components/ui/pending-button";
 import { formatMoney } from "@/lib/money";
 import { getPrimaryImage } from "@/lib/products/images";
 import { sellingUnitLabel } from "@/lib/products/units";
@@ -66,9 +67,7 @@ export function ProductCard({ product }: { product: ProductCardProduct }) {
         <div className="product-actions">
           <Link href={`/product/${product.slug}`}>View</Link>
           <form action={addToCartAction.bind(null, product.slug)}>
-            <button disabled={product.stockQuantity <= 0} type="submit">
-              Add to cart
-            </button>
+            <PendingButton className="" disabled={product.stockQuantity <= 0} pendingText="Adding...">Add to cart</PendingButton>
           </form>
         </div>
       </div>

@@ -43,7 +43,7 @@ export async function createWalkInSaleAction(formData: FormData) {
       data: {
         orderNumber: orderNumberValue,
         customerName,
-        customerEmail: customerEmail ?? `walkin-${orderNumberValue.toLowerCase()}@sunspark.co.ke`,
+        customerEmail: customerEmail ?? `walkin-${orderNumberValue.toLowerCase()}@sunsparkelectricals.co.ke`,
         customerPhone,
         subtotalCents: totalCents,
         totalCents,

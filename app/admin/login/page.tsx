@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { PendingButton } from "@/components/ui/pending-button";
 import { prisma } from "@/lib/db";
 import { verifyPassword } from "@/lib/auth/password";
 import { setSession } from "@/lib/auth/session";
@@ -37,9 +38,7 @@ export default async function AdminLoginPage({ searchParams }: { searchParams?: 
             Password
             <input name="password" type="password" required />
           </label>
-          <button className="primary-btn" type="submit">
-            Sign in
-          </button>
+          <PendingButton pendingText="Signing in...">Sign in</PendingButton>
         </form>
         {params?.error ? <p className="form-error" role="alert">Invalid admin credentials.</p> : null}
       </div>

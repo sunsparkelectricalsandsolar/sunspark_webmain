@@ -9,10 +9,10 @@ Rebuild the existing static Electro-style e-commerce template into a production-
 ## Brand and Business Details
 
 - Business name: Sunspark Electrical and Solar.
-- Domain target: sunspark.co.ke.
+- Domain target: sunsparkelectricals.co.ke.
 - Currency: KSH.
 - WhatsApp/phone: 0703586562.
-- Admin email: admin@sunspark.co.ke.
+- Admin email: admin@sunsparkelectricals.co.ke.
 - Default admin password for initial setup: Password.
 - Facebook: https://www.facebook.com/profile.php?id=61589534876668.
 - Location: Nairobi CBD, Duruma Road, Downtown Tower, second floor, shop number 8, Nairobi, Kenya.

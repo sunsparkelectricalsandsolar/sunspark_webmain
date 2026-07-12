@@ -51,7 +51,7 @@ Admin login route:
 The public storefront does not link to admin. The setup seed creates:
 
 ```text
-admin
+admin@sunsparkelectricals.co.ke
 Password
 ```
 

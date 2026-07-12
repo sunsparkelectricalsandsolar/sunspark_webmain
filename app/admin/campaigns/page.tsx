@@ -1,4 +1,5 @@
 import { AdminLayout } from "@/components/admin/admin-layout";
+import { PendingButton } from "@/components/ui/pending-button";
 import { requireAdmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import { createCampaignAction, updateCampaignAction } from "./actions";
@@ -44,7 +45,7 @@ export default async function AdminCampaignsPage({
           Description
           <input name="description" />
         </label>
-        <button className="primary-btn" type="submit">Add campaign</button>
+        <PendingButton pendingText="Adding campaign...">Add campaign</PendingButton>
       </form>
       <div className="category-admin-list">
         {campaigns.map((campaign) => (
@@ -68,7 +69,7 @@ export default async function AdminCampaignsPage({
               Description
               <input name="description" defaultValue={campaign.description ?? ""} />
             </label>
-            <button className="secondary-btn" type="submit">Save campaign</button>
+            <PendingButton className="secondary-btn" pendingText="Saving campaign...">Save campaign</PendingButton>
           </form>
         ))}
       </div>

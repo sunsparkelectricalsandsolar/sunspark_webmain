@@ -1,4 +1,6 @@
 import { checkoutAction } from "@/app/checkout/actions";
+import { LocationPicker } from "@/components/site/location-picker";
+import { PendingButton } from "@/components/ui/pending-button";
 import { preventAdminShopping } from "@/lib/auth/guards";
 import { getCart } from "@/lib/cart/cart-service";
 import { formatMoney } from "@/lib/money";
@@ -33,6 +35,7 @@ export default async function CheckoutPage() {
               Delivery note
               <textarea name="deliveryNote" rows={4} />
             </label>
+            <LocationPicker />
             <label>
               Payment method
               <select name="paymentMethod" defaultValue="WHATSAPP">
@@ -40,9 +43,7 @@ export default async function CheckoutPage() {
                 <option value="MPESA">M-Pesa</option>
               </select>
             </label>
-            <button className="primary-btn" disabled={!cart.items.length} type="submit">
-              Place order
-            </button>
+            <PendingButton disabled={!cart.items.length} pendingText="Submitting order...">Place order</PendingButton>
           </form>
         </div>
         <aside className="order-summary">
