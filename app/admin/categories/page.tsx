@@ -3,7 +3,8 @@ import { AdminLayout } from "@/components/admin/admin-layout";
 import { CategoryForm } from "@/components/admin/category-form";
 import { createCategoryAction } from "@/app/admin/categories/actions";
 import { requireAdmin } from "@/lib/auth/guards";
-import { prisma } from "@/lib/db";
+import { apiFetch, toQueryString } from "@/lib/api/client";
+import type { Category } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -51,7 +52,7 @@ export default async function AdminCategoriesPage({
             <span>{category._count.products}</span>
             <span>{category.images.length}</span>
             <span><i className={category.isActive ? "status-dot active" : "status-dot"} />{category.isActive ? "Active" : "Hidden"}</span>
-            <span>{category.updatedAt.toLocaleDateString("en-KE")}</span>
+            <span>{new Date(category.updatedAt).toLocaleDateString("en-KE")}</span>
             <Link className="table-link" href={`/admin/categories/${category.id}/edit`}>Edit</Link>
           </div>
         ))}
@@ -62,15 +63,5 @@ export default async function AdminCategoriesPage({
 }
 
 async function getCategories(input: { q?: string; status?: string }) {
-  const q = input.q?.trim();
-  return prisma.category.findMany({
-    where: {
-      parentId: null,
-      ...(q ? { OR: [{ name: { contains: q } }, { description: { contains: q } }, { slug: { contains: q } }] } : {}),
-      ...(input.status === "active" ? { isActive: true } : {}),
-      ...(input.status === "hidden" ? { isActive: false } : {})
-    },
-    include: { images: { orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }] }, _count: { select: { products: true } } },
-    orderBy: [{ sortOrder: "asc" }, { name: "asc" }]
-  });
+  return apiFetch<(Category & { _count: { products: number } })[]>(`/admin/categories${toQueryString(input)}`);
 }

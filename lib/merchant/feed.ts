@@ -4,7 +4,7 @@ type MerchantImage = {
   url: string;
   isPrimary: boolean;
   sortOrder: number;
-  createdAt: Date;
+  createdAt: Date | string;
 };
 
 export type MerchantProduct = {
@@ -58,7 +58,7 @@ export function buildMerchantFeed(products: MerchantProduct[]) {
     const images = [...product.images].sort((a, b) => {
       if (a.isPrimary !== b.isPrimary) return a.isPrimary ? -1 : 1;
       if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
-      return a.createdAt.getTime() - b.createdAt.getTime();
+      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
     });
     const primaryImage = images[0];
     const additionalImages = images.slice(1, 11);

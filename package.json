@@ -9,15 +9,13 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "playwright test",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "db:push": "prisma db push",
-    "prisma:studio": "prisma studio",
-    "seed": "tsx prisma/seed.ts"
+    "api:dev": "cd apps/api && npm run dev",
+    "api:build": "cd apps/api && npm run build",
+    "api:start": "cd apps/api && npm run start",
+    "api:migrate": "cd apps/api && npm run migrate",
+    "api:seed": "cd apps/api && npm run seed"
   },
   "dependencies": {
-    "@prisma/adapter-mariadb": "7.8.0",
-    "@prisma/client": "7.8.0",
     "@types/node": "26.1.1",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
@@ -25,7 +23,6 @@
     "clsx": "2.1.1",
     "mariadb": "3.5.3",
     "next": "16.2.10",
-    "prisma": "7.8.0",
     "react": "19.2.7",
     "react-dom": "19.2.7",
     "tsx": "4.23.0",

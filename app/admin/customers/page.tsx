@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { requireAdmin } from "@/lib/auth/guards";
-import { prisma } from "@/lib/db";
+import { apiFetch, toQueryString } from "@/lib/api/client";
+import type { PublicUser } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -41,8 +42,8 @@ export default async function AdminCustomersPage({
               <strong>{customer.name}</strong>
               <span>{customer.email}</span>
               <span>{customer.phone ?? "-"}</span>
-              <span>{customer.createdAt.toLocaleDateString("en-KE")}</span>
-              <span>{customer._count.orders}</span>
+              <span>{customer.createdAt ? new Date(customer.createdAt).toLocaleDateString("en-KE") : "-"}</span>
+              <span>{customer.orders ?? 0}</span>
             </div>
           ))}
           {!customers.length ? <p className="empty-state">No registered customers yet.</p> : null}
@@ -54,26 +55,7 @@ export default async function AdminCustomersPage({
 async function getCustomers(q?: string) {
   const term = q?.trim();
   try {
-    return prisma.user.findMany({
-      where: {
-        role: "CUSTOMER",
-        ...(term
-          ? {
-              OR: [
-                { name: { contains: term } },
-                { email: { contains: term } },
-                { phone: { contains: term } }
-              ]
-            }
-          : {})
-      },
-      orderBy: { createdAt: "desc" },
-      include: {
-        _count: {
-          select: { orders: true }
-        }
-      }
-    });
+    return apiFetch<(PublicUser & { orders?: number })[]>(`/admin/customers${toQueryString({ q: term })}`);
   } catch {
     return [];
   }

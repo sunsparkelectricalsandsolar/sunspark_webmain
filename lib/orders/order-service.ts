@@ -1,9 +1,9 @@
 import "server-only";
 
-import { PaymentMethod } from "@/lib/generated/prisma";
-import { prisma } from "@/lib/db";
+import { apiFetch } from "@/lib/api/client";
 import { clearCart, getCart } from "@/lib/cart/cart-service";
 import { getSession } from "@/lib/auth/session";
+import type { Order, PaymentMethod } from "@/lib/types";
 
 export type CheckoutInput = {
   customerName: string;
@@ -17,10 +17,6 @@ export type CheckoutInput = {
   paymentMethod: PaymentMethod;
 };
 
-function makeOrderNumber() {
-  return `SUN-${Date.now().toString().slice(-8)}`;
-}
-
 export async function createOrderFromCart(input: CheckoutInput) {
   const cart = await getCart();
 
@@ -28,61 +24,15 @@ export async function createOrderFromCart(input: CheckoutInput) {
     throw new Error("Cart is empty");
   }
 
-  const orderNumber = makeOrderNumber();
-  const invoiceNumber = `INV-${orderNumber}`;
   const session = await getSession();
-
-  const order = await prisma.order.create({
-    data: {
-      orderNumber,
-      userId: session?.role === "CUSTOMER" ? session.id : undefined,
-      customerName: input.customerName,
-      customerEmail: input.customerEmail,
-      customerPhone: input.customerPhone,
-      deliveryNote: input.deliveryNote,
-      deliveryLocation: input.deliveryLocation,
-      deliveryMapUrl: input.deliveryMapUrl,
-      deliveryLatitude: input.deliveryLatitude,
-      deliveryLongitude: input.deliveryLongitude,
-      paymentMethod: input.paymentMethod,
-      subtotalCents: cart.subtotalCents,
-      totalCents: cart.subtotalCents,
-      items: {
-        create: cart.items.map((item) => ({
-          productId: item.product.id,
-          productName: item.product.name,
-          sku: item.product.sku,
-          unitCents: item.product.priceCents,
-          costCents: item.product.costCents,
-          quantity: item.quantity,
-          totalCents: item.lineTotalCents
-        }))
-      },
-      invoice: {
-        create: { invoiceNumber }
-      }
-    },
-    include: {
-      items: true,
-      invoice: true
-    }
+  const order = await apiFetch<Order>("/orders/checkout", {
+    method: "POST",
+    body: JSON.stringify({
+      ...input,
+      userId: session?.role === "CUSTOMER" ? session.id : null,
+      items: cart.items.map((item) => ({ productId: item.product.id, quantity: item.quantity }))
+    })
   });
-
-  for (const item of cart.items) {
-    await prisma.product.update({
-      where: { id: item.product.id },
-      data: {
-        stockQuantity: { decrement: item.quantity },
-        stockMovements: {
-          create: {
-            type: "SALE",
-            quantity: -item.quantity,
-            note: order.orderNumber
-          }
-        }
-      }
-    });
-  }
 
   await clearCart();
   return order;

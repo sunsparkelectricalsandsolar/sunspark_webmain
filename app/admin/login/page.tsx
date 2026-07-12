@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PendingButton } from "@/components/ui/pending-button";
-import { prisma } from "@/lib/db";
-import { verifyPassword } from "@/lib/auth/password";
+import { apiFetch, ApiError } from "@/lib/api/client";
 import { setSession } from "@/lib/auth/session";
+import type { PublicUser } from "@/lib/types";
 
 async function adminLoginAction(formData: FormData) {
   "use server";
@@ -11,9 +11,20 @@ async function adminLoginAction(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
   const next = safeAdminPath(String(formData.get("next") ?? ""));
-  const user = await prisma.user.findUnique({ where: { email } });
+  let user: PublicUser;
 
-  if (!user || user.role !== "ADMIN" || !(await verifyPassword(password, user.passwordHash))) {
+  try {
+    const result = await apiFetch<{ user: PublicUser }>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password })
+    });
+    user = result.user;
+  } catch (error) {
+    if (!(error instanceof ApiError)) throw error;
+    redirect(`/admin/login?error=invalid${next ? `&next=${encodeURIComponent(next)}` : ""}`);
+  }
+
+  if (user.role !== "ADMIN") {
     redirect(`/admin/login?error=invalid${next ? `&next=${encodeURIComponent(next)}` : ""}`);
   }
 

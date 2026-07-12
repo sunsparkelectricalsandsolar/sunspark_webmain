@@ -3,21 +3,17 @@ import { LocationPicker } from "@/components/site/location-picker";
 import { PendingButton } from "@/components/ui/pending-button";
 import { preventAdminShopping } from "@/lib/auth/guards";
 import { getSession } from "@/lib/auth/session";
+import { apiFetch } from "@/lib/api/client";
 import { getCart } from "@/lib/cart/cart-service";
-import { prisma } from "@/lib/db";
 import { formatMoney } from "@/lib/money";
+import type { PublicUser } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 export default async function CheckoutPage() {
   await preventAdminShopping();
   const [cart, session] = await Promise.all([getCart(), getSession()]);
-  const customer = session
-    ? await prisma.user.findUnique({
-        where: { id: session.id },
-        select: { name: true, email: true, phone: true }
-      })
-    : null;
+  const customer = session ? await apiFetch<PublicUser>(`/users/${session.id}`).catch(() => null) : null;
 
   return (
     <section className="section">

@@ -2,7 +2,8 @@ import { notFound } from "next/navigation";
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { ProductForm } from "@/components/admin/product-form";
 import { requireAdmin } from "@/lib/auth/guards";
-import { prisma } from "@/lib/db";
+import { apiFetch } from "@/lib/api/client";
+import type { Category, Product } from "@/lib/types";
 import { updateProductAction } from "../../actions";
 
 export const dynamic = "force-dynamic";
@@ -27,10 +28,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
 
 async function getProduct(id: string) {
   try {
-    return prisma.product.findUnique({
-      where: { id },
-      include: { images: { orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] } }
-    });
+    return apiFetch<Product>(`/admin/products/${id}`);
   } catch {
     return null;
   }
@@ -38,7 +36,7 @@ async function getProduct(id: string) {
 
 async function getCategories() {
   try {
-    return prisma.category.findMany({ where: { isActive: true }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }] });
+    return apiFetch<Category[]>("/categories");
   } catch {
     return [];
   }

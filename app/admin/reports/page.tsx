@@ -1,7 +1,8 @@
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { requireAdmin } from "@/lib/auth/guards";
-import { prisma } from "@/lib/db";
+import { apiFetch } from "@/lib/api/client";
 import { formatMoney } from "@/lib/money";
+import type { Order } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,11 @@ function Stat({ label, value }: { label: string; value: string }) { return <div 
 async function getDailyReport(date: string) {
   const start = new Date(`${date}T00:00:00+03:00`);
   const end = new Date(`${date}T23:59:59.999+03:00`);
-  const orders = await prisma.order.findMany({ where: { createdAt: { gte: start, lte: end }, status: { not: "CANCELLED" } }, include: { items: true } });
+  const allOrders = await apiFetch<Order[]>("/admin/orders").catch(() => []);
+  const orders = allOrders.filter((order) => {
+    const createdAt = new Date(order.createdAt);
+    return createdAt >= start && createdAt <= end && order.status !== "CANCELLED";
+  });
   const lines = new Map<string, { key: string; name: string; quantity: number; revenueCents: number; costCents: number; profitCents: number }>();
   for (const order of orders) for (const item of order.items) {
     const key = item.productId ?? item.productName;

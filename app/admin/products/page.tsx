@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { requireAdmin } from "@/lib/auth/guards";
-import { prisma } from "@/lib/db";
+import { apiFetch, toQueryString } from "@/lib/api/client";
 import { productUrl } from "@/lib/merchant/feed";
 import { formatMoney } from "@/lib/money";
 import { deleteProductAction } from "./actions";
+import type { Category, Product } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -82,28 +83,12 @@ export default async function AdminProductsPage({
 async function getProducts(input: { q?: string; category?: string; status?: string }) {
   const terms = input.q?.trim().split(/\s+/).filter(Boolean) ?? [];
   try {
-    return prisma.product.findMany({
-      where: {
-        ...(terms.length
-          ? {
-              AND: terms.map((term) => ({
-                OR: [
-                  { name: { contains: term } },
-                  { sku: { contains: term } },
-                  { shortDescription: { contains: term } },
-                  { description: { contains: term } },
-                  { category: { name: { contains: term } } }
-                ]
-              }))
-            }
-          : {}),
-        ...(input.category ? { category: { slug: input.category } } : {}),
-        ...(input.status === "active" ? { isActive: true } : {}),
-        ...(input.status === "hidden" ? { isActive: false } : {}),
-        ...(input.status === "low" ? { stockQuantity: { lte: 3 } } : {})
-      },
-      include: { category: true },
-      orderBy: { updatedAt: "desc" }
+    const products = await apiFetch<Product[]>(`/products${toQueryString({ q: terms.join(" "), category: input.category, limit: 500 })}`);
+    return products.filter((product) => {
+      if (input.status === "active") return product.isActive;
+      if (input.status === "hidden") return !product.isActive;
+      if (input.status === "low") return product.stockQuantity <= product.lowStockThreshold;
+      return true;
     });
   } catch {
     return [];
@@ -112,7 +97,7 @@ async function getProducts(input: { q?: string; category?: string; status?: stri
 
 async function getCategories() {
   try {
-    return prisma.category.findMany({ where: { parentId: null }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }] });
+    return apiFetch<Category[]>("/categories");
   } catch {
     return [];
   }

@@ -10,3 +10,4 @@ test-results/
 public/uploads/
 .vercel/
 exports/
+*.tsbuildinfo

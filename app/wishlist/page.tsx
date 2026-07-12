@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { ProductCard } from "@/components/site/product-card";
 import { preventAdminShopping } from "@/lib/auth/guards";
-import { prisma } from "@/lib/db";
+import { apiFetch } from "@/lib/api/client";
 import { getWishlistSlugs } from "@/lib/wishlist/wishlist-service";
+import type { Product } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -42,13 +43,7 @@ async function getProducts(slugs: string[]) {
   }
 
   try {
-    return prisma.product.findMany({
-      where: { slug: { in: slugs }, isActive: true },
-      include: {
-        category: true,
-        images: { orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }, { createdAt: "asc" }] }
-      }
-    });
+    return apiFetch<Product[]>(`/products/by-slugs?slugs=${encodeURIComponent(slugs.join(","))}`);
   } catch {
     return [];
   }

@@ -3,14 +3,15 @@ import { AdminLayout } from "@/components/admin/admin-layout";
 import { PrintReceiptButton } from "@/components/admin/print-receipt-button";
 import { SalesDocument } from "@/components/admin/sales-document";
 import { requireAdmin } from "@/lib/auth/guards";
-import { prisma } from "@/lib/db";
+import { apiFetch } from "@/lib/api/client";
+import type { Order } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 export default async function WalkInReceiptPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   await requireAdmin(`/admin/walk-in-sale/${id}/receipt`);
-  const order = await prisma.order.findUnique({ where: { id }, include: { invoice: true, items: true } });
+  const order = await apiFetch<Order>(`/admin/orders/${id}`).catch(() => null);
   if (!order) notFound();
   const paymentLabel = order.paymentMethod === "CASH" ? "Cash" : order.paymentMethod === "MPESA" ? "M-Pesa" : "WhatsApp";
   const title = order.paymentStatus === "PAID" ? "Receipt" : "Invoice";

@@ -4,8 +4,8 @@ Modern Next.js e-commerce site for Sunspark Electrical and Solar.
 
 ## Stack
 
-- Next.js + React + TypeScript
-- Prisma + MySQL/MariaDB
+- Next.js + React + TypeScript frontend
+- Express + MySQL/MariaDB backend in `apps/api`
 - File uploads for product images
 - Admin dashboard for products, categories, customers, orders, checkout settings
 
@@ -25,16 +25,19 @@ SESSION_SECRET="use-a-long-random-secret"
 NEXT_PUBLIC_SITE_URL="public url"
 ```
 
-3. Push schema and seed setup data:
+3. Prepare the backend database:
 
 ```bash
-npm run db:push
+cd apps/api
+npm install
+npm run migrate
 npm run seed
 ```
 
-4. Run locally:
+4. Run locally in two terminals:
 
 ```bash
+npm run api:dev
 npm run dev
 ```
 
@@ -69,43 +72,44 @@ Each uploaded image must be JPEG, PNG, or WebP and below 2MB. SQL stores only im
 
 On hosting, make sure the uploads directory is writable and backed up. For larger production scale, move uploads to object storage and keep the same URL-based database design.
 
-## HostAfrica Deployment
+## Split Deployment
 
-From the GitHub repo:
+Frontend:
 
-The repository includes `.cpanel.yml` for a cPanel Git deployment. It deliberately does not seed production data.
-
-In cPanel's Node.js Application screen, set the application root to `sunspark`, use Node 20, set `NODE_ENV=production`, and configure the startup command as `npm start`.
-
-For a manual SSH deployment:
-
-```bash
-source ~/nodevenv/sunspark/20/bin/activate
-unset NODE_ENV
-export NODE_ENV=production NPM_CONFIG_PRODUCTION=false
-rm -rf .next
-npm ci --include=dev
-npx prisma generate
-npx prisma db push
-npm run build
+```text
+Deploy the root Next.js app to Vercel.
+Set NEXT_PUBLIC_API_URL and API_INTERNAL_URL to https://backend.sunsparkelectricals.co.ke.
 ```
 
-Do not put `NODE_ENV` in `.env`; cPanel's application environment should provide it. The build uses Webpack and one worker to work around cPanel's external `node_modules` symlink and process limit.
+Backend:
+
+```text
+Host apps/api on HostAfrica at backend.sunsparkelectricals.co.ke.
+Application root: sunspark/apps/api
+Startup file: dist/server.js
+```
+
+Manual backend SSH deployment:
+
+```bash
+cd ~/sunspark
+bash docs/hostafrica-deploy.sh
+```
+
+There is no Prisma command in this project.
 
 Required environment variables on HostAfrica:
 
 ```text
 DATABASE_URL
 SESSION_SECRET
-NEXT_PUBLIC_SITE_URL
-EMAIL_FROM
-MPESA_CONSUMER_KEY
-MPESA_CONSUMER_SECRET
-MPESA_SHORTCODE
-MPESA_PASSKEY
+FRONTEND_ORIGIN
+ADMIN_EMAIL
+ADMIN_PASSWORD
+REPORT_EMAIL
+SUPPORT_EMAIL
+WHATSAPP_PHONE
 ```
-
-If `npm run db:push` fails with `Access denied`, confirm the MySQL password and allow the hosting/server IP to connect to the MySQL database.
 
 ## Verification
 

@@ -16,7 +16,7 @@ type SalesDocumentItem = {
 type SalesDocumentProps = {
   kind: SalesDocumentKind;
   number?: string | null;
-  date: Date;
+  date: Date | string;
   customerName: string;
   customerEmail?: string | null;
   customerPhone?: string | null;
@@ -42,6 +42,8 @@ export function SalesDocument({
   subtotalCents,
   totalCents
 }: SalesDocumentProps) {
+  const documentDate = date instanceof Date ? date : new Date(date);
+
   return (
     <article className="sales-document" id="admin-print-document">
       <header className="sales-document-header">
@@ -57,7 +59,7 @@ export function SalesDocument({
         <div className="sales-document-title">
           <span>{kind}</span>
           <strong>{number ?? "Pending"}</strong>
-          <small>{date.toLocaleDateString("en-KE", { day: "2-digit", month: "short", year: "numeric" })}</small>
+          <small>{documentDate.toLocaleDateString("en-KE", { day: "2-digit", month: "short", year: "numeric" })}</small>
         </div>
       </header>
 

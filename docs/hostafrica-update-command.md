@@ -1,41 +1,56 @@
-# HostAfrica Update Command
+# HostAfrica Backend Update Command
 
-Run this from the HostAfrica SSH terminal after code has been pushed to GitHub:
+Run this on SSH for `backend.sunsparkelectricals.co.ke`:
 
 ```bash
 cd ~/sunspark
 bash docs/hostafrica-deploy.sh
 ```
 
-The normal deploy command skips `npm install` because that is the step HostAfrica/CloudLinux often kills.
-
-Run this only when `package.json` or `package-lock.json` changed:
+First deploy or dependency changes:
 
 ```bash
 cd ~/sunspark
-INSTALL_DEPS=1 bash docs/hostafrica-deploy.sh
+INSTALL_DEPS=1 RUN_SEED=1 bash docs/hostafrica-deploy.sh
 ```
 
-For the current update that added password reset email, run the `INSTALL_DEPS=1` version once. After that, use the normal command unless dependencies change again.
-
-That uses the lowest-memory install command:
+Daily update after pushing code:
 
 ```bash
-npm install --omit=dev --no-audit --no-fund --legacy-peer-deps --prefer-offline --maxsockets=1
+cd ~/sunspark
+bash docs/hostafrica-deploy.sh
 ```
 
-Admin seed:
+Backend cPanel Node app settings:
 
-```bash
-npm run seed
+```text
+Application root: sunspark/apps/api
+Startup file: dist/server.js
+Node: 20.x
+App URL: backend.sunsparkelectricals.co.ke
 ```
 
-This makes sure `admin@sunsparkelectricals.co.ke` exists. It creates the admin with password `Password` only when the admin does not already exist.
+Required backend `.env` in `~/sunspark/apps/api/.env`:
 
-Emergency admin password reset:
-
-```bash
-RESET_ADMIN_PASSWORD=true npm run seed
+```text
+DATABASE_URL="mysql://USER:PASSWORD@HOST:3306/DATABASE"
+PORT=4000
+FRONTEND_ORIGIN="https://sunsparkelectricals.co.ke"
+SESSION_SECRET="long-random-secret"
+ADMIN_EMAIL="admin@sunsparkelectricals.co.ke"
+ADMIN_PASSWORD="Password"
+REPORT_EMAIL="sunsparkelectricalsandsolar@gmail.com"
+SUPPORT_EMAIL="support@sunsparkelectricals.co.ke"
+WHATSAPP_PHONE="254703586562"
 ```
 
-This deliberately resets `admin@sunsparkelectricals.co.ke` back to password `Password`.
+Frontend Vercel env:
+
+```text
+NEXT_PUBLIC_API_URL="https://backend.sunsparkelectricals.co.ke"
+API_INTERNAL_URL="https://backend.sunsparkelectricals.co.ke"
+NEXT_PUBLIC_SITE_URL="https://sunsparkelectricals.co.ke"
+SESSION_SECRET="same-long-random-secret"
+```
+
+There is no Prisma step. Use `npm run migrate` and `npm run seed` inside `apps/api`.

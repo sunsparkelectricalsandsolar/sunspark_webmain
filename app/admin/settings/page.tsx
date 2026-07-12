@@ -1,11 +1,32 @@
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { PendingButton } from "@/components/ui/pending-button";
 import { requireAdmin } from "@/lib/auth/guards";
-import { prisma } from "@/lib/db";
+import { apiFetch } from "@/lib/api/client";
 import { siteConfig } from "@/lib/site-config";
 import { updateSettingsAction } from "./actions";
 
 export const dynamic = "force-dynamic";
+
+type SettingsView = {
+  site: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    location?: string;
+    facebookUrl?: string;
+    mapUrl?: string;
+  } | null;
+  checkout: {
+    whatsappPhone?: string;
+    whatsappEnabled: boolean;
+    mpesaEnabled: boolean;
+  } | null;
+  reports: {
+    reportTime?: string;
+    weekdays?: string;
+    enabled?: boolean;
+  } | null;
+};
 
 export default async function AdminSettingsPage() {
   await requireAdmin();
@@ -78,14 +99,14 @@ export default async function AdminSettingsPage() {
   );
 }
 
-async function getSettings() {
+async function getSettings(): Promise<SettingsView> {
   try {
-    const [site, checkout, reports] = await Promise.all([
-      prisma.siteSettings.findUnique({ where: { id: "default" } }),
-      prisma.checkoutSettings.findUnique({ where: { id: "default" } }),
-      prisma.reportSettings.findUnique({ where: { id: "default" } })
-    ]);
-    return { site, checkout, reports };
+    const settings = await apiFetch<{ store_name?: string; support_email?: string; whatsapp_phone?: string }>("/settings");
+    return {
+      site: settings ? { name: settings.store_name, email: settings.support_email, phone: siteConfig.phone, location: siteConfig.location, facebookUrl: siteConfig.facebookUrl, mapUrl: siteConfig.mapUrl } : null,
+      checkout: settings ? { whatsappPhone: settings.whatsapp_phone, whatsappEnabled: true, mpesaEnabled: false } : null,
+      reports: null
+    };
   } catch {
     return { site: null, checkout: null, reports: null };
   }

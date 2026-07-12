@@ -1,31 +1,32 @@
 # Sync Local Data To HostAfrica
 
-`npx prisma db push` makes the live database schema match the code. It does not copy local products, categories, customers, orders, images, or settings.
+The backend now uses plain SQL migrations, not Prisma.
 
-To copy local data to live, export the local MySQL database, upload the SQL file to the HostAfrica account, then run the deploy script with `IMPORT_SQL`.
+To prepare the live database structure:
 
-On the local machine, export the local database:
-
-```powershell
-mysqldump -u root -p --databases sunspark > sunspark-local-data.sql
+```bash
+cd ~/sunspark/apps/api
+npm run migrate
 ```
 
-If the local database has a different name, replace `sunspark`. Upload `sunspark-local-data.sql` to the server, for example:
+To seed admin, default categories, and settings:
+
+```bash
+cd ~/sunspark/apps/api
+npm run seed
+```
+
+To copy local data to live, export the local MySQL database and import it on HostAfrica:
 
 ```powershell
+mysqldump -u root -p sunspark > sunspark-local-data.sql
 scp .\sunspark-local-data.sql <ssh-user>@<ssh-host>:~/sunspark-local-data.sql
 ```
 
-On HostAfrica SSH, import while deploying:
+On HostAfrica:
 
 ```bash
-IMPORT_SQL="$HOME/sunspark-local-data.sql" bash ~/sunspark/docs/hostafrica-deploy.sh
+mysql -u DB_USER -p DB_NAME < ~/sunspark-local-data.sql
 ```
 
-Uploaded product/category images are files, not database rows. Copy `public/uploads` to the server as well when local uploaded images should appear live:
-
-```powershell
-scp -r .\public\uploads <ssh-user>@<ssh-host>:~/sunspark/public/
-```
-
-Only import local data into live when it is acceptable to overwrite or merge live records. If customers or orders already exist live, take a database backup first from cPanel/phpMyAdmin.
+Uploaded product/category images are files, not database rows. Copy `public/uploads` to the frontend host or move them to permanent object storage before launch.

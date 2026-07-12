@@ -1,191 +1,64 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-# Sunspark HostAfrica deployment helper.
-# Run this on SSH as the cPanel user:
-#   bash ~/sunspark/docs/hostafrica-deploy.sh
-#
-# Normal updates intentionally avoid npm install because CloudLinux shared
-# hosting can kill that step. Use INSTALL_DEPS=1 only when package.json changes.
+# HostAfrica backend deploy for backend.sunsparkelectricals.co.ke.
+# Run from SSH:
+#   cd ~/sunspark
+#   bash docs/hostafrica-deploy.sh
 
 APP_DIR="${APP_DIR:-$HOME/sunspark}"
 REPO_URL="${REPO_URL:-https://github.com/muchirifloy/sunspark.git}"
 BRANCH="${BRANCH:-main}"
 NODE_ENV_DIR="${NODE_ENV_DIR:-$HOME/nodevenv/sunspark/20}"
-BACKUP_ROOT="${BACKUP_ROOT:-$HOME/backups}"
-IMPORT_SQL="${IMPORT_SQL:-}"
 INSTALL_DEPS="${INSTALL_DEPS:-0}"
-BACKUP_APP="${BACKUP_APP:-0}"
-RUN_PRISMA="${RUN_PRISMA:-0}"
+RUN_MIGRATE="${RUN_MIGRATE:-1}"
 RUN_SEED="${RUN_SEED:-0}"
 
-timestamp="$(date +%Y%m%d-%H%M%S)"
-backup_dir="$BACKUP_ROOT/sunspark-$timestamp"
-
-copy_dir_contents() {
-  source_dir="$1"
-  target_dir="$2"
-  mkdir -p "$target_dir"
-
-  if command -v rsync >/dev/null 2>&1; then
-    rsync -a "$source_dir"/ "$target_dir"/
-    return
-  fi
-
-  if command -v tar >/dev/null 2>&1; then
-    (cd "$source_dir" && tar cf - .) | (cd "$target_dir" && tar xf -)
-    return
-  fi
-
-  cp -a "$source_dir"/. "$target_dir"/
-}
-
-repair_cloudlinux_node_modules() {
-  modules_target="$NODE_ENV_DIR/lib/node_modules"
-  if [ ! -d "$modules_target" ]; then
-    return
-  fi
-
-  if [ ! -e "$APP_DIR/node_modules" ]; then
-    echo "==> Linking CloudLinux node_modules virtualenv"
-    ln -s "$modules_target" "$APP_DIR/node_modules"
-  fi
-}
-
-echo "==> Sunspark deploy started at $timestamp"
-mkdir -p "$BACKUP_ROOT"
-
-if [ "$BACKUP_APP" = "1" ] && [ -d "$APP_DIR" ]; then
-  echo "==> Backing up current app to $backup_dir"
-  mkdir -p "$backup_dir"
-  if command -v rsync >/dev/null 2>&1; then
-    rsync -a \
-      --exclude node_modules \
-      --exclude .next/cache \
-      "$APP_DIR"/ "$backup_dir"/
-  else
-    mkdir -p "$backup_dir"
-    (cd "$APP_DIR" && tar \
-      --exclude ./node_modules \
-      --exclude ./.next/cache \
-      -cf - .) | (cd "$backup_dir" && tar xf -)
-  fi
-fi
-
+echo "==> Pulling Sunspark backend"
 if [ ! -d "$APP_DIR/.git" ]; then
-  echo "==> App root is not a Git checkout. Replacing it with a fresh clone."
-  old_dir="${APP_DIR}.old.$timestamp"
-  if [ -d "$APP_DIR" ]; then
-    mv "$APP_DIR" "$old_dir"
-  fi
-
   git clone --branch "$BRANCH" "$REPO_URL" "$APP_DIR"
-
-  if [ -f "$old_dir/.env" ]; then
-    cp "$old_dir/.env" "$APP_DIR/.env"
-  fi
-
-  if [ -d "$old_dir/public/uploads" ]; then
-    mkdir -p "$APP_DIR/public/uploads"
-    copy_dir_contents "$old_dir/public/uploads" "$APP_DIR/public/uploads"
-  fi
-else
-  echo "==> Pulling latest code from $BRANCH"
-  cd "$APP_DIR"
-  git fetch origin "$BRANCH"
-  git checkout "$BRANCH"
-  git pull --ff-only origin "$BRANCH"
 fi
 
 cd "$APP_DIR"
-
-echo "==> Active commit"
+git fetch origin "$BRANCH"
+git checkout "$BRANCH"
+git pull --ff-only origin "$BRANCH"
 git log -1 --oneline
 
-if [ -f "$APP_DIR/.env" ]; then
-  sed -i '/^NODE_ENV=/d' "$APP_DIR/.env"
-fi
-
 if [ -f "$NODE_ENV_DIR/bin/activate" ]; then
-  # shellcheck source=/dev/null
   set +u
+  # shellcheck source=/dev/null
   source "$NODE_ENV_DIR/bin/activate"
   set -u
 fi
 
-repair_cloudlinux_node_modules
-
 export NODE_ENV=production
-export NPM_CONFIG_PRODUCTION=false
 export NEXT_TELEMETRY_DISABLED=1
 
-if [ -f "$APP_DIR/.env" ]; then
-  set -a
-  # shellcheck source=/dev/null
-  source "$APP_DIR/.env"
-  set +a
-fi
+cd "$APP_DIR/apps/api"
 
-rm -rf .next
-
-if [ "$INSTALL_DEPS" = "1" ]; then
-  echo "==> Installing production/build dependencies"
+if [ "$INSTALL_DEPS" = "1" ] || [ ! -d node_modules ]; then
+  echo "==> Installing backend dependencies"
   npm install --omit=dev --no-audit --no-fund --legacy-peer-deps --prefer-offline --maxsockets=1
 else
-  echo "==> Skipping npm install. Use INSTALL_DEPS=1 only when you intentionally want dependency install."
+  echo "==> Skipping npm install"
 fi
 
-if [ "$RUN_PRISMA" = "1" ]; then
-  echo "==> Running Prisma schema sync"
-  npx prisma db push
-else
-  echo "==> Skipping Prisma CLI. Generated client is committed in lib/generated/prisma."
+if [ "$RUN_MIGRATE" = "1" ]; then
+  echo "==> Applying SQL schema"
+  npm run migrate
 fi
 
 if [ "$RUN_SEED" = "1" ]; then
-  echo "==> Running seed"
+  echo "==> Seeding admin/categories/settings"
   npm run seed
-else
-  echo "==> Skipping seed. Use RUN_SEED=1 only when initial admin/settings seed is needed."
 fi
 
-if [ -n "$IMPORT_SQL" ]; then
-  if [ ! -f "$IMPORT_SQL" ]; then
-    echo "Import file not found: $IMPORT_SQL" >&2
-    exit 1
-  fi
-  echo "==> Importing SQL data from $IMPORT_SQL"
-  set -a
-  # shellcheck source=/dev/null
-  source "$APP_DIR/.env"
-  set +a
-  if [ -z "${DATABASE_URL:-}" ]; then
-    echo "DATABASE_URL is missing in $APP_DIR/.env" >&2
-    exit 1
-  fi
-  node -e '
-    const url = new URL(process.env.DATABASE_URL);
-    const fs = require("fs");
-    fs.writeFileSync(".db-import.cnf", [
-      "[client]",
-      `host=${url.hostname}`,
-      `port=${url.port || 3306}`,
-      `user=${decodeURIComponent(url.username)}`,
-      `password=${decodeURIComponent(url.password)}`,
-      `database=${url.pathname.slice(1)}`,
-      ""
-    ].join("\n"), { mode: 0o600 });
-  '
-  mysql --defaults-extra-file=.db-import.cnf < "$IMPORT_SQL"
-  rm -f .db-import.cnf
-fi
-
-echo "==> Building Next.js"
+echo "==> Building backend"
 npm run build
 
 echo "==> Restarting cPanel Node app"
-mkdir -p tmp
-touch tmp/restart.txt
+mkdir -p "$APP_DIR/tmp"
+touch "$APP_DIR/tmp/restart.txt"
 
-echo "==> Done. Live app should now be on:"
-git log -1 --oneline
+echo "==> Done"

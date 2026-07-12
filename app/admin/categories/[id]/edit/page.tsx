@@ -3,7 +3,8 @@ import { AdminLayout } from "@/components/admin/admin-layout";
 import { CategoryForm } from "@/components/admin/category-form";
 import { updateCategoryAction } from "@/app/admin/categories/actions";
 import { requireAdmin } from "@/lib/auth/guards";
-import { prisma } from "@/lib/db";
+import { apiFetch } from "@/lib/api/client";
+import type { Category } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -23,10 +24,7 @@ export default async function EditCategoryPage({
   const { id } = await params;
   const query = await searchParams;
   await requireAdmin(`/admin/categories/${id}/edit`);
-  const category = await prisma.category.findUnique({
-    where: { id },
-    include: { images: { orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }] } }
-  });
+  const category = await apiFetch<Category>(`/admin/categories/${id}`).catch(() => null);
 
   if (!category) notFound();
 

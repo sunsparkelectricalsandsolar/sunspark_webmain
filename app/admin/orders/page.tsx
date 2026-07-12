@@ -1,13 +1,13 @@
 import { AdminLayout } from "@/components/admin/admin-layout";
-import { OrderStatus, PaymentStatus } from "@/lib/generated/prisma";
+import type { OrderStatus, PaymentStatus, Order } from "@/lib/types";
 import { requireAdmin } from "@/lib/auth/guards";
-import { prisma } from "@/lib/db";
+import { apiFetch, toQueryString } from "@/lib/api/client";
 import { formatMoney } from "@/lib/money";
 import { updateOrderAction } from "./actions";
 
 export const dynamic = "force-dynamic";
-const orderStatuses = Object.values(OrderStatus);
-const paymentStatuses = Object.values(PaymentStatus);
+const orderStatuses: OrderStatus[] = ["PENDING", "CONFIRMED", "PROCESSING", "READY", "COMPLETED", "CANCELLED"];
+const paymentStatuses: PaymentStatus[] = ["UNPAID", "PENDING", "PAID", "FAILED", "REFUNDED"];
 
 export default async function AdminOrdersPage({
   searchParams
@@ -92,30 +92,11 @@ export default async function AdminOrdersPage({
 async function getOrders(input: { q?: string; status?: string; paymentStatus?: string }) {
   const terms = input.q?.trim().split(/\s+/).filter(Boolean) ?? [];
   try {
-    return prisma.order.findMany({
-      where: {
-        ...(terms.length
-          ? {
-              AND: terms.map((term) => ({
-                OR: [
-                  { orderNumber: { contains: term } },
-                  { customerName: { contains: term } },
-                  { customerEmail: { contains: term } },
-                  { customerPhone: { contains: term } },
-                  { deliveryLocation: { contains: term } },
-                  { deliveryMapUrl: { contains: term } }
-                ]
-              }))
-            }
-          : {}),
-        ...(orderStatuses.includes(input.status as OrderStatus) ? { status: input.status as OrderStatus } : {}),
-        ...(paymentStatuses.includes(input.paymentStatus as PaymentStatus)
-          ? { paymentStatus: input.paymentStatus as PaymentStatus }
-          : {})
-      },
-      orderBy: { createdAt: "desc" },
-      take: 100
-    });
+    return apiFetch<Order[]>(`/admin/orders${toQueryString({
+      q: terms.join(" "),
+      status: orderStatuses.includes(input.status as OrderStatus) ? input.status : undefined,
+      paymentStatus: paymentStatuses.includes(input.paymentStatus as PaymentStatus) ? input.paymentStatus : undefined
+    })}`);
   } catch {
     return [];
   }

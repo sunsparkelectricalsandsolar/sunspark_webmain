@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 export default defineConfig({
   test: {
     environment: "jsdom",
-    exclude: ["node_modules/**", ".next/**", "e2e/**", "test-results/**", "playwright-report/**"]
+    exclude: ["**/node_modules/**", ".next/**", "e2e/**", "test-results/**", "playwright-report/**"]
   },
   resolve: {
     alias: {

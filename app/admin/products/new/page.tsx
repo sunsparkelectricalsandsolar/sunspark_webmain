@@ -1,7 +1,8 @@
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { ProductForm } from "@/components/admin/product-form";
 import { requireAdmin } from "@/lib/auth/guards";
-import { prisma } from "@/lib/db";
+import { apiFetch } from "@/lib/api/client";
+import type { Category } from "@/lib/types";
 import { createProductAction } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +22,7 @@ export default async function NewProductPage() {
 
 async function getCategories() {
   try {
-    return prisma.category.findMany({ where: { isActive: true }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }] });
+    return apiFetch<Category[]>("/categories");
   } catch {
     return [];
   }

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { requireAdmin } from "@/lib/auth/guards";
-import { prisma } from "@/lib/db";
+import { apiFetch } from "@/lib/api/client";
 
 export const dynamic = "force-dynamic";
 
@@ -54,20 +54,7 @@ function Stat({ label, value }: { label: string; value: number }) {
 
 async function getStats() {
   try {
-    const [products, orders, customers, lowStock] = await Promise.all([
-      prisma.product.count(),
-      prisma.order.count(),
-      prisma.user.count({ where: { role: "CUSTOMER" } }),
-      prisma.product.count({
-        where: {
-          stockQuantity: {
-            lte: 3
-          }
-        }
-      })
-    ]);
-
-    return { products, orders, customers, lowStock };
+    return await apiFetch<{ products: number; orders: number; customers: number; lowStock: number }>("/admin/stats");
   } catch {
     return { products: 0, orders: 0, customers: 0, lowStock: 0 };
   }

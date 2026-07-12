@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/guards";
-import { prisma } from "@/lib/db";
+import { apiFetch, ApiError } from "@/lib/api/client";
 import { slugifyProductName } from "@/lib/products/validation";
 import { saveCategoryImages } from "@/lib/uploads/product-images";
 import { getImageUploadError } from "@/lib/uploads/product-images";
@@ -31,25 +31,24 @@ export async function createCategoryAction(formData: FormData) {
   if (getImageUploadError(files)) redirect("/admin/categories?error=image");
 
   const slug = slugifyProductName(name);
-  if (await prisma.category.findUnique({ where: { slug } })) redirect("/admin/categories?error=duplicate");
   const images = await saveCategoryImages(files, name);
 
-  await prisma.category.create({
-    data: {
+  try {
+    await apiFetch("/admin/categories", {
+      method: "POST",
+      body: JSON.stringify({
       name,
       slug,
       description: description || null,
       sortOrder: Number.isFinite(sortOrder) ? sortOrder : 0,
       isActive: formData.get("isActive") === "on",
-      images: {
-        create: images.map((image, index) => ({
-          ...image,
-          isPrimary: index === 0,
-          sortOrder: index
-        }))
-      }
-    }
-  });
+      images: images.map((image, index) => ({ ...image, isPrimary: index === 0, sortOrder: index }))
+      })
+    });
+  } catch (error) {
+    if (!(error instanceof ApiError)) throw error;
+    redirect("/admin/categories?error=duplicate");
+  }
 
   revalidatePath("/");
   revalidatePath("/store");
@@ -65,7 +64,6 @@ export async function updateCategoryAction(categoryId: string, formData: FormDat
   const files = getImageFiles(formData);
   const primaryImageId = String(formData.get("primaryImageId") ?? "");
   const deleteImageIds = getDeleteImageIds(formData);
-  const existingImages = await prisma.categoryImage.count({ where: { categoryId } });
 
   if (name.length < 2) {
     redirect(`/admin/categories/${categoryId}/edit?error=invalid`);
@@ -74,38 +72,26 @@ export async function updateCategoryAction(categoryId: string, formData: FormDat
   if (getImageUploadError(files)) redirect(`/admin/categories/${categoryId}/edit?error=image`);
 
   const slug = slugifyProductName(name);
-  const conflicting = await prisma.category.findUnique({ where: { slug }, select: { id: true } });
-  if (conflicting && conflicting.id !== categoryId) redirect(`/admin/categories/${categoryId}/edit?error=duplicate`);
   const images = await saveCategoryImages(files, name);
 
-  await prisma.$transaction([
-    prisma.category.update({
-      where: { id: categoryId },
-      data: {
+  try {
+    await apiFetch(`/admin/categories/${categoryId}`, {
+      method: "PATCH",
+      body: JSON.stringify({
         name,
         slug,
         description: description || null,
         sortOrder: Number.isFinite(sortOrder) ? sortOrder : 0,
         isActive: formData.get("isActive") === "on",
-        images: {
-          create: images.map((image, index) => ({
-            ...image,
-            isPrimary: existingImages === 0 && index === 0,
-            sortOrder: existingImages + index
-          }))
-        }
-      }
-    }),
-    ...(deleteImageIds.length
-      ? [prisma.categoryImage.deleteMany({ where: { categoryId, id: { in: deleteImageIds } } })]
-      : []),
-    ...(primaryImageId
-      ? [
-          prisma.categoryImage.updateMany({ where: { categoryId }, data: { isPrimary: false } }),
-          prisma.categoryImage.update({ where: { id: primaryImageId }, data: { isPrimary: true } })
-        ]
-      : [])
-  ]);
+        images,
+        deleteImageIds,
+        primaryImageId: primaryImageId || null
+      })
+    });
+  } catch (error) {
+    if (!(error instanceof ApiError)) throw error;
+    redirect(`/admin/categories/${categoryId}/edit?error=duplicate`);
+  }
 
   revalidatePath("/");
   revalidatePath("/store");

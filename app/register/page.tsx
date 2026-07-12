@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import { PendingButton } from "@/components/ui/pending-button";
-import { prisma } from "@/lib/db";
-import { hashPassword } from "@/lib/auth/password";
+import { apiFetch, ApiError } from "@/lib/api/client";
 import { setSession } from "@/lib/auth/session";
+import type { PublicUser } from "@/lib/types";
 
 async function registerAction(formData: FormData) {
   "use server";
@@ -15,14 +15,18 @@ async function registerAction(formData: FormData) {
     redirect("/register?error=invalid");
   }
 
-  const user = await prisma.user.create({
-    data: {
-      name,
-      email,
-      passwordHash: await hashPassword(password),
-      role: "CUSTOMER"
-    }
-  });
+  let user: PublicUser;
+
+  try {
+    const result = await apiFetch<{ user: PublicUser }>("/auth/register", {
+      method: "POST",
+      body: JSON.stringify({ name, email, password })
+    });
+    user = result.user;
+  } catch (error) {
+    if (!(error instanceof ApiError)) throw error;
+    redirect("/register?error=exists");
+  }
 
   await setSession({ id: user.id, email: user.email, name: user.name, role: user.role });
   redirect("/account");

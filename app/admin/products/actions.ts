@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/db";
+import { apiFetch } from "@/lib/api/client";
 import { requireAdmin } from "@/lib/auth/guards";
 import { saveProductImages } from "@/lib/uploads/product-images";
 import { productInputSchema, slugifyProductName } from "@/lib/products/validation";
@@ -50,18 +50,13 @@ export async function createProductAction(formData: FormData) {
   const images = await saveProductImages(getImageFiles(formData), input.name);
   const slug = slugifyProductName(input.name);
 
-  await prisma.product.create({
-    data: {
+  await apiFetch("/admin/products", {
+    method: "POST",
+    body: JSON.stringify({
       ...input,
       slug,
-      images: {
-        create: images.map((image, index) => ({
-          ...image,
-          isPrimary: index === 0,
-          sortOrder: index
-        }))
-      }
-    }
+      images: images.map((image, index) => ({ ...image, isPrimary: index === 0, sortOrder: index }))
+    })
   });
 
   revalidatePath("/");
@@ -76,33 +71,16 @@ export async function updateProductAction(productId: string, formData: FormData)
   const images = await saveProductImages(getImageFiles(formData), input.name);
   const primaryImageId = String(formData.get("primaryImageId") ?? "");
   const deleteImageIds = getDeleteImageIds(formData);
-  const existingImages = await prisma.productImage.count({ where: { productId } });
-
-  await prisma.$transaction([
-    prisma.product.update({
-      where: { id: productId },
-      data: {
-        ...input,
-        slug: slugifyProductName(input.name),
-        images: {
-          create: images.map((image, index) => ({
-            ...image,
-            isPrimary: existingImages === 0 && index === 0,
-            sortOrder: existingImages + index
-          }))
-        }
-      }
-    }),
-    ...(deleteImageIds.length
-      ? [prisma.productImage.deleteMany({ where: { productId, id: { in: deleteImageIds } } })]
-      : []),
-    ...(primaryImageId
-      ? [
-          prisma.productImage.updateMany({ where: { productId }, data: { isPrimary: false } }),
-          prisma.productImage.update({ where: { id: primaryImageId }, data: { isPrimary: true } })
-        ]
-      : [])
-  ]);
+  await apiFetch(`/admin/products/${productId}`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      ...input,
+      slug: slugifyProductName(input.name),
+      images,
+      deleteImageIds,
+      primaryImageId: primaryImageId || null
+    })
+  });
 
   revalidatePath("/");
   revalidatePath("/store");
@@ -112,10 +90,7 @@ export async function updateProductAction(productId: string, formData: FormData)
 export async function deleteProductAction(productId: string) {
   await requireAdmin();
 
-  await prisma.product.update({
-    where: { id: productId },
-    data: { isActive: false }
-  });
+  await apiFetch(`/admin/products/${productId}/hide`, { method: "PATCH" });
 
   revalidatePath("/");
   revalidatePath("/store");

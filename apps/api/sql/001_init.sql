@@ -1,0 +1,171 @@
+CREATE TABLE IF NOT EXISTS users (
+  id VARCHAR(64) PRIMARY KEY,
+  name VARCHAR(191) NOT NULL,
+  email VARCHAR(191) NOT NULL UNIQUE,
+  password_hash VARCHAR(191) NOT NULL,
+  role VARCHAR(32) NOT NULL DEFAULT 'CUSTOMER',
+  phone VARCHAR(64) NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX users_role_idx (role)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+  id VARCHAR(64) PRIMARY KEY,
+  user_id VARCHAR(64) NOT NULL,
+  token_hash VARCHAR(191) NOT NULL UNIQUE,
+  expires_at DATETIME NOT NULL,
+  used_at DATETIME NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX password_reset_user_idx (user_id),
+  CONSTRAINT password_reset_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS categories (
+  id VARCHAR(64) PRIMARY KEY,
+  name VARCHAR(191) NOT NULL,
+  slug VARCHAR(191) NOT NULL UNIQUE,
+  description TEXT NULL,
+  parent_id VARCHAR(64) NULL,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  sort_order INT NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX categories_parent_idx (parent_id),
+  INDEX categories_active_sort_idx (is_active, sort_order),
+  CONSTRAINT categories_parent_fk FOREIGN KEY (parent_id) REFERENCES categories(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS category_images (
+  id VARCHAR(64) PRIMARY KEY,
+  category_id VARCHAR(64) NOT NULL,
+  url VARCHAR(500) NOT NULL,
+  alt VARCHAR(191) NULL,
+  is_primary BOOLEAN NOT NULL DEFAULT FALSE,
+  sort_order INT NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX category_images_category_idx (category_id),
+  CONSTRAINT category_images_category_fk FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS products (
+  id VARCHAR(64) PRIMARY KEY,
+  name VARCHAR(191) NOT NULL,
+  slug VARCHAR(191) NOT NULL UNIQUE,
+  sku VARCHAR(191) NULL UNIQUE,
+  brand VARCHAR(191) NULL,
+  short_description VARCHAR(500) NULL,
+  description TEXT NULL,
+  price_cents INT NOT NULL,
+  compare_at_cents INT NULL,
+  cost_cents INT NOT NULL DEFAULT 0,
+  selling_unit VARCHAR(32) NOT NULL DEFAULT 'UNIT',
+  stock_quantity INT NOT NULL DEFAULT 0,
+  low_stock_threshold INT NOT NULL DEFAULT 5,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  is_featured BOOLEAN NOT NULL DEFAULT FALSE,
+  is_hot_deal BOOLEAN NOT NULL DEFAULT FALSE,
+  seo_title VARCHAR(191) NULL,
+  seo_description VARCHAR(300) NULL,
+  seo_keywords VARCHAR(300) NULL,
+  category_id VARCHAR(64) NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FULLTEXT products_search_idx (name, sku, brand, short_description, description, seo_title, seo_description, seo_keywords),
+  INDEX products_category_idx (category_id),
+  INDEX products_active_updated_idx (is_active, updated_at),
+  CONSTRAINT products_category_fk FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS product_images (
+  id VARCHAR(64) PRIMARY KEY,
+  product_id VARCHAR(64) NOT NULL,
+  url VARCHAR(500) NOT NULL,
+  alt VARCHAR(191) NULL,
+  is_primary BOOLEAN NOT NULL DEFAULT FALSE,
+  sort_order INT NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX product_images_product_idx (product_id),
+  CONSTRAINT product_images_product_fk FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS wishlist_items (
+  id VARCHAR(64) PRIMARY KEY,
+  user_id VARCHAR(64) NOT NULL,
+  product_id VARCHAR(64) NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY wishlist_unique (user_id, product_id),
+  CONSTRAINT wishlist_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT wishlist_product_fk FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS orders (
+  id VARCHAR(64) PRIMARY KEY,
+  order_number VARCHAR(64) NOT NULL UNIQUE,
+  user_id VARCHAR(64) NULL,
+  customer_name VARCHAR(191) NOT NULL,
+  customer_email VARCHAR(191) NOT NULL,
+  customer_phone VARCHAR(64) NULL,
+  delivery_note TEXT NULL,
+  delivery_location VARCHAR(500) NULL,
+  delivery_map_url VARCHAR(500) NULL,
+  delivery_latitude VARCHAR(64) NULL,
+  delivery_longitude VARCHAR(64) NULL,
+  status VARCHAR(32) NOT NULL DEFAULT 'PENDING',
+  payment_method VARCHAR(32) NOT NULL DEFAULT 'WHATSAPP',
+  payment_status VARCHAR(32) NOT NULL DEFAULT 'UNPAID',
+  subtotal_cents INT NOT NULL DEFAULT 0,
+  total_cents INT NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX orders_user_idx (user_id),
+  INDEX orders_status_idx (status),
+  INDEX orders_created_idx (created_at),
+  CONSTRAINT orders_user_fk FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS order_items (
+  id VARCHAR(64) PRIMARY KEY,
+  order_id VARCHAR(64) NOT NULL,
+  product_id VARCHAR(64) NULL,
+  product_name VARCHAR(191) NOT NULL,
+  sku VARCHAR(191) NULL,
+  unit_cents INT NOT NULL,
+  cost_cents INT NOT NULL DEFAULT 0,
+  quantity INT NOT NULL,
+  total_cents INT NOT NULL,
+  CONSTRAINT order_items_order_fk FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+  CONSTRAINT order_items_product_fk FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS invoices (
+  id VARCHAR(64) PRIMARY KEY,
+  order_id VARCHAR(64) NOT NULL UNIQUE,
+  invoice_number VARCHAR(64) NOT NULL UNIQUE,
+  issued_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT invoices_order_fk FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS campaigns (
+  id VARCHAR(64) PRIMARY KEY,
+  title VARCHAR(191) NOT NULL,
+  description TEXT NULL,
+  image_url VARCHAR(500) NULL,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  starts_at DATETIME NULL,
+  ends_at DATETIME NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX campaigns_active_idx (is_active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS site_settings (
+  id VARCHAR(64) PRIMARY KEY,
+  store_name VARCHAR(191) NOT NULL DEFAULT 'Sunspark Electricals & Solar',
+  support_email VARCHAR(191) NOT NULL DEFAULT 'support@sunsparkelectricals.co.ke',
+  report_email VARCHAR(191) NOT NULL DEFAULT 'sunsparkelectricalsandsolar@gmail.com',
+  whatsapp_phone VARCHAR(64) NOT NULL DEFAULT '254703586562',
+  currency VARCHAR(16) NOT NULL DEFAULT 'KSH',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

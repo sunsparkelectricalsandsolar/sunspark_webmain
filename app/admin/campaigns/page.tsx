@@ -1,8 +1,9 @@
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { PendingButton } from "@/components/ui/pending-button";
 import { requireAdmin } from "@/lib/auth/guards";
-import { prisma } from "@/lib/db";
+import { apiFetch } from "@/lib/api/client";
 import { createCampaignAction, updateCampaignAction } from "./actions";
+import type { Campaign } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -80,21 +81,11 @@ export default async function AdminCampaignsPage({
 async function getCampaigns(input: { q?: string; status?: string }) {
   const q = input.q?.trim();
   try {
-    return prisma.campaign.findMany({
-      where: {
-        ...(q
-          ? {
-              OR: [
-                { title: { contains: q } },
-                { description: { contains: q } },
-                { slug: { contains: q } }
-              ]
-            }
-          : {}),
-        ...(input.status === "active" ? { isActive: true } : {}),
-        ...(input.status === "hidden" ? { isActive: false } : {})
-      },
-      orderBy: { updatedAt: "desc" }
+    const campaigns = await apiFetch<Campaign[]>("/admin/campaigns");
+    return campaigns.filter((campaign) => {
+      const matchesQ = q ? `${campaign.title} ${campaign.description ?? ""}`.toLowerCase().includes(q.toLowerCase()) : true;
+      const matchesStatus = input.status === "active" ? campaign.isActive : input.status === "hidden" ? !campaign.isActive : true;
+      return matchesQ && matchesStatus;
     });
   } catch {
     return [];

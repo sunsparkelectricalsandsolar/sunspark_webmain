@@ -1,19 +1,11 @@
-import { prisma } from "@/lib/db";
+import { apiFetch } from "@/lib/api/client";
 import { buildMerchantFeed } from "@/lib/merchant/feed";
+import type { Product } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const products = await prisma.product.findMany({
-    where: { isActive: true },
-    include: {
-      category: { select: { name: true } },
-      images: {
-        orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }, { createdAt: "asc" }]
-      }
-    },
-    orderBy: [{ updatedAt: "desc" }, { name: "asc" }]
-  });
+  const products = await apiFetch<Product[]>("/products?limit=500");
 
   return new Response(buildMerchantFeed(products), {
     headers: {

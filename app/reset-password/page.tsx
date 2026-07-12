@@ -1,13 +1,7 @@
-import { createHash } from "node:crypto";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PendingButton } from "@/components/ui/pending-button";
-import { hashPassword } from "@/lib/auth/password";
-import { prisma } from "@/lib/db";
-
-function hashToken(token: string) {
-  return createHash("sha256").update(token).digest("hex");
-}
+import { apiFetch, ApiError } from "@/lib/api/client";
 
 async function resetPasswordAction(formData: FormData) {
   "use server";
@@ -20,34 +14,17 @@ async function resetPasswordAction(formData: FormData) {
     redirect(`/reset-password?token=${encodeURIComponent(token)}&error=invalid`);
   }
 
-  const resetToken = await prisma.passwordResetToken.findUnique({
-    where: { tokenHash: hashToken(token) },
-    include: { user: true }
-  });
-
-  if (!resetToken || resetToken.usedAt || resetToken.expiresAt < new Date()) {
+  try {
+    await apiFetch("/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify({ token, password })
+    });
+  } catch (error) {
+    if (!(error instanceof ApiError)) throw error;
     redirect("/reset-password?error=expired");
   }
 
-  await prisma.$transaction([
-    prisma.user.update({
-      where: { id: resetToken.userId },
-      data: { passwordHash: await hashPassword(password) }
-    }),
-    prisma.passwordResetToken.update({
-      where: { id: resetToken.id },
-      data: { usedAt: new Date() }
-    }),
-    prisma.passwordResetToken.deleteMany({
-      where: {
-        userId: resetToken.userId,
-        usedAt: null,
-        id: { not: resetToken.id }
-      }
-    })
-  ]);
-
-  redirect(resetToken.user.role === "ADMIN" ? "/admin/login?reset=1" : "/login?reset=1");
+  redirect("/login?reset=1");
 }
 
 export default async function ResetPasswordPage({

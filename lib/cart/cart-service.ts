@@ -1,7 +1,8 @@
 import "server-only";
 
 import { cookies } from "next/headers";
-import { prisma } from "@/lib/db";
+import { apiFetch } from "@/lib/api/client";
+import type { Product } from "@/lib/types";
 
 const cartCookie = "sunspark_cart";
 
@@ -69,16 +70,7 @@ export async function getCart() {
   }
 
   try {
-    const products = await prisma.product.findMany({
-      where: {
-        slug: { in: items.map((item) => item.slug) },
-        isActive: true
-      },
-      include: {
-        images: { orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }, { createdAt: "asc" }] },
-        category: true
-      }
-    });
+    const products = await apiFetch<Product[]>(`/products/by-slugs?slugs=${encodeURIComponent(items.map((item) => item.slug).join(","))}`);
 
     const cartItems = items.flatMap((item) => {
       const product = products.find((candidate) => candidate.slug === item.slug);

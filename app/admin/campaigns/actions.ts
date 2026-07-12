@@ -3,8 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/guards";
-import { prisma } from "@/lib/db";
-import { slugifyProductName } from "@/lib/products/validation";
+import { apiFetch } from "@/lib/api/client";
 import { saveUploadedImages } from "@/lib/uploads/product-images";
 
 function imageFiles(formData: FormData) {
@@ -22,14 +21,14 @@ export async function createCampaignAction(formData: FormData) {
     redirect("/admin/campaigns?error=invalid");
   }
 
-  await prisma.campaign.create({
-    data: {
+  await apiFetch("/admin/campaigns", {
+    method: "POST",
+    body: JSON.stringify({
       title,
-      slug: slugifyProductName(title),
       description: description || null,
       imageUrl: images[0]?.url ?? null,
       isActive: formData.get("isActive") === "on"
-    }
+    })
   });
 
   revalidatePath("/");
@@ -43,15 +42,14 @@ export async function updateCampaignAction(campaignId: string, formData: FormDat
   const description = String(formData.get("description") ?? "").trim();
   const images = await saveUploadedImages(imageFiles(formData), title, "categories");
 
-  await prisma.campaign.update({
-    where: { id: campaignId },
-    data: {
+  await apiFetch(`/admin/campaigns/${campaignId}`, {
+    method: "PATCH",
+    body: JSON.stringify({
       title,
-      slug: slugifyProductName(title),
       description: description || null,
-      ...(images[0] ? { imageUrl: images[0].url } : {}),
+      imageUrl: images[0]?.url ?? null,
       isActive: formData.get("isActive") === "on"
-    }
+    })
   });
 
   revalidatePath("/");

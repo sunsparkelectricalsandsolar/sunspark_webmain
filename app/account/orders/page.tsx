@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { requireCustomer } from "@/lib/auth/guards";
-import { prisma } from "@/lib/db";
+import { apiFetch, toQueryString } from "@/lib/api/client";
 import { formatMoney } from "@/lib/money";
+import type { Order } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +34,7 @@ export default async function OrdersPage() {
 
 async function getOrders(userId: string, email: string) {
   try {
-    return prisma.order.findMany({ where: { OR: [{ userId }, { userId: null, customerEmail: email }] }, orderBy: { createdAt: "desc" } });
+    return apiFetch<Order[]>(`/orders${toQueryString({ userId, email })}`);
   } catch {
     return [];
   }

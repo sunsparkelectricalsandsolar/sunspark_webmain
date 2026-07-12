@@ -1,13 +1,13 @@
 import { AdminLayout } from "@/components/admin/admin-layout";
-import { PaymentMethod, PaymentStatus } from "@/lib/generated/prisma";
+import type { Order, PaymentMethod, PaymentStatus } from "@/lib/types";
 import { requireAdmin } from "@/lib/auth/guards";
-import { prisma } from "@/lib/db";
+import { apiFetch, toQueryString } from "@/lib/api/client";
 import { formatMoney } from "@/lib/money";
 import { updateOrderAction } from "../orders/actions";
 
 export const dynamic = "force-dynamic";
-const paymentMethods = Object.values(PaymentMethod);
-const paymentStatuses = Object.values(PaymentStatus);
+const paymentMethods: PaymentMethod[] = ["WHATSAPP", "MPESA", "CASH"];
+const paymentStatuses: PaymentStatus[] = ["UNPAID", "PENDING", "PAID", "FAILED", "REFUNDED"];
 
 export default async function AdminPaymentsPage({
   searchParams
@@ -84,28 +84,11 @@ export default async function AdminPaymentsPage({
 async function getPaymentOrders(input: { q?: string; paymentStatus?: string; method?: string }) {
   const terms = input.q?.trim().split(/\s+/).filter(Boolean) ?? [];
   try {
-    return prisma.order.findMany({
-      where: {
-        ...(terms.length
-          ? {
-              AND: terms.map((term) => ({
-                OR: [
-                  { orderNumber: { contains: term } },
-                  { customerName: { contains: term } },
-                  { customerEmail: { contains: term } },
-                  { customerPhone: { contains: term } }
-                ]
-              }))
-            }
-          : {}),
-        ...(paymentMethods.includes(input.method as PaymentMethod) ? { paymentMethod: input.method as PaymentMethod } : {}),
-        ...(paymentStatuses.includes(input.paymentStatus as PaymentStatus)
-          ? { paymentStatus: input.paymentStatus as PaymentStatus }
-          : {})
-      },
-      orderBy: { createdAt: "desc" },
-      take: 100
-    });
+    const orders = await apiFetch<Order[]>(`/admin/orders${toQueryString({
+      q: terms.join(" "),
+      paymentStatus: paymentStatuses.includes(input.paymentStatus as PaymentStatus) ? input.paymentStatus : undefined
+    })}`);
+    return orders.filter((order) => paymentMethods.includes(input.method as PaymentMethod) ? order.paymentMethod === input.method : true);
   } catch {
     return [];
   }
