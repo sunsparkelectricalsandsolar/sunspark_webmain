@@ -1,7 +1,8 @@
 deployment:
   tasks:
-    - /bin/bash -lc 'source "$HOME/nodevenv/sunspark/20/bin/activate" && export NODE_ENV=production NPM_CONFIG_PRODUCTION=false && rm -rf .next && npm ci --omit=dev --no-audit --no-fund'
+    - /bin/bash -lc 'source "$HOME/nodevenv/sunspark/20/bin/activate" && export NODE_ENV=production NPM_CONFIG_PRODUCTION=false && rm -rf .next && npm install --omit=dev --no-audit --no-fund --legacy-peer-deps --prefer-offline --maxsockets=1'
     - /bin/bash -lc 'source "$HOME/nodevenv/sunspark/20/bin/activate" && export NODE_ENV=production && npx prisma generate'
     - /bin/bash -lc 'source "$HOME/nodevenv/sunspark/20/bin/activate" && export NODE_ENV=production && npx prisma db push'
+    - /bin/bash -lc 'source "$HOME/nodevenv/sunspark/20/bin/activate" && export NODE_ENV=production && npm run seed'
     - /bin/bash -lc 'source "$HOME/nodevenv/sunspark/20/bin/activate" && export NODE_ENV=production && npm run build'
     - mkdir -p tmp && touch tmp/restart.txt

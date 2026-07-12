@@ -122,12 +122,13 @@ export NPM_CONFIG_PRODUCTION=false
 
 echo "==> Installing production/build dependencies"
 rm -rf .next
-npm ci --omit=dev --no-audit --no-fund
+npm install --omit=dev --no-audit --no-fund --legacy-peer-deps --prefer-offline --maxsockets=1
 
 echo "==> Preparing Prisma"
 node -e 'require.resolve("dotenv/config"); console.log("dotenv/config ok")'
 npx prisma generate
 npx prisma db push
+npm run seed
 
 if [ -n "$IMPORT_SQL" ]; then
   if [ ! -f "$IMPORT_SQL" ]; then

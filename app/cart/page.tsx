@@ -33,16 +33,37 @@ export default async function CartPage() {
                         <span>No image</span>
                       )}
                     </Link>
-                    <div>
-                      <h2>{item.product.name}</h2>
-                      <p>{formatMoney(item.product.priceCents)}</p>
+                    <div className="cart-item-main">
+                      <Link href={`/product/${item.product.slug}`}>
+                        <h2>{item.product.name}</h2>
+                      </Link>
+                      <p>
+                        <span>{formatMoney(item.product.priceCents)}</span>
+                        <small> each</small>
+                      </p>
                     </div>
-                    <form action={updateCartAction} className="cart-qty">
+                    <div className="cart-stepper" aria-label={`Quantity for ${item.product.name}`}>
+                      <form action={updateCartAction}>
+                        <input name="slug" type="hidden" value={item.product.slug} />
+                        <input name="quantity" type="hidden" value={Math.max(0, item.quantity - 1)} />
+                        <PendingButton aria-label={`Reduce ${item.product.name}`} pendingText="...">-</PendingButton>
+                      </form>
+                      <strong>{item.quantity}</strong>
+                      <form action={updateCartAction}>
+                        <input name="slug" type="hidden" value={item.product.slug} />
+                        <input name="quantity" type="hidden" value={item.quantity + 1} />
+                        <PendingButton aria-label={`Add one ${item.product.name}`} pendingText="...">+</PendingButton>
+                      </form>
+                    </div>
+                    <div className="cart-line-total">
+                      <span>Total</span>
+                      <strong>{formatMoney(item.lineTotalCents)}</strong>
+                    </div>
+                    <form action={updateCartAction} className="cart-remove">
                       <input name="slug" type="hidden" value={item.product.slug} />
-                      <input min="0" name="quantity" type="number" defaultValue={item.quantity} />
-                      <PendingButton className="" pendingText="Updating...">Update</PendingButton>
+                      <input name="quantity" type="hidden" value="0" />
+                      <PendingButton pendingText="Removing...">Remove</PendingButton>
                     </form>
-                    <strong>{formatMoney(item.lineTotalCents)}</strong>
                   </article>
                 );
               })}

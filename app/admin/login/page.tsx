@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PendingButton } from "@/components/ui/pending-button";
 import { prisma } from "@/lib/db";
@@ -20,7 +21,7 @@ async function adminLoginAction(formData: FormData) {
   redirect(next || "/admin");
 }
 
-export default async function AdminLoginPage({ searchParams }: { searchParams?: Promise<{ error?: string; next?: string }> }) {
+export default async function AdminLoginPage({ searchParams }: { searchParams?: Promise<{ error?: string; next?: string; reset?: string }> }) {
   const params = await searchParams;
   const next = safeAdminPath(params?.next ?? "");
   return (
@@ -41,6 +42,10 @@ export default async function AdminLoginPage({ searchParams }: { searchParams?: 
           <PendingButton pendingText="Signing in...">Sign in</PendingButton>
         </form>
         {params?.error ? <p className="form-error" role="alert">Invalid admin credentials.</p> : null}
+        {params?.reset ? <p className="form-success" role="status">Password updated. You can sign in now.</p> : null}
+        <div className="auth-links">
+          <Link href="/forgot-password">Forgot password?</Link>
+        </div>
       </div>
     </section>
   );

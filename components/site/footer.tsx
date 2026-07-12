@@ -14,8 +14,8 @@ export function Footer() {
         </section>
         <section>
           <h2>Shop</h2>
-          <Link href="/category/electricals">Electricals</Link>
           <Link href="/category/solar">Solar</Link>
+          <Link href="/category/electricals">Electricals</Link>
           <Link href="/category/electronics">Electronics</Link>
         </section>
         <section>

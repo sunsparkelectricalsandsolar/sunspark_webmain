@@ -16,6 +16,12 @@ const categoryInclude = {
   }
 };
 
+function storefrontCategoryRank(slug: string) {
+  const order = ["solar", "electricals", "electronics"];
+  const rank = order.indexOf(slug);
+  return rank === -1 ? order.length : rank;
+}
+
 async function withFallback<T>(query: Promise<T>, fallback: T): Promise<T> {
   try {
     return await Promise.race([
@@ -74,21 +80,19 @@ export async function getHomeData() {
 
   return {
     categories: categories.sort((a, b) => {
-      const order = ["solar", "electricals", "electronics"];
-      return order.indexOf(a.slug) - order.indexOf(b.slug);
+      return storefrontCategoryRank(a.slug) - storefrontCategoryRank(b.slug);
     }),
     products,
     categorySections: categorySections
       .sort((a, b) => {
-        const order = ["solar", "electricals", "electronics"];
-        return order.indexOf(a.slug) - order.indexOf(b.slug);
+        return storefrontCategoryRank(a.slug) - storefrontCategoryRank(b.slug);
       }),
     brands: brands.flatMap((item) => item.brand ? [item.brand] : [])
   };
 }
 
 export async function getStoreCategories() {
-  return withFallback(
+  const categories = await withFallback(
     prisma.category.findMany({
       where: { parentId: null, isActive: true },
       include: categoryInclude,
@@ -96,6 +100,8 @@ export async function getStoreCategories() {
     }),
     []
   );
+
+  return categories.sort((a, b) => storefrontCategoryRank(a.slug) - storefrontCategoryRank(b.slug));
 }
 
 export async function getStoreProducts(input: { q?: string; category?: string }) {

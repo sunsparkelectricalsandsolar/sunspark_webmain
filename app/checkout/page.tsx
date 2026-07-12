@@ -2,14 +2,22 @@ import { checkoutAction } from "@/app/checkout/actions";
 import { LocationPicker } from "@/components/site/location-picker";
 import { PendingButton } from "@/components/ui/pending-button";
 import { preventAdminShopping } from "@/lib/auth/guards";
+import { getSession } from "@/lib/auth/session";
 import { getCart } from "@/lib/cart/cart-service";
+import { prisma } from "@/lib/db";
 import { formatMoney } from "@/lib/money";
 
 export const dynamic = "force-dynamic";
 
 export default async function CheckoutPage() {
   await preventAdminShopping();
-  const cart = await getCart();
+  const [cart, session] = await Promise.all([getCart(), getSession()]);
+  const customer = session
+    ? await prisma.user.findUnique({
+        where: { id: session.id },
+        select: { name: true, email: true, phone: true }
+      })
+    : null;
 
   return (
     <section className="section">
@@ -21,15 +29,15 @@ export default async function CheckoutPage() {
           <form action={checkoutAction} className="admin-form">
             <label>
               Name
-              <input name="customerName" required />
+              <input name="customerName" defaultValue={customer?.name ?? ""} required />
             </label>
             <label>
               Email
-              <input name="customerEmail" type="email" required />
+              <input name="customerEmail" defaultValue={customer?.email ?? ""} type="email" required />
             </label>
             <label>
               Phone
-              <input name="customerPhone" />
+              <input name="customerPhone" defaultValue={customer?.phone ?? ""} />
             </label>
             <label>
               Delivery note

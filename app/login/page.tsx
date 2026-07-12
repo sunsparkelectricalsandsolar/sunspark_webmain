@@ -25,7 +25,7 @@ async function loginAction(formData: FormData) {
   redirect(next || "/account");
 }
 
-export default async function LoginPage({ searchParams }: { searchParams?: Promise<{ error?: string; next?: string }> }) {
+export default async function LoginPage({ searchParams }: { searchParams?: Promise<{ error?: string; next?: string; reset?: string }> }) {
   const params = await searchParams;
   const next = safeCustomerPath(params?.next ?? "");
   return (
@@ -46,7 +46,11 @@ export default async function LoginPage({ searchParams }: { searchParams?: Promi
           <PendingButton pendingText="Signing in...">Sign in</PendingButton>
         </form>
         {params?.error ? <p className="form-error" role="alert">Invalid email or password.</p> : null}
-        <Link href="/register">Create an account</Link>
+        {params?.reset ? <p className="form-success" role="status">Password updated. You can sign in now.</p> : null}
+        <div className="auth-links">
+          <Link href="/forgot-password">Forgot password?</Link>
+          <Link href="/register">Create an account</Link>
+        </div>
       </div>
     </section>
   );

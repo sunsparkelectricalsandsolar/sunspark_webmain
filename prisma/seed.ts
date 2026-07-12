@@ -7,16 +7,27 @@ import { siteConfig } from "../lib/site-config";
 
 async function main() {
   const passwordHash = await bcrypt.hash("Password", 12);
+  const resetAdminPassword = process.env.RESET_ADMIN_PASSWORD === "true";
+  const adminUpdate: {
+    name: string;
+    email: string;
+    role: UserRole;
+    phone: string;
+    passwordHash?: string;
+  } = {
+    name: "Sunspark Admin",
+    email: siteConfig.adminEmail,
+    role: UserRole.ADMIN,
+    phone: siteConfig.phone
+  };
+
+  if (resetAdminPassword) {
+    adminUpdate.passwordHash = passwordHash;
+  }
 
   await prisma.user.upsert({
     where: { email: siteConfig.adminEmail },
-    update: {
-      name: "Sunspark Admin",
-      email: siteConfig.adminEmail,
-      passwordHash,
-      role: UserRole.ADMIN,
-      phone: siteConfig.phone
-    },
+    update: adminUpdate,
     create: {
       name: "Sunspark Admin",
       email: siteConfig.adminEmail,

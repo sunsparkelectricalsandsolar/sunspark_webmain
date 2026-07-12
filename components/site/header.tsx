@@ -48,11 +48,19 @@ export async function Header() {
           </form>
           <nav aria-label="Shop actions" className="header-actions">
             <Link aria-label="Wishlist" className="icon-link wishlist-link" href="/wishlist">
-              <span aria-hidden="true">W</span>
+              <span aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false">
+                  <path d="M12 20s-7-4.4-9.4-8.3C.6 8.4 2.5 4.5 6.2 4.5c2 0 3.3 1 3.8 2 0.5-1 1.8-2 3.8-2 3.7 0 5.6 3.9 3.6 7.2C19 15.6 12 20 12 20Z" />
+                </svg>
+              </span>
               <strong>Wishlist</strong>
             </Link>
             <Link aria-label={`${cartCount} items in cart`} className="icon-link cart-link" href="/cart">
-              <span aria-hidden="true">C</span>
+              <span aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false">
+                  <path d="M7 18.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Zm10 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3ZM4.2 4H2V2h3.8l1 4H21l-2 8.5H8.2L7.7 16H19v2H6.1L3.9 6 4.2 4Zm3.1 4 .9 4.5h9.2L18.5 8H7.3Z" />
+                </svg>
+              </span>
               <strong>Cart</strong>
               <em aria-hidden="true">{cartCount}</em>
             </Link>

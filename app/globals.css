@@ -161,8 +161,18 @@ textarea {
   border-radius: 50%;
   background: var(--soft);
   color: var(--spark);
-  font-size: 18px;
   line-height: 1;
+}
+
+.icon-link svg {
+  width: 17px;
+  height: 17px;
+  fill: currentColor;
+}
+
+.icon-link:hover > span {
+  background: var(--spark);
+  color: #fff;
 }
 
 .cart-link em {
@@ -241,23 +251,24 @@ textarea {
 }
 
 .site-footer {
-  padding: 42px 0;
+  padding: 28px 0;
   background: #111827;
   color: #fff;
 }
 
 .footer-grid {
   align-items: flex-start;
+  gap: 22px;
 }
 
 .footer-grid section {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .footer-grid h2 {
   margin: 0;
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .auth-section {
@@ -302,6 +313,20 @@ textarea {
 
 .form-error {
   color: #b91c1c;
+  font-weight: 700;
+}
+
+.form-success {
+  color: #047857;
+  font-weight: 700;
+}
+
+.auth-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  align-items: center;
+  margin-top: 12px;
   font-weight: 700;
 }
 
@@ -381,6 +406,7 @@ textarea {
 .support-chat-trigger { min-width: 58px; height: 48px; border: 0; border-radius: 5px; background: var(--green); color: #fff; cursor: pointer; font-weight: 800; box-shadow: 0 8px 24px rgba(21, 128, 61, 0.24); }
 .support-chat-panel { display: grid; gap: 12px; width: min(320px, calc(100vw - 40px)); margin-bottom: 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 18px; box-shadow: 0 16px 38px rgba(17,24,39,0.18); }
 .support-chat-panel p { margin: 0; color: var(--muted); line-height: 1.5; }
+.support-chat-panel small { color: var(--spark); font-weight: 800; line-height: 1.4; }
 .support-chat-close { justify-self: end; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
 
 .location-picker {
@@ -392,6 +418,12 @@ textarea {
   margin: 0;
   color: var(--muted);
   font-size: 13px;
+}
+
+.location-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .category-tile-media,
@@ -697,17 +729,21 @@ textarea {
 
 .cart-row {
   display: grid;
-  grid-template-columns: 88px minmax(0, 1fr) 130px 120px;
-  gap: 16px;
+  grid-template-columns: 84px minmax(0, 1fr) auto auto auto;
+  gap: 14px;
   align-items: center;
   border: 1px solid var(--line);
+  border-radius: 8px;
   padding: 12px;
+  background: #fff;
 }
 
 .cart-thumb {
   position: relative;
   aspect-ratio: 1;
   background: var(--soft);
+  border-radius: 6px;
+  overflow: hidden;
 }
 
 .cart-thumb img {
@@ -720,21 +756,69 @@ textarea {
   font-size: 16px;
 }
 
-.cart-qty {
+.cart-item-main p {
+  margin: 0;
+  font-weight: 800;
+  color: var(--spark);
+}
+
+.cart-item-main small {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.cart-stepper {
   display: flex;
+  align-items: center;
   gap: 6px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--soft);
 }
 
-.cart-qty input {
-  width: 64px;
-  border: 1px solid var(--line);
-  padding: 8px;
+.cart-stepper strong {
+  min-width: 28px;
+  text-align: center;
 }
 
-.cart-qty button {
-  border: 1px solid var(--line);
+.cart-stepper button,
+.cart-remove button {
+  border: 0;
   background: #fff;
   cursor: pointer;
+}
+
+.cart-stepper button {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: var(--spark);
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.cart-line-total {
+  display: grid;
+  gap: 2px;
+  text-align: right;
+}
+
+.cart-line-total span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.cart-remove button {
+  color: #b91c1c;
+  font-weight: 800;
+}
+
+.cart-stepper button:hover,
+.cart-remove button:hover {
+  transform: translateY(-1px);
 }
 
 .invoice-box {
@@ -1814,12 +1898,30 @@ summary:focus-visible {
   }
 
   .cart-row {
-    grid-template-columns: 72px minmax(0, 1fr);
+    grid-template-columns: 68px minmax(0, 1fr) auto;
+    gap: 10px;
   }
 
-  .cart-row > strong,
-  .cart-qty {
-    grid-column: 2;
+  .cart-stepper,
+  .cart-line-total,
+  .cart-remove {
+    grid-column: 2 / -1;
+  }
+
+  .cart-stepper {
+    justify-self: start;
+  }
+
+  .cart-line-total {
+    justify-self: stretch;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-align: left;
+  }
+
+  .cart-remove {
+    justify-self: start;
   }
 }
 
@@ -1931,6 +2033,18 @@ summary:focus-visible {
 
   .section {
     padding: 12px 0;
+  }
+
+  .site-footer {
+    padding: 20px 0;
+  }
+
+  .footer-grid {
+    gap: 14px;
+  }
+
+  .footer-grid section {
+    gap: 4px;
   }
 
   .category-section {

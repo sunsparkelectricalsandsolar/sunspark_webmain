@@ -29,6 +29,7 @@ export async function checkoutAction(formData: FormData) {
         phone: siteConfig.whatsappPhone,
         orderNumber: order.orderNumber,
         customerName: order.customerName,
+        deliveryNote: order.deliveryNote ?? undefined,
         deliveryLocation: order.deliveryLocation ?? undefined,
         deliveryMapUrl: order.deliveryMapUrl ?? undefined,
         totalLabel: formatMoney(order.totalCents),
