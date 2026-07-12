@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   experimental: {
     // Shared hosting has a strict process limit. Keep page-data collection to one worker.
     cpus: 1,
