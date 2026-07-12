@@ -36,6 +36,24 @@ copy_dir_contents() {
   cp -a "$source_dir"/. "$target_dir"/
 }
 
+repair_cloudlinux_node_modules() {
+  modules_target="$NODE_ENV_DIR/lib/node_modules"
+  if [ ! -d "$modules_target" ]; then
+    return
+  fi
+
+  if [ -e "$APP_DIR/node_modules" ] && [ ! -L "$APP_DIR/node_modules" ]; then
+    broken_modules="$BACKUP_ROOT/node_modules-$timestamp"
+    echo "==> Moving non-symlink node_modules to $broken_modules"
+    mv "$APP_DIR/node_modules" "$broken_modules"
+  fi
+
+  if [ ! -e "$APP_DIR/node_modules" ]; then
+    echo "==> Linking CloudLinux node_modules virtualenv"
+    ln -s "$modules_target" "$APP_DIR/node_modules"
+  fi
+}
+
 echo "==> Sunspark deploy started at $timestamp"
 mkdir -p "$BACKUP_ROOT"
 
@@ -97,6 +115,8 @@ if [ -f "$NODE_ENV_DIR/bin/activate" ]; then
   set -u
 fi
 
+repair_cloudlinux_node_modules
+
 export NODE_ENV=production
 export NPM_CONFIG_PRODUCTION=false
 
@@ -105,6 +125,7 @@ rm -rf .next
 npm ci --include=dev
 
 echo "==> Preparing Prisma"
+node -e 'require.resolve("dotenv/config"); console.log("dotenv/config ok")'
 npx prisma generate
 npx prisma db push
 
