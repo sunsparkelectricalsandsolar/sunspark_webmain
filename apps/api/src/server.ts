@@ -171,6 +171,31 @@ function frontendOrigin() {
   return env("FRONTEND_ORIGIN", env("NEXT_PUBLIC_SITE_URL", "http://localhost:3000")).replace(/\/+$/, "");
 }
 
+function routeParam(value: string | string[]) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+async function assertUniqueCategorySlug(slug: string, currentId?: string) {
+  const rows = await query<{ id: string }>("SELECT id FROM categories WHERE slug = ? LIMIT 1", [slug]);
+  if (rows[0] && rows[0].id !== currentId) {
+    throw new HttpError(409, "A category with that name already exists.");
+  }
+}
+
+async function assertUniqueProductSlugAndSku(slug: string, sku?: string | null, currentId?: string) {
+  const slugRows = await query<{ id: string }>("SELECT id FROM products WHERE slug = ? LIMIT 1", [slug]);
+  if (slugRows[0] && slugRows[0].id !== currentId) {
+    throw new HttpError(409, "A product with that name already exists.");
+  }
+
+  if (sku) {
+    const skuRows = await query<{ id: string }>("SELECT id FROM products WHERE sku = ? LIMIT 1", [sku]);
+    if (skuRows[0] && skuRows[0].id !== currentId) {
+      throw new HttpError(409, "A product with that SKU already exists.");
+    }
+  }
+}
+
 async function imagesForProducts(productIds: string[]) {
   if (!productIds.length) return new Map<string, ImageRow[]>();
   const rows = await query<ImageRow>(
@@ -484,6 +509,7 @@ app.post("/admin/categories", asyncRoute(async (request, response) => {
     isActive: z.boolean().default(true),
     images: z.array(z.object({ url: z.string(), alt: z.string().optional().nullable(), isPrimary: z.boolean(), sortOrder: z.number().int() })).default([])
   }).parse(request.body);
+  await assertUniqueCategorySlug(input.slug);
   const categoryId = id("cat");
   await transaction(async (connection) => {
     await connection.query(
@@ -511,6 +537,7 @@ app.patch("/admin/categories/:id", asyncRoute(async (request, response) => {
     deleteImageIds: z.array(z.string()).default([]),
     primaryImageId: z.string().optional().nullable()
   }).parse(request.body);
+  await assertUniqueCategorySlug(input.slug, routeParam(request.params.id));
   await transaction(async (connection) => {
     await connection.query(
       "UPDATE categories SET name = ?, slug = ?, description = ?, sort_order = ?, is_active = ? WHERE id = ?",
@@ -541,6 +568,17 @@ app.patch("/admin/categories/:id", asyncRoute(async (request, response) => {
 app.patch("/admin/categories/:id/hide", asyncRoute(async (request, response) => {
   await execute("UPDATE categories SET is_active = FALSE WHERE id = ?", [request.params.id]);
   response.json({ ok: true });
+}));
+
+app.delete("/admin/categories/:id", asyncRoute(async (request, response) => {
+  const productRows = await query<{ count: number }>("SELECT COUNT(*) AS count FROM products WHERE category_id = ?", [request.params.id]);
+  if (Number(productRows[0]?.count ?? 0) > 0) {
+    throw new HttpError(409, "Move or delete this category's products before deleting the category.");
+  }
+
+  const result = await execute("DELETE FROM categories WHERE id = ?", [request.params.id]) as { affectedRows?: number };
+  if (!result.affectedRows) throw new HttpError(404, "Category not found.");
+  response.status(204).send();
 }));
 
 app.post("/admin/uploads", asyncRoute(async (request, response) => {
@@ -601,6 +639,7 @@ app.post("/admin/products", asyncRoute(async (request, response) => {
     seoKeywords: z.string().optional().nullable(),
     images: z.array(z.object({ url: z.string(), alt: z.string().optional().nullable(), isPrimary: z.boolean(), sortOrder: z.number().int() })).default([])
   }).parse(request.body);
+  await assertUniqueProductSlugAndSku(input.slug, input.sku);
   const productId = id("prd");
   await transaction(async (connection) => {
     await connection.query(
@@ -651,6 +690,7 @@ app.patch("/admin/products/:id", asyncRoute(async (request, response) => {
     deleteImageIds: z.array(z.string()).default([]),
     primaryImageId: z.string().optional().nullable()
   }).parse(request.body);
+  await assertUniqueProductSlugAndSku(input.slug, input.sku, routeParam(request.params.id));
   await transaction(async (connection) => {
     await connection.query(
       `UPDATE products SET name = ?, slug = ?, sku = ?, brand = ?, category_id = ?, short_description = ?,
@@ -690,6 +730,17 @@ app.patch("/admin/products/:id", asyncRoute(async (request, response) => {
 app.patch("/admin/products/:id/hide", asyncRoute(async (request, response) => {
   await execute("UPDATE products SET is_active = FALSE WHERE id = ?", [request.params.id]);
   response.json({ ok: true });
+}));
+
+app.delete("/admin/products/:id", asyncRoute(async (request, response) => {
+  const draftRows = await query<{ count: number }>("SELECT COUNT(*) AS count FROM draft_document_items WHERE product_id = ?", [request.params.id]);
+  if (Number(draftRows[0]?.count ?? 0) > 0) {
+    throw new HttpError(409, "This product is used on an invoice or quotation. Hide it instead, or remove it from those documents first.");
+  }
+
+  const result = await execute("DELETE FROM products WHERE id = ?", [request.params.id]) as { affectedRows?: number };
+  if (!result.affectedRows) throw new HttpError(404, "Product not found.");
+  response.status(204).send();
 }));
 
 app.post("/admin/campaigns", asyncRoute(async (request, response) => {

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { CategoryForm } from "@/components/admin/category-form";
-import { createCategoryAction, deleteCategoryAction } from "@/app/admin/categories/actions";
+import { createCategoryAction, deleteCategoryAction, hideCategoryAction } from "@/app/admin/categories/actions";
 import { requireAdmin } from "@/lib/auth/guards";
 import { apiFetch, toQueryString } from "@/lib/api/client";
 import type { Category } from "@/lib/types";
@@ -14,7 +14,10 @@ const messages: Record<string, string> = {
   invalid: "Enter a category name with at least two characters.",
   save: "The category could not be saved. Please review the form and try again.",
   saved: "Category saved successfully.",
-  hidden: "Category hidden from the storefront."
+  hidden: "Category hidden from the storefront.",
+  deleted: "Category deleted.",
+  delete: "The category could not be deleted. Please try again.",
+  "delete-linked": "Move or delete this category's products before deleting the category."
 };
 
 export default async function AdminCategoriesPage({
@@ -57,10 +60,13 @@ export default async function AdminCategoriesPage({
             <span className="table-actions">
               <Link className="table-link" href={`/admin/categories/${category.id}/edit`}>Edit</Link>
               {category.isActive ? (
-                <form action={deleteCategoryAction.bind(null, category.id)}>
+                <form action={hideCategoryAction.bind(null, category.id)}>
                   <button type="submit">Hide</button>
                 </form>
               ) : null}
+              <form action={deleteCategoryAction.bind(null, category.id)}>
+                <button className="danger-btn" disabled={category._count.products > 0} title={category._count.products > 0 ? "Move or delete products first" : "Delete category"} type="submit">Delete</button>
+              </form>
             </span>
           </div>
         ))}

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { apiFetch } from "@/lib/api/client";
+import { apiFetch, ApiError } from "@/lib/api/client";
 import { requireAdmin } from "@/lib/auth/guards";
 import { saveProductImages } from "@/lib/uploads/product-images";
 import { productInputSchema, slugifyProductName } from "@/lib/products/validation";
@@ -50,14 +50,19 @@ export async function createProductAction(formData: FormData) {
   const images = await saveProductImages(getImageFiles(formData), input.name);
   const slug = slugifyProductName(input.name);
 
-  await apiFetch("/admin/products", {
-    method: "POST",
-    body: JSON.stringify({
-      ...input,
-      slug,
-      images: images.map((image, index) => ({ ...image, isPrimary: index === 0, sortOrder: index }))
-    })
-  });
+  try {
+    await apiFetch("/admin/products", {
+      method: "POST",
+      body: JSON.stringify({
+        ...input,
+        slug,
+        images: images.map((image, index) => ({ ...image, isPrimary: index === 0, sortOrder: index }))
+      })
+    });
+  } catch (error) {
+    if (!(error instanceof ApiError)) throw error;
+    redirect(`/admin/products/new?error=${error.status === 409 ? "duplicate" : "save"}`);
+  }
 
   revalidatePath("/");
   revalidatePath("/store");
@@ -71,16 +76,21 @@ export async function updateProductAction(productId: string, formData: FormData)
   const images = await saveProductImages(getImageFiles(formData), input.name);
   const primaryImageId = String(formData.get("primaryImageId") ?? "");
   const deleteImageIds = getDeleteImageIds(formData);
-  await apiFetch(`/admin/products/${productId}`, {
-    method: "PATCH",
-    body: JSON.stringify({
-      ...input,
-      slug: slugifyProductName(input.name),
-      images,
-      deleteImageIds,
-      primaryImageId: primaryImageId || null
-    })
-  });
+  try {
+    await apiFetch(`/admin/products/${productId}`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        ...input,
+        slug: slugifyProductName(input.name),
+        images,
+        deleteImageIds,
+        primaryImageId: primaryImageId || null
+      })
+    });
+  } catch (error) {
+    if (!(error instanceof ApiError)) throw error;
+    redirect(`/admin/products/${productId}/edit?error=${error.status === 409 ? "duplicate" : "save"}`);
+  }
 
   revalidatePath("/");
   revalidatePath("/store");
@@ -90,9 +100,24 @@ export async function updateProductAction(productId: string, formData: FormData)
 export async function deleteProductAction(productId: string) {
   await requireAdmin();
 
+  try {
+    await apiFetch(`/admin/products/${productId}`, { method: "DELETE" });
+  } catch (error) {
+    if (!(error instanceof ApiError)) throw error;
+    redirect(`/admin/products?error=${error.status === 409 ? "delete-linked" : "delete"}`);
+  }
+
+  revalidatePath("/");
+  revalidatePath("/store");
+  redirect("/admin/products?notice=deleted");
+}
+
+export async function hideProductAction(productId: string) {
+  await requireAdmin();
+
   await apiFetch(`/admin/products/${productId}/hide`, { method: "PATCH" });
 
   revalidatePath("/");
   revalidatePath("/store");
-  redirect("/admin/products");
+  redirect("/admin/products?notice=hidden");
 }

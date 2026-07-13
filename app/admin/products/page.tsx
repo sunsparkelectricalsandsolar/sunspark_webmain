@@ -4,15 +4,22 @@ import { requireAdmin } from "@/lib/auth/guards";
 import { apiFetch, toQueryString } from "@/lib/api/client";
 import { productUrl } from "@/lib/merchant/feed";
 import { formatMoney } from "@/lib/money";
-import { deleteProductAction } from "./actions";
+import { deleteProductAction, hideProductAction } from "./actions";
 import type { Category, Product } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
+const messages: Record<string, string> = {
+  deleted: "Product deleted.",
+  hidden: "Product hidden from the storefront.",
+  delete: "The product could not be deleted. Please try again.",
+  "delete-linked": "This product is used on an invoice or quotation. Hide it instead, or remove it from those documents first."
+};
+
 export default async function AdminProductsPage({
   searchParams
 }: {
-  searchParams?: Promise<{ q?: string; category?: string; status?: string }>;
+  searchParams?: Promise<{ q?: string; category?: string; status?: string; error?: string; notice?: string }>;
 }) {
   await requireAdmin();
   const params = await searchParams;
@@ -22,6 +29,7 @@ export default async function AdminProductsPage({
     status: params?.status
   });
   const categories = await getCategories();
+  const feedback = params?.error ? messages[params.error] : params?.notice ? messages[params.notice] : null;
 
   return (
     <AdminLayout
@@ -33,6 +41,7 @@ export default async function AdminProductsPage({
         </Link>
       }
     >
+        {feedback ? <p className={params?.error ? "admin-feedback error" : "admin-feedback success"} role="status">{feedback}</p> : null}
         <form action="/admin/products" className="admin-filter">
           <input name="q" defaultValue={params?.q ?? ""} placeholder="Search product, SKU, description..." />
           <select name="category" defaultValue={params?.category ?? ""}>
@@ -69,10 +78,13 @@ export default async function AdminProductsPage({
                 <Link href={`/admin/products/${product.id}/edit`}>Edit</Link>
                 <a href={productUrl(product.slug)} rel="noreferrer" target="_blank">Merchant</a>
                 {product.isActive ? (
-                  <form action={deleteProductAction.bind(null, product.id)}>
+                  <form action={hideProductAction.bind(null, product.id)}>
                     <button type="submit" title="Hide from customers without deleting order history">Hide</button>
                   </form>
                 ) : null}
+                <form action={deleteProductAction.bind(null, product.id)}>
+                  <button className="danger-btn" type="submit">Delete</button>
+                </form>
               </span>
             </div>
           ))}

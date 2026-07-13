@@ -47,7 +47,7 @@ export async function createCategoryAction(formData: FormData) {
     });
   } catch (error) {
     if (!(error instanceof ApiError)) throw error;
-    redirect("/admin/categories?error=duplicate");
+    redirect(`/admin/categories?error=${error.status === 409 ? "duplicate" : "save"}`);
   }
 
   revalidatePath("/");
@@ -90,7 +90,7 @@ export async function updateCategoryAction(categoryId: string, formData: FormDat
     });
   } catch (error) {
     if (!(error instanceof ApiError)) throw error;
-    redirect(`/admin/categories/${categoryId}/edit?error=duplicate`);
+    redirect(`/admin/categories/${categoryId}/edit?error=${error.status === 409 ? "duplicate" : "save"}`);
   }
 
   revalidatePath("/");
@@ -100,6 +100,22 @@ export async function updateCategoryAction(categoryId: string, formData: FormDat
 }
 
 export async function deleteCategoryAction(categoryId: string) {
+  await requireAdmin();
+
+  try {
+    await apiFetch(`/admin/categories/${categoryId}`, { method: "DELETE" });
+  } catch (error) {
+    if (!(error instanceof ApiError)) throw error;
+    redirect(`/admin/categories?error=${error.status === 409 ? "delete-linked" : "delete"}`);
+  }
+
+  revalidatePath("/");
+  revalidatePath("/store");
+  revalidatePath("/admin/categories");
+  redirect("/admin/categories?notice=deleted");
+}
+
+export async function hideCategoryAction(categoryId: string) {
   await requireAdmin();
 
   await apiFetch(`/admin/categories/${categoryId}/hide`, { method: "PATCH" });

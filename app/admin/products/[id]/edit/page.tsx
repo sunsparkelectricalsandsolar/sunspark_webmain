@@ -8,9 +8,21 @@ import { updateProductAction } from "../../actions";
 
 export const dynamic = "force-dynamic";
 
-export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
+const messages: Record<string, string> = {
+  duplicate: "A product with that name or SKU already exists.",
+  save: "The product could not be saved. Please try again."
+};
+
+export default async function EditProductPage({
+  params,
+  searchParams
+}: {
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<{ error?: string }>;
+}) {
   await requireAdmin();
   const { id } = await params;
+  const query = await searchParams;
   const [product, categories] = await Promise.all([getProduct(id), getCategories()]);
 
   if (!product) {
@@ -20,6 +32,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
   return (
     <AdminLayout title="Edit Product" subtitle={product.name}>
       <div className="admin-shell narrow">
+        {query?.error && messages[query.error] ? <p className="admin-feedback error" role="alert">{messages[query.error]}</p> : null}
         <ProductForm action={updateProductAction.bind(null, product.id)} categories={categories} product={product} />
       </div>
     </AdminLayout>

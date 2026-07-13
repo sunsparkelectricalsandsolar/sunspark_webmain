@@ -11,7 +11,8 @@ export const dynamic = "force-dynamic";
 const messages: Record<string, string> = {
   duplicate: "A category with that name already exists. Choose a different name.",
   image: "The image could not be uploaded. Use a JPEG, PNG, or WebP below 2 MB.",
-  invalid: "Enter a category name with at least two characters."
+  invalid: "Enter a category name with at least two characters.",
+  save: "The category could not be saved. Please try again."
 };
 
 export default async function EditCategoryPage({
