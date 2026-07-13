@@ -20,6 +20,18 @@ app.use("/uploads", express.static(uploadRoot, { maxAge: "30d", immutable: true 
 function truthy(value) {
     return value === true || value === 1;
 }
+function apiPublicBase() {
+    return env("API_PUBLIC_URL", env("NEXT_PUBLIC_API_URL", "http://localhost:4000")).replace(/\/+$/, "");
+}
+function publicImageUrl(url) {
+    if (/^https?:\/\//i.test(url) || url.startsWith("data:"))
+        return url;
+    if (url.startsWith("/uploads/"))
+        return `${apiPublicBase()}${url}`;
+    if (url.startsWith("uploads/"))
+        return `${apiPublicBase()}/${url}`;
+    return url;
+}
 function mapCategory(row, images = [], products = [], children = []) {
     return {
         id: row.id,
@@ -34,7 +46,7 @@ function mapCategory(row, images = [], products = [], children = []) {
         images: images.map((image) => ({
             id: image.id,
             categoryId: image.category_id,
-            url: image.url,
+            url: publicImageUrl(image.url),
             alt: image.alt,
             isPrimary: truthy(image.is_primary),
             sortOrder: image.sort_order,
@@ -87,7 +99,7 @@ function mapProduct(row, images = []) {
         images: images.map((image) => ({
             id: image.id,
             productId: image.product_id,
-            url: image.url,
+            url: publicImageUrl(image.url),
             alt: image.alt,
             isPrimary: truthy(image.is_primary),
             sortOrder: image.sort_order,

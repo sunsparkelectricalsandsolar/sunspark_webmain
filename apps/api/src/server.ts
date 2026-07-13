@@ -74,6 +74,17 @@ function truthy(value: 0 | 1 | boolean) {
   return value === true || value === 1;
 }
 
+function apiPublicBase() {
+  return env("API_PUBLIC_URL", env("NEXT_PUBLIC_API_URL", "http://localhost:4000")).replace(/\/+$/, "");
+}
+
+function publicImageUrl(url: string) {
+  if (/^https?:\/\//i.test(url) || url.startsWith("data:")) return url;
+  if (url.startsWith("/uploads/")) return `${apiPublicBase()}${url}`;
+  if (url.startsWith("uploads/")) return `${apiPublicBase()}/${url}`;
+  return url;
+}
+
 function mapCategory(row: CategoryRow, images: ImageRow[] = [], products: unknown[] = [], children: unknown[] = []) {
   return {
     id: row.id,
@@ -88,7 +99,7 @@ function mapCategory(row: CategoryRow, images: ImageRow[] = [], products: unknow
     images: images.map((image) => ({
       id: image.id,
       categoryId: image.category_id,
-      url: image.url,
+      url: publicImageUrl(image.url),
       alt: image.alt,
       isPrimary: truthy(image.is_primary),
       sortOrder: image.sort_order,
@@ -142,7 +153,7 @@ function mapProduct(row: ProductRow, images: ImageRow[] = []) {
     images: images.map((image) => ({
       id: image.id,
       productId: image.product_id,
-      url: image.url,
+      url: publicImageUrl(image.url),
       alt: image.alt,
       isPrimary: truthy(image.is_primary),
       sortOrder: image.sort_order,
