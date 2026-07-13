@@ -1,8 +1,10 @@
 import { existsSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
-function loadEnvFile() {
-  const envPath = resolve(process.cwd(), ".env");
+const here = dirname(fileURLToPath(import.meta.url));
+
+function loadEnvFile(envPath: string) {
   if (!existsSync(envPath)) return;
 
   for (const line of readFileSync(envPath, "utf8").split(/\r?\n/)) {
@@ -20,7 +22,14 @@ function loadEnvFile() {
   }
 }
 
-loadEnvFile();
+[
+  resolve(process.cwd(), ".env"),
+  resolve(process.cwd(), "../.env"),
+  resolve(process.cwd(), "../../.env"),
+  resolve(here, "../.env"),
+  resolve(here, "../../.env"),
+  resolve(here, "../../../.env")
+].forEach(loadEnvFile);
 
 export function env(name: string, fallback = "") {
   return process.env[name] ?? fallback;

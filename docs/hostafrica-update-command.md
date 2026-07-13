@@ -14,6 +14,13 @@ cd ~/sunspark
 INSTALL_DEPS=1 RUN_SEED=1 bash docs/hostafrica-deploy.sh
 ```
 
+If the database already has the old Prisma tables and you want to copy those products/categories/users into the new backend tables, run this once:
+
+```bash
+cd ~/sunspark
+RUN_LEGACY_IMPORT=1 bash docs/hostafrica-deploy.sh
+```
+
 Daily update after pushing code:
 
 ```bash

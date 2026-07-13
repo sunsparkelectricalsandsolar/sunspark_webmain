@@ -13,6 +13,7 @@ NODE_ENV_DIR="${NODE_ENV_DIR:-$HOME/nodevenv/sunspark/20}"
 INSTALL_DEPS="${INSTALL_DEPS:-0}"
 RUN_MIGRATE="${RUN_MIGRATE:-1}"
 RUN_SEED="${RUN_SEED:-0}"
+RUN_LEGACY_IMPORT="${RUN_LEGACY_IMPORT:-0}"
 
 echo "==> Pulling Sunspark backend"
 if [ ! -d "$APP_DIR/.git" ]; then
@@ -52,6 +53,11 @@ fi
 if [ "$RUN_SEED" = "1" ]; then
   echo "==> Seeding admin/categories/settings"
   npm run seed
+fi
+
+if [ "$RUN_LEGACY_IMPORT" = "1" ]; then
+  echo "==> Importing existing Prisma-table data into SQL API tables"
+  npm run import:legacy
 fi
 
 echo "==> Building backend"

@@ -16,6 +16,15 @@ cd ~/sunspark/apps/api
 npm run seed
 ```
 
+If this database already contains the old Prisma tables such as `product`, `category`, `user`, and `productimage`, copy them into the new backend tables:
+
+```bash
+cd ~/sunspark/apps/api
+npm run import:legacy
+```
+
+This import is non-destructive: it does not drop old tables.
+
 To copy local data to live, export the local MySQL database and import it on HostAfrica:
 
 ```powershell
