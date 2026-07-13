@@ -125,6 +125,10 @@ export type Campaign = {
   title: string;
   description: string | null;
   imageUrl: string | null;
+  badge: string | null;
+  offerLabel: string | null;
+  ctaLabel: string | null;
+  ctaUrl: string | null;
   isActive: boolean;
   startsAt: string | Date | null;
   endsAt: string | Date | null;

@@ -1,5 +1,5 @@
 import { apiFetch, toQueryString } from "@/lib/api/client";
-import type { Category, Product } from "@/lib/types";
+import type { Campaign, Category, Product } from "@/lib/types";
 
 const queryTimeoutMs = 2500;
 
@@ -27,9 +27,11 @@ export async function getHomeData() {
     apiFetch<{ categories: Category[]; categorySections: Category[]; products: Product[]; brands: string[] }>("/home"),
     { categories: [], categorySections: [], products: [], brands: [] }
   );
+  const campaigns = await withFallback(apiFetch<Campaign[]>("/campaigns"), []);
   const products = data.products.length ? data.products : await getStoreProducts({});
 
   return {
+    campaigns,
     categories: data.categories.sort((a, b) => storefrontCategoryRank(a.slug) - storefrontCategoryRank(b.slug)),
     products,
     categorySections: data.categorySections.sort((a, b) => storefrontCategoryRank(a.slug) - storefrontCategoryRank(b.slug)),

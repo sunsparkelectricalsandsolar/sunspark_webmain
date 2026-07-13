@@ -16,6 +16,10 @@ function getDeleteImageIds(formData: FormData) {
   return formData.getAll("deleteImageIds").map(String).filter(Boolean);
 }
 
+function limitWords(value: string, count: number) {
+  return value.trim().split(/\s+/).filter(Boolean).slice(0, count).join(" ");
+}
+
 function categoryErrorUrl(path: string, error: unknown) {
   if (!(error instanceof ApiError)) throw error;
   const reason = error.status === 409 ? "duplicate" : error.status === 413 ? "image" : "save";
@@ -27,7 +31,7 @@ export async function createCategoryAction(formData: FormData) {
   await requireAdmin();
 
   const name = String(formData.get("name") ?? "").trim();
-  const description = String(formData.get("description") ?? "").trim();
+  const description = limitWords(String(formData.get("description") ?? ""), 15);
   const sortOrder = Number(formData.get("sortOrder") ?? 0);
   const files = getImageFiles(formData);
 
@@ -64,7 +68,7 @@ export async function updateCategoryAction(categoryId: string, formData: FormDat
   await requireAdmin();
 
   const name = String(formData.get("name") ?? "").trim();
-  const description = String(formData.get("description") ?? "").trim();
+  const description = limitWords(String(formData.get("description") ?? ""), 15);
   const sortOrder = Number(formData.get("sortOrder") ?? 0);
   const files = getImageFiles(formData);
   const primaryImageId = String(formData.get("primaryImageId") ?? "");

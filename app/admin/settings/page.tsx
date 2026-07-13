@@ -47,54 +47,50 @@ export default async function AdminSettingsPage({
   return (
     <AdminLayout title="Settings" subtitle="Business identity, contact links, checkout methods, and payment availability.">
       {feedback ? <p className={params?.error ? "admin-feedback error" : "admin-feedback success"} role="status">{feedback}</p> : null}
-      <form action={updateSettingsAction} className="settings-form">
-        <section className="settings-panel">
-          <div className="settings-panel-heading">
-            <span>01</span>
-            <div><h2>Business identity</h2><p>Shown on emails, documents, and customer contact areas.</p></div>
+      <form action={updateSettingsAction} className="settings-dashboard">
+        <section className="settings-card settings-card-wide">
+          <div className="settings-card-header">
+            <div><span>Business</span><h2>Business identity</h2><p>Shown on customer contact areas, reports, and store documents.</p></div>
           </div>
-          <div className="form-grid two">
-            <label>Business name<input name="name" defaultValue={settings.site?.name ?? siteConfig.name} /></label>
-            <label>Support email<input name="email" defaultValue={settings.site?.email ?? siteConfig.email} /></label>
-            <label>Phone<input name="phone" defaultValue={settings.site?.phone ?? siteConfig.phone} /></label>
-            <label>WhatsApp phone<input name="whatsappPhone" defaultValue={settings.checkout?.whatsappPhone ?? siteConfig.whatsappPhone} /></label>
-          </div>
-          <label>Location<input name="location" defaultValue={settings.site?.location ?? siteConfig.location} /></label>
-        </section>
-
-        <section className="settings-panel">
-          <div className="settings-panel-heading">
-            <span>02</span>
-            <div><h2>Reports</h2><p>Daily sales summary and profit reporting destination.</p></div>
-          </div>
-          <div className="form-grid two">
-            <label>Recipient email<input name="reportRecipient" type="email" defaultValue={settings.reports?.recipient ?? siteConfig.reportEmail} /></label>
-            <label>Send time<input name="reportTime" type="time" defaultValue={settings.reports?.reportTime ?? "20:00"} /></label>
-          </div>
-          <div className="form-grid two">
-            <label>Weekdays<input name="reportWeekdays" defaultValue={settings.reports?.weekdays ?? "1,2,3,4,5"} /></label>
-            <label className="check-label"><input name="reportEnabled" type="checkbox" defaultChecked={settings.reports?.enabled ?? false} />Automatic daily report</label>
+          <div className="settings-fields">
+            <label><span>Business name</span><input name="name" defaultValue={settings.site?.name ?? siteConfig.name} /></label>
+            <label><span>Support email</span><input name="email" defaultValue={settings.site?.email ?? siteConfig.email} /></label>
+            <label><span>Phone</span><input name="phone" defaultValue={settings.site?.phone ?? siteConfig.phone} /></label>
+            <label><span>WhatsApp phone</span><input name="whatsappPhone" defaultValue={settings.checkout?.whatsappPhone ?? siteConfig.whatsappPhone} /></label>
+            <label className="settings-field-full"><span>Location</span><input name="location" defaultValue={settings.site?.location ?? siteConfig.location} /></label>
           </div>
         </section>
 
-        <section className="settings-panel">
-          <div className="settings-panel-heading">
-            <span>03</span>
-            <div><h2>Checkout and links</h2><p>Customer checkout options and external business links.</p></div>
+        <section className="settings-card">
+          <div className="settings-card-header">
+            <div><span>Reports</span><h2>Daily reporting</h2><p>Sales and profit summaries.</p></div>
           </div>
-          <div className="form-grid two">
-            <label className="check-label"><input name="whatsappEnabled" type="checkbox" defaultChecked={settings.checkout?.whatsappEnabled ?? true} />WhatsApp checkout enabled</label>
-            <label className="check-label"><input name="mpesaEnabled" type="checkbox" defaultChecked={settings.checkout?.mpesaEnabled ?? false} />M-Pesa checkout enabled</label>
+          <div className="settings-fields single">
+            <label><span>Recipient email</span><input name="reportRecipient" type="email" defaultValue={settings.reports?.recipient ?? siteConfig.reportEmail} /></label>
+            <label><span>Send time</span><input name="reportTime" type="time" defaultValue={settings.reports?.reportTime ?? "20:00"} /></label>
+            <label><span>Weekdays</span><input name="reportWeekdays" defaultValue={settings.reports?.weekdays ?? "1,2,3,4,5"} /></label>
+            <label className="settings-toggle"><input name="reportEnabled" type="checkbox" defaultChecked={settings.reports?.enabled ?? false} /><span>Automatic daily report</span></label>
           </div>
-          <label>Facebook URL<input name="facebookUrl" defaultValue={settings.site?.facebookUrl ?? siteConfig.facebookUrl} /></label>
-          <label>Map URL<input name="mapUrl" defaultValue={settings.site?.mapUrl ?? siteConfig.mapUrl} /></label>
+        </section>
+
+        <section className="settings-card">
+          <div className="settings-card-header">
+            <div><span>Checkout</span><h2>Checkout and links</h2><p>Payment options and public links.</p></div>
+          </div>
+          <div className="settings-fields single">
+            <label className="settings-toggle"><input name="whatsappEnabled" type="checkbox" defaultChecked={settings.checkout?.whatsappEnabled ?? true} /><span>WhatsApp checkout enabled</span></label>
+            <label className="settings-toggle"><input name="mpesaEnabled" type="checkbox" defaultChecked={settings.checkout?.mpesaEnabled ?? false} /><span>M-Pesa checkout enabled</span></label>
+            <label><span>Facebook URL</span><input name="facebookUrl" defaultValue={settings.site?.facebookUrl ?? siteConfig.facebookUrl} /></label>
+            <label><span>Map URL</span><input name="mapUrl" defaultValue={settings.site?.mapUrl ?? siteConfig.mapUrl} /></label>
+          </div>
           <div className="admin-note">
             <strong>Google Merchant feed</strong>
             <a href="/google-merchant.xml" rel="noreferrer" target="_blank">/google-merchant.xml</a>
           </div>
         </section>
 
-        <div className="settings-actions">
+        <div className="settings-savebar">
+          <span>Save changes to apply store settings.</span>
           <PendingButton pendingText="Saving settings...">Save settings</PendingButton>
         </div>
       </form>

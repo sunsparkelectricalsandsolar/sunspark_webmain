@@ -27,6 +27,11 @@ export async function createCampaignAction(formData: FormData) {
       title,
       description: description || null,
       imageUrl: images[0]?.url ?? null,
+      badge: String(formData.get("badge") ?? "").trim() || null,
+      offerLabel: String(formData.get("offerLabel") ?? "").trim() || null,
+      ctaLabel: String(formData.get("ctaLabel") ?? "").trim() || null,
+      ctaUrl: String(formData.get("ctaUrl") ?? "").trim() || null,
+      endsAt: String(formData.get("endsAt") ?? "").trim() || null,
       isActive: formData.get("isActive") === "on"
     })
   });
@@ -48,6 +53,11 @@ export async function updateCampaignAction(campaignId: string, formData: FormDat
       title,
       description: description || null,
       imageUrl: images[0]?.url ?? null,
+      badge: String(formData.get("badge") ?? "").trim() || null,
+      offerLabel: String(formData.get("offerLabel") ?? "").trim() || null,
+      ctaLabel: String(formData.get("ctaLabel") ?? "").trim() || null,
+      ctaUrl: String(formData.get("ctaUrl") ?? "").trim() || null,
+      endsAt: String(formData.get("endsAt") ?? "").trim() || null,
       isActive: formData.get("isActive") === "on"
     })
   });

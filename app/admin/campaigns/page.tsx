@@ -28,52 +28,57 @@ export default async function AdminCampaignsPage({
         </select>
         <button type="submit">Filter</button>
       </form>
-      <form action={createCampaignAction} className="admin-form">
-        <div className="form-grid three">
-          <label>
-            Title
-            <input name="title" required />
-          </label>
-          <label>
-            Campaign image
-            <input name="images" type="file" accept="image/jpeg,image/png,image/webp" />
-          </label>
-          <label className="check-label">
-            <input name="isActive" type="checkbox" defaultChecked />
-            Active
-          </label>
-        </div>
-        <label>
-          Description
-          <input name="description" />
-        </label>
-        <PendingButton pendingText="Adding campaign...">Add campaign</PendingButton>
-      </form>
-      <div className="category-admin-list">
+      <section className="campaign-admin-layout">
+        <form action={createCampaignAction} className="campaign-editor">
+          <div className="campaign-editor-heading">
+            <span>New Campaign</span>
+            <h2>Create a selling offer</h2>
+            <p>Use a strong image, short offer text, and a clear action.</p>
+          </div>
+          <div className="form-grid two">
+            <label>Title<input name="title" placeholder="Weekend solar deal" required /></label>
+            <label>Badge<input name="badge" placeholder="20% OFF" /></label>
+            <label>Offer line<input name="offerLabel" placeholder="Buy inverter + battery at a fixed price" /></label>
+            <label>Deal ends<input name="endsAt" type="datetime-local" /></label>
+          </div>
+          <label>Description<textarea name="description" rows={3} placeholder="Short text that sells the campaign." /></label>
+          <div className="form-grid two">
+            <label>Button text<input name="ctaLabel" placeholder="Buy this offer" /></label>
+            <label>Button link<input name="ctaUrl" placeholder="/store?q=solar" /></label>
+          </div>
+          <div className="form-grid two">
+            <label>Campaign image<input name="images" type="file" accept="image/jpeg,image/png,image/webp" /></label>
+            <label className="check-label"><input name="isActive" type="checkbox" defaultChecked />Active on website</label>
+          </div>
+          <PendingButton pendingText="Adding campaign...">Add campaign</PendingButton>
+        </form>
+      </section>
+
+      <div className="campaign-admin-list">
         {campaigns.map((campaign) => (
-          <form action={updateCampaignAction.bind(null, campaign.id)} className="admin-form" key={campaign.id}>
-            <div className="form-grid three">
-              <label>
-                Title
-                <input name="title" defaultValue={campaign.title} required />
-              </label>
-              <label>
-                Replace image
-                <input name="images" type="file" accept="image/jpeg,image/png,image/webp" />
-              </label>
-              <label className="check-label">
-                <input name="isActive" type="checkbox" defaultChecked={campaign.isActive} />
-                Active
-              </label>
+          <form action={updateCampaignAction.bind(null, campaign.id)} className="campaign-admin-card" key={campaign.id}>
+            {campaign.imageUrl ? <img className="campaign-thumb" alt={campaign.title} src={publicImageUrl(campaign.imageUrl)} /> : <div className="campaign-thumb campaign-thumb-empty">No image</div>}
+            <div className="campaign-admin-fields">
+              <div className="form-grid two">
+                <label>Title<input name="title" defaultValue={campaign.title} required /></label>
+                <label>Badge<input name="badge" defaultValue={campaign.badge ?? ""} /></label>
+                <label>Offer line<input name="offerLabel" defaultValue={campaign.offerLabel ?? ""} /></label>
+                <label>Deal ends<input name="endsAt" type="datetime-local" defaultValue={campaign.endsAt ? new Date(campaign.endsAt).toISOString().slice(0, 16) : ""} /></label>
+              </div>
+              <label>Description<textarea name="description" defaultValue={campaign.description ?? ""} rows={2} /></label>
+              <div className="form-grid three">
+                <label>Button text<input name="ctaLabel" defaultValue={campaign.ctaLabel ?? ""} /></label>
+                <label>Button link<input name="ctaUrl" defaultValue={campaign.ctaUrl ?? ""} /></label>
+                <label>Replace image<input name="images" type="file" accept="image/jpeg,image/png,image/webp" /></label>
+              </div>
+              <div className="campaign-card-actions">
+                <label className="check-label"><input name="isActive" type="checkbox" defaultChecked={campaign.isActive} />Active</label>
+                <PendingButton className="secondary-btn" pendingText="Saving campaign...">Save campaign</PendingButton>
+              </div>
             </div>
-            {campaign.imageUrl ? <img className="campaign-thumb" alt={campaign.title} src={publicImageUrl(campaign.imageUrl)} /> : null}
-            <label>
-              Description
-              <input name="description" defaultValue={campaign.description ?? ""} />
-            </label>
-            <PendingButton className="secondary-btn" pendingText="Saving campaign...">Save campaign</PendingButton>
           </form>
         ))}
+        {!campaigns.length ? <p className="empty-state">No campaigns yet. Create the first active offer.</p> : null}
       </div>
     </AdminLayout>
   );

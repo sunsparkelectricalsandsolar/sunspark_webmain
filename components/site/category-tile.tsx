@@ -13,6 +13,8 @@ export type CategoryTileCategory = {
 };
 
 export function CategoryTile({ category }: { category: CategoryTileCategory }) {
+  const description = (category.description ?? "Explore Sunspark products").split(/\s+/).filter(Boolean).slice(0, 10).join(" ");
+
   return (
     <Link className="category-tile shop-tile" href={`/category/${category.slug}`}>
       {category.images?.length ? (
@@ -24,7 +26,7 @@ export function CategoryTile({ category }: { category: CategoryTileCategory }) {
       ) : null}
       <span className="category-tile-copy">
         <strong>{category.name}</strong>
-        <small>{category.description ?? "Explore Sunspark products"}</small>
+        <small>{description}</small>
       </span>
     </Link>
   );

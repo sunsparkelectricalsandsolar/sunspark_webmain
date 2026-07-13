@@ -107,6 +107,23 @@ function mapProduct(row, images = []) {
         }))
     };
 }
+function mapCampaign(row) {
+    return {
+        id: row.id,
+        title: row.title,
+        description: row.description,
+        imageUrl: row.image_url ? publicImageUrl(row.image_url) : null,
+        badge: row.badge ?? null,
+        offerLabel: row.offer_label ?? null,
+        ctaLabel: row.cta_label ?? null,
+        ctaUrl: row.cta_url ?? null,
+        isActive: truthy(row.is_active),
+        startsAt: row.starts_at,
+        endsAt: row.ends_at,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+    };
+}
 const uploadContentTypes = new Map([
     ["image/jpeg", "jpg"],
     ["image/png", "png"],
@@ -373,11 +390,11 @@ app.get("/admin/stats", asyncRoute(async (_request, response) => {
 }));
 app.get("/campaigns", asyncRoute(async (_request, response) => {
     const rows = await query("SELECT * FROM campaigns WHERE is_active = TRUE ORDER BY updated_at DESC LIMIT 3");
-    response.json(rows);
+    response.json(rows.map(mapCampaign));
 }));
 app.get("/admin/campaigns", asyncRoute(async (_request, response) => {
     const rows = await query("SELECT * FROM campaigns ORDER BY updated_at DESC LIMIT 100");
-    response.json(rows);
+    response.json(rows.map(mapCampaign));
 }));
 app.get("/admin/customers", asyncRoute(async (request, response) => {
     const q = String(request.query.q ?? "").trim();
@@ -662,10 +679,15 @@ app.post("/admin/campaigns", asyncRoute(async (request, response) => {
         title: z.string().min(2),
         description: z.string().optional().nullable(),
         imageUrl: z.string().optional().nullable(),
+        badge: z.string().optional().nullable(),
+        offerLabel: z.string().optional().nullable(),
+        ctaLabel: z.string().optional().nullable(),
+        ctaUrl: z.string().optional().nullable(),
+        endsAt: z.string().optional().nullable(),
         isActive: z.boolean().default(true)
     }).parse(request.body);
     const campaignId = id("cmp");
-    await execute("INSERT INTO campaigns (id, title, description, image_url, is_active) VALUES (?, ?, ?, ?, ?)", [campaignId, input.title, input.description ?? null, input.imageUrl ?? null, input.isActive]);
+    await execute("INSERT INTO campaigns (id, title, description, image_url, badge, offer_label, cta_label, cta_url, ends_at, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [campaignId, input.title, input.description ?? null, input.imageUrl ?? null, input.badge ?? null, input.offerLabel ?? null, input.ctaLabel ?? null, input.ctaUrl ?? null, input.endsAt ? new Date(input.endsAt) : null, input.isActive]);
     response.status(201).json({ id: campaignId });
 }));
 app.patch("/admin/campaigns/:id", asyncRoute(async (request, response) => {
@@ -673,9 +695,14 @@ app.patch("/admin/campaigns/:id", asyncRoute(async (request, response) => {
         title: z.string().min(2),
         description: z.string().optional().nullable(),
         imageUrl: z.string().optional().nullable(),
+        badge: z.string().optional().nullable(),
+        offerLabel: z.string().optional().nullable(),
+        ctaLabel: z.string().optional().nullable(),
+        ctaUrl: z.string().optional().nullable(),
+        endsAt: z.string().optional().nullable(),
         isActive: z.boolean().default(true)
     }).parse(request.body);
-    await execute("UPDATE campaigns SET title = ?, description = ?, image_url = COALESCE(?, image_url), is_active = ? WHERE id = ?", [input.title, input.description ?? null, input.imageUrl ?? null, input.isActive, request.params.id]);
+    await execute("UPDATE campaigns SET title = ?, description = ?, image_url = COALESCE(?, image_url), badge = ?, offer_label = ?, cta_label = ?, cta_url = ?, ends_at = ?, is_active = ? WHERE id = ?", [input.title, input.description ?? null, input.imageUrl ?? null, input.badge ?? null, input.offerLabel ?? null, input.ctaLabel ?? null, input.ctaUrl ?? null, input.endsAt ? new Date(input.endsAt) : null, input.isActive, request.params.id]);
     response.json({ ok: true });
 }));
 app.patch("/admin/orders/:id", asyncRoute(async (request, response) => {

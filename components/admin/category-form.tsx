@@ -31,6 +31,7 @@ export function CategoryForm({
       <label>
         Customer-facing description
         <textarea defaultValue={category?.description ?? ""} name="description" rows={3} />
+        <small>Maximum 15 words. Storefront cards show the first 10 words.</small>
       </label>
       <label className="check-label form-switch">
         <input defaultChecked={category?.isActive ?? true} name="isActive" type="checkbox" />

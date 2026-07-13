@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CategoryTile } from "@/components/site/category-tile";
+import { CampaignFeature } from "@/components/site/campaign-feature";
 import { ProductCard } from "@/components/site/product-card";
 import { getHomeData } from "@/lib/products/queries";
 
@@ -14,16 +15,26 @@ function chunkProducts<T>(products: T[], size: number) {
 }
 
 export default async function HomePage() {
-  const { categories: displayCategories, categorySections, products, brands } = await getHomeData();
+  const { campaigns, categories: displayCategories, categorySections, products, brands } = await getHomeData();
   const productSections = categorySections.filter((category) => category.products.length);
+  const topProducts = products.slice(0, 4);
 
   return (
     <>
       <section className="section category-section">
-        <div className="container category-grid shop-grid">
-          {displayCategories.map((category) => (
-            <CategoryTile category={category} key={category.slug} />
-          ))}
+        <div className="container storefront-showcase">
+          <div className="category-grid shop-grid">
+            {displayCategories.map((category) => (
+              <CategoryTile category={category} key={category.slug} />
+            ))}
+          </div>
+          {topProducts.length ? (
+            <div className="mini-product-panel">
+              <div className="mini-panel-heading"><strong>Best sellers</strong><Link href="/store">Shop all</Link></div>
+              {topProducts.map((product) => <Link href={`/product/${product.slug}`} key={product.id}><span>{product.name}</span><strong>{new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 }).format(product.priceCents / 100)}</strong></Link>)}
+            </div>
+          ) : null}
+          <CampaignFeature campaign={campaigns[0]} />
         </div>
       </section>
       {brands.length ? <section className="section brand-section"><div className="container"><details className="brand-disclosure"><summary><span>Shop by Brand</span><Link href="/store">View all</Link></summary><div className="brand-list">{brands.map((brand) => <Link href={`/store?q=${encodeURIComponent(brand)}`} key={brand}>{brand}</Link>)}</div></details></div></section> : null}
