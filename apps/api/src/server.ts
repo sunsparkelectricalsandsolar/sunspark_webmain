@@ -528,7 +528,7 @@ app.get("/admin/stats", asyncRoute(async (_request, response) => {
 
 app.get("/campaigns", asyncRoute(async (_request, response) => {
   const rows = await query<CampaignRow>(
-    "SELECT * FROM campaigns WHERE is_active = TRUE ORDER BY updated_at DESC LIMIT 3"
+    "SELECT * FROM campaigns WHERE is_active = TRUE AND (ends_at IS NULL OR ends_at > NOW()) ORDER BY updated_at DESC LIMIT 3"
   );
   response.json(rows.map(mapCampaign));
 }));
@@ -907,6 +907,12 @@ app.patch("/admin/campaigns/:id", asyncRoute(async (request, response) => {
     [input.title, input.description ?? null, input.imageUrl ?? null, input.badge ?? null, input.offerLabel ?? null, input.ctaLabel ?? null, input.ctaUrl ?? null, input.endsAt ? new Date(input.endsAt) : null, input.isActive, request.params.id]
   );
   response.json({ ok: true });
+}));
+
+app.delete("/admin/campaigns/:id", asyncRoute(async (request, response) => {
+  const result = await execute("DELETE FROM campaigns WHERE id = ?", [request.params.id]) as { affectedRows?: number };
+  if (!result.affectedRows) throw new HttpError(404, "Campaign not found.");
+  response.status(204).send();
 }));
 
 app.patch("/admin/orders/:id", asyncRoute(async (request, response) => {

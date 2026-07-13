@@ -389,7 +389,7 @@ app.get("/admin/stats", asyncRoute(async (_request, response) => {
     });
 }));
 app.get("/campaigns", asyncRoute(async (_request, response) => {
-    const rows = await query("SELECT * FROM campaigns WHERE is_active = TRUE ORDER BY updated_at DESC LIMIT 3");
+    const rows = await query("SELECT * FROM campaigns WHERE is_active = TRUE AND (ends_at IS NULL OR ends_at > NOW()) ORDER BY updated_at DESC LIMIT 3");
     response.json(rows.map(mapCampaign));
 }));
 app.get("/admin/campaigns", asyncRoute(async (_request, response) => {
@@ -704,6 +704,12 @@ app.patch("/admin/campaigns/:id", asyncRoute(async (request, response) => {
     }).parse(request.body);
     await execute("UPDATE campaigns SET title = ?, description = ?, image_url = COALESCE(?, image_url), badge = ?, offer_label = ?, cta_label = ?, cta_url = ?, ends_at = ?, is_active = ? WHERE id = ?", [input.title, input.description ?? null, input.imageUrl ?? null, input.badge ?? null, input.offerLabel ?? null, input.ctaLabel ?? null, input.ctaUrl ?? null, input.endsAt ? new Date(input.endsAt) : null, input.isActive, request.params.id]);
     response.json({ ok: true });
+}));
+app.delete("/admin/campaigns/:id", asyncRoute(async (request, response) => {
+    const result = await execute("DELETE FROM campaigns WHERE id = ?", [request.params.id]);
+    if (!result.affectedRows)
+        throw new HttpError(404, "Campaign not found.");
+    response.status(204).send();
 }));
 app.patch("/admin/orders/:id", asyncRoute(async (request, response) => {
     const input = z.object({ status: z.string(), paymentStatus: z.string() }).parse(request.body);

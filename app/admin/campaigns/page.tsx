@@ -2,7 +2,7 @@ import { AdminLayout } from "@/components/admin/admin-layout";
 import { PendingButton } from "@/components/ui/pending-button";
 import { requireAdmin } from "@/lib/auth/guards";
 import { apiFetch } from "@/lib/api/client";
-import { createCampaignAction, updateCampaignAction } from "./actions";
+import { createCampaignAction, deleteCampaignAction, updateCampaignAction } from "./actions";
 import { publicImageUrl } from "@/lib/products/images";
 import type { Campaign } from "@/lib/types";
 
@@ -56,27 +56,43 @@ export default async function AdminCampaignsPage({
 
       <div className="campaign-admin-list">
         {campaigns.map((campaign) => (
-          <form action={updateCampaignAction.bind(null, campaign.id)} className="campaign-admin-card" key={campaign.id}>
-            {campaign.imageUrl ? <img className="campaign-thumb" alt={campaign.title} src={publicImageUrl(campaign.imageUrl)} /> : <div className="campaign-thumb campaign-thumb-empty">No image</div>}
-            <div className="campaign-admin-fields">
-              <div className="form-grid two">
-                <label>Title<input name="title" defaultValue={campaign.title} required /></label>
-                <label>Badge<input name="badge" defaultValue={campaign.badge ?? ""} /></label>
-                <label>Offer line<input name="offerLabel" defaultValue={campaign.offerLabel ?? ""} /></label>
-                <label>Deal ends<input name="endsAt" type="datetime-local" defaultValue={campaign.endsAt ? new Date(campaign.endsAt).toISOString().slice(0, 16) : ""} /></label>
-              </div>
-              <label>Description<textarea name="description" defaultValue={campaign.description ?? ""} rows={2} /></label>
-              <div className="form-grid three">
-                <label>Button text<input name="ctaLabel" defaultValue={campaign.ctaLabel ?? ""} /></label>
-                <label>Button link<input name="ctaUrl" defaultValue={campaign.ctaUrl ?? ""} /></label>
-                <label>Replace image<input name="images" type="file" accept="image/jpeg,image/png,image/webp" /></label>
-              </div>
-              <div className="campaign-card-actions">
-                <label className="check-label"><input name="isActive" type="checkbox" defaultChecked={campaign.isActive} />Active</label>
-                <PendingButton className="secondary-btn" pendingText="Saving campaign...">Save campaign</PendingButton>
-              </div>
+          <article className="campaign-admin-row" key={campaign.id}>
+            {campaign.imageUrl ? <img className="campaign-row-thumb" alt={campaign.title} src={publicImageUrl(campaign.imageUrl)} /> : <div className="campaign-row-thumb campaign-thumb-empty">No image</div>}
+            <div className="campaign-row-main">
+              <strong>{campaign.title}</strong>
+              <span>{campaign.badge || "No badge"} · {campaign.offerLabel || "No offer line"} · {campaign.endsAt ? `Ends ${new Date(campaign.endsAt).toLocaleString("en-KE")}` : "No end time"}</span>
             </div>
-          </form>
+            <span className={campaign.isActive ? "status-pill active" : "status-pill"}>{campaign.isActive ? "Active" : "Hidden"}</span>
+            <details className="row-action-menu campaign-row-actions">
+              <summary>Actions</summary>
+              <div>
+                <details className="campaign-inline-editor">
+                  <summary>Edit campaign</summary>
+                  <form action={updateCampaignAction.bind(null, campaign.id)}>
+                    <div className="form-grid two">
+                      <label>Title<input name="title" defaultValue={campaign.title} required /></label>
+                      <label>Badge<input name="badge" defaultValue={campaign.badge ?? ""} /></label>
+                      <label>Offer line<input name="offerLabel" defaultValue={campaign.offerLabel ?? ""} /></label>
+                      <label>Deal ends<input name="endsAt" type="datetime-local" defaultValue={campaign.endsAt ? new Date(campaign.endsAt).toISOString().slice(0, 16) : ""} /></label>
+                    </div>
+                    <label>Description<textarea name="description" defaultValue={campaign.description ?? ""} rows={2} /></label>
+                    <div className="form-grid three">
+                      <label>Button text<input name="ctaLabel" defaultValue={campaign.ctaLabel ?? ""} /></label>
+                      <label>Button link<input name="ctaUrl" defaultValue={campaign.ctaUrl ?? ""} /></label>
+                      <label>Replace image<input name="images" type="file" accept="image/jpeg,image/png,image/webp" /></label>
+                    </div>
+                    <div className="campaign-card-actions">
+                      <label className="check-label"><input name="isActive" type="checkbox" defaultChecked={campaign.isActive} />Active</label>
+                      <PendingButton className="secondary-btn" pendingText="Saving campaign...">Save campaign</PendingButton>
+                    </div>
+                  </form>
+                </details>
+                <form action={deleteCampaignAction.bind(null, campaign.id)}>
+                  <button className="danger-btn" type="submit">Delete campaign</button>
+                </form>
+              </div>
+            </details>
+          </article>
         ))}
         {!campaigns.length ? <p className="empty-state">No campaigns yet. Create the first active offer.</p> : null}
       </div>

@@ -65,3 +65,12 @@ export async function updateCampaignAction(campaignId: string, formData: FormDat
   revalidatePath("/");
   redirect("/admin/campaigns");
 }
+
+export async function deleteCampaignAction(campaignId: string) {
+  await requireAdmin();
+
+  await apiFetch(`/admin/campaigns/${campaignId}`, { method: "DELETE" });
+
+  revalidatePath("/");
+  redirect("/admin/campaigns");
+}

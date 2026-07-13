@@ -2327,6 +2327,65 @@ summary:focus-visible {
   gap: 12px;
 }
 
+.campaign-admin-row {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) 82px 92px;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 8px 10px;
+}
+
+.campaign-row-thumb {
+  width: 58px;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 6px;
+  background: var(--soft);
+}
+
+.campaign-row-main {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.campaign-row-main strong,
+.campaign-row-main span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.campaign-row-main span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.campaign-row-actions > div {
+  width: min(720px, calc(100vw - 40px));
+  max-height: min(76vh, 680px);
+  overflow-y: auto;
+}
+
+.campaign-inline-editor {
+  display: grid;
+}
+
+.campaign-inline-editor > summary {
+  cursor: pointer;
+  font-weight: 800;
+  padding: 8px;
+}
+
+.campaign-inline-editor form {
+  display: grid;
+  gap: 10px;
+  padding: 8px;
+}
+
 .campaign-admin-card {
   grid-template-columns: 160px minmax(0, 1fr);
   align-items: start;
@@ -3043,6 +3102,27 @@ summary:focus-visible {
 }
 
 @media (max-width: 560px) {
+  .mini-product-panel {
+    display: none;
+  }
+
+  .campaign-admin-row {
+    grid-template-columns: 46px minmax(0, 1fr) 72px;
+  }
+
+  .campaign-row-thumb {
+    width: 46px;
+  }
+
+  .campaign-row-actions {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+  }
+
+  .campaign-row-actions summary {
+    width: 100%;
+  }
+
   .settings-fields {
     grid-template-columns: 1fr;
   }

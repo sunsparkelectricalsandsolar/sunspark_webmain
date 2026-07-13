@@ -21,7 +21,11 @@ export function CampaignModal({ campaigns }: { campaigns: Campaign[] }) {
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
-    const next = campaigns.find((item) => !sessionStorage.getItem(`sunspark-campaign-${item.id}`));
+    const current = Date.now();
+    const next = campaigns.find((item) => {
+      const expired = item.endsAt ? new Date(item.endsAt).getTime() <= current : false;
+      return !expired && !sessionStorage.getItem(`sunspark-campaign-${item.id}`);
+    });
     setCampaign(next ?? null);
   }, [campaigns]);
 
@@ -37,6 +41,10 @@ export function CampaignModal({ campaigns }: { campaigns: Campaign[] }) {
 
   if (!campaign) return null;
   const remaining = campaign.endsAt ? Math.max(new Date(campaign.endsAt).getTime() - now, 0) : 0;
+  if (campaign.endsAt && remaining <= 0) {
+    window.setTimeout(() => close(), 0);
+    return null;
+  }
   const days = Math.floor(remaining / 86_400_000);
   const hours = Math.floor((remaining % 86_400_000) / 3_600_000);
   const minutes = Math.floor((remaining % 3_600_000) / 60_000);
