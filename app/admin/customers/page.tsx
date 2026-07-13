@@ -43,7 +43,13 @@ export default async function AdminCustomersPage({
               <span>{customer.email}</span>
               <span>{customer.phone ?? "-"}</span>
               <span>{customer.createdAt ? new Date(customer.createdAt).toLocaleDateString("en-KE") : "-"}</span>
-              <span>{customer.orders ?? 0}</span>
+              <span>
+                {(customer.orders ?? 0) > 0 ? (
+                  <Link className="table-link" href={`/admin/orders?customerId=${encodeURIComponent(customer.id)}`}>
+                    {customer.orders} orders
+                  </Link>
+                ) : "0"}
+              </span>
             </div>
           ))}
           {!customers.length ? <p className="empty-state">No registered customers yet.</p> : null}

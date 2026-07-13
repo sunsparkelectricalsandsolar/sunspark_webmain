@@ -3,6 +3,7 @@ import { PendingButton } from "@/components/ui/pending-button";
 import { requireAdmin } from "@/lib/auth/guards";
 import { apiFetch } from "@/lib/api/client";
 import { createCampaignAction, updateCampaignAction } from "./actions";
+import { publicImageUrl } from "@/lib/products/images";
 import type { Campaign } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -65,7 +66,7 @@ export default async function AdminCampaignsPage({
                 Active
               </label>
             </div>
-            {campaign.imageUrl ? <img className="campaign-thumb" alt={campaign.title} src={campaign.imageUrl} /> : null}
+            {campaign.imageUrl ? <img className="campaign-thumb" alt={campaign.title} src={publicImageUrl(campaign.imageUrl)} /> : null}
             <label>
               Description
               <input name="description" defaultValue={campaign.description ?? ""} />

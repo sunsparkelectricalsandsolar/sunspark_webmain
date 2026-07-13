@@ -3,7 +3,7 @@ import Link from "next/link";
 import { updateCartAction } from "@/app/cart/actions";
 import { PendingButton } from "@/components/ui/pending-button";
 import { formatMoney } from "@/lib/money";
-import { getPrimaryImage } from "@/lib/products/images";
+import { getPrimaryImage, publicImageUrl } from "@/lib/products/images";
 import { getCart } from "@/lib/cart/cart-service";
 import { preventAdminShopping } from "@/lib/auth/guards";
 
@@ -28,7 +28,7 @@ export default async function CartPage() {
                   <article className="cart-row" key={item.product.id}>
                     <Link className="cart-thumb" href={`/product/${item.product.slug}`}>
                       {image ? (
-                        <Image src={image.url} alt={image.alt ?? item.product.name} fill sizes="90px" />
+                        <Image src={publicImageUrl(image.url)} alt={image.alt ?? item.product.name} fill sizes="90px" />
                       ) : (
                         <span>No image</span>
                       )}

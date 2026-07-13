@@ -34,9 +34,10 @@ type DraftDocument = {
   items: unknown[];
 };
 
-export default async function InvoicesPage({ searchParams }: { searchParams?: Promise<{ q?: string; error?: string; notice?: string }> }) {
+export default async function InvoicesPage({ searchParams }: { searchParams?: Promise<{ q?: string; create?: string; error?: string; notice?: string }> }) {
   await requireAdmin("/admin/invoices");
   const params = await searchParams;
+  const createMode = params?.create === "quotation" ? "quotation" : params?.create === "invoice" ? "invoice" : "";
   const [products, invoices] = await Promise.all([
     apiFetch<Product[]>("/products?limit=500").catch(() => []),
     getInvoices(params?.q)
@@ -44,10 +45,26 @@ export default async function InvoicesPage({ searchParams }: { searchParams?: Pr
   const message = params?.error ? feedback[params.error] : params?.notice ? feedback[params.notice] : null;
   return <AdminLayout title="Invoices & Quotations" subtitle="Create printable customer documents. Only finalized invoices update stock and orders.">
     {message ? <p className={`admin-feedback ${params?.error ? "error" : "success"}`} role="status">{message}</p> : null}
-    <div className="document-create-grid">
-      <details className="admin-disclosure"><summary>Create invoice</summary><WalkInSaleForm action={createDraftInvoiceAction} products={products} submitLabel="Create invoice" /></details>
-      <details className="admin-disclosure"><summary>Create quotation</summary><WalkInSaleForm action={createQuotationAction} products={products} submitLabel="Create quotation" /></details>
+    <div className="document-create-actions">
+      <Link className={createMode === "invoice" ? "primary-btn" : "secondary-btn"} href="/admin/invoices?create=invoice">Create invoice</Link>
+      <Link className={createMode === "quotation" ? "primary-btn" : "secondary-btn"} href="/admin/invoices?create=quotation">Create quotation</Link>
     </div>
+    {createMode ? (
+      <section className="document-editor-panel">
+        <div className="document-editor-heading">
+          <div>
+            <p className="eyebrow">{createMode === "quotation" ? "Quotation" : "Invoice"}</p>
+            <h2>{createMode === "quotation" ? "Create customer quotation" : "Create draft invoice"}</h2>
+          </div>
+          <Link className="table-link" href="/admin/invoices">Close</Link>
+        </div>
+        <WalkInSaleForm
+          action={createMode === "quotation" ? createQuotationAction : createDraftInvoiceAction}
+          products={products}
+          submitLabel={createMode === "quotation" ? "Create quotation" : "Create invoice"}
+        />
+      </section>
+    ) : null}
     <form action="/admin/invoices" className="admin-filter"><input defaultValue={params?.q ?? ""} name="q" placeholder="Search document, customer, email, phone, item..." /><button type="submit">Search</button></form>
     <div className="admin-table"><div className="admin-table-row invoice-row heading"><span>Document</span><span>Customer</span><span>Items</span><span>Total</span><span>Status</span><span /></div>
       {invoices.map((invoice) => <div className="admin-table-row invoice-row" key={invoice.id}><strong>{invoice.reference}<small>{invoice.kind === "QUOTATION" ? "Quotation" : "Invoice"} | {new Date(invoice.createdAt).toLocaleDateString("en-KE")}</small></strong><span>{invoice.customerName}<small>{invoice.customerPhone ?? invoice.customerEmail ?? "No contact"}</small></span><span>{invoice.items.length}</span><strong>{formatMoney(invoice.totalCents)}</strong><span>{invoice.status}</span><div className="table-actions"><Link className="table-link" href={`/admin/invoices/${invoice.id}`}>View</Link>{invoice.kind === "INVOICE" && invoice.status === "DRAFT" ? <form action={finalizeDraftInvoiceAction.bind(null, invoice.id)}><PendingButton pendingText="Finalizing...">Finalize</PendingButton></form> : invoice.orderId ? <Link className="table-link" href={`/admin/walk-in-sale/${invoice.orderId}/receipt`}>Receipt</Link> : null}</div></div>)}

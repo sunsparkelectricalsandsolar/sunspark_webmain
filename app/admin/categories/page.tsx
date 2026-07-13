@@ -17,7 +17,7 @@ const messages: Record<string, string> = {
   hidden: "Category hidden from the storefront.",
   deleted: "Category deleted.",
   delete: "The category could not be deleted. Please try again.",
-  "delete-linked": "Move or delete this category's products before deleting the category."
+  "delete-linked": "This category has products used on invoices or quotations. Hide it instead, or remove those document items first."
 };
 
 export default async function AdminCategoriesPage({
@@ -65,7 +65,7 @@ export default async function AdminCategoriesPage({
                 </form>
               ) : null}
               <form action={deleteCategoryAction.bind(null, category.id)}>
-                <button className="danger-btn" disabled={category._count.products > 0} title={category._count.products > 0 ? "Move or delete products first" : "Delete category"} type="submit">Delete</button>
+                <button className="danger-btn" title={category._count.products > 0 ? "Deletes this category and its products if they are not used on draft documents" : "Delete category"} type="submit">Delete</button>
               </form>
             </span>
           </div>

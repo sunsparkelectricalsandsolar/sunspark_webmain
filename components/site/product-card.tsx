@@ -3,7 +3,7 @@ import Link from "next/link";
 import { addToCartAction } from "@/app/cart/actions";
 import { PendingButton } from "@/components/ui/pending-button";
 import { formatMoney } from "@/lib/money";
-import { getPrimaryImage } from "@/lib/products/images";
+import { getPrimaryImage, publicImageUrl } from "@/lib/products/images";
 import { sellingUnitLabel } from "@/lib/products/units";
 import type { SellingUnit } from "@/lib/types";
 
@@ -43,13 +43,13 @@ export function ProductCard({ product }: { product: ProductCardProduct }) {
                 fill
                 key={item.url}
                 sizes="(max-width: 700px) 50vw, 25vw"
-                src={item.url}
+                src={publicImageUrl(item.url)}
                 style={{ animationDelay: `${index * 2.4}s` }}
               />
             ))}
           </span>
         ) : image ? (
-          <Image src={image.url} alt={image.alt ?? product.name} fill sizes="(max-width: 700px) 50vw, 25vw" />
+          <Image src={publicImageUrl(image.url)} alt={image.alt ?? product.name} fill sizes="(max-width: 700px) 50vw, 25vw" />
         ) : (
           <span>No image</span>
         )}

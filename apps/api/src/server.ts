@@ -582,13 +582,22 @@ app.patch("/admin/categories/:id/hide", asyncRoute(async (request, response) => 
 }));
 
 app.delete("/admin/categories/:id", asyncRoute(async (request, response) => {
-  const productRows = await query<{ count: number }>("SELECT COUNT(*) AS count FROM products WHERE category_id = ?", [request.params.id]);
-  if (Number(productRows[0]?.count ?? 0) > 0) {
-    throw new HttpError(409, "Move or delete this category's products before deleting the category.");
+  const linkedRows = await query<{ count: number }>(
+    `SELECT COUNT(*) AS count
+     FROM draft_document_items ddi
+     INNER JOIN products p ON p.id = ddi.product_id
+     WHERE p.category_id = ?`,
+    [request.params.id]
+  );
+  if (Number(linkedRows[0]?.count ?? 0) > 0) {
+    throw new HttpError(409, "This category has products used on invoices or quotations. Hide it instead, or remove those document items first.");
   }
 
-  const result = await execute("DELETE FROM categories WHERE id = ?", [request.params.id]) as { affectedRows?: number };
-  if (!result.affectedRows) throw new HttpError(404, "Category not found.");
+  await transaction(async (connection) => {
+    await connection.query("DELETE FROM products WHERE category_id = ?", [request.params.id]);
+    const result = await connection.query("DELETE FROM categories WHERE id = ?", [request.params.id]) as { affectedRows?: number };
+    if (!result.affectedRows) throw new HttpError(404, "Category not found.");
+  });
   response.status(204).send();
 }));
 
@@ -1191,12 +1200,13 @@ app.get("/admin/orders", asyncRoute(async (request, response) => {
   const q = String(request.query.q ?? "").trim();
   const status = String(request.query.status ?? "");
   const paymentStatus = String(request.query.paymentStatus ?? "");
+  const customerId = String(request.query.customerId ?? "");
   const where: string[] = [];
   const values: unknown[] = [];
 
   if (q) {
-    where.push("(order_number LIKE ? OR customer_name LIKE ? OR customer_email LIKE ? OR customer_phone LIKE ?)");
-    values.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`);
+    where.push("(order_number LIKE ? OR customer_name LIKE ? OR customer_email LIKE ? OR customer_phone LIKE ? OR delivery_location LIKE ? OR delivery_note LIKE ?)");
+    values.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`);
   }
   if (status) {
     where.push("status = ?");
@@ -1205,6 +1215,10 @@ app.get("/admin/orders", asyncRoute(async (request, response) => {
   if (paymentStatus) {
     where.push("payment_status = ?");
     values.push(paymentStatus);
+  }
+  if (customerId) {
+    where.push("user_id = ?");
+    values.push(customerId);
   }
 
   const orders = await query<Record<string, unknown>>(

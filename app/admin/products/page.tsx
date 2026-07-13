@@ -57,6 +57,7 @@ export default async function AdminProductsPage({
             <option value="low">Low stock</option>
           </select>
           <button type="submit">Filter</button>
+          <Link className="filter-reset" href="/admin/products">All products</Link>
         </form>
         <div className="admin-table">
           <div className="admin-table-row heading">
@@ -73,19 +74,22 @@ export default async function AdminProductsPage({
               <span>{product.category.name}</span>
               <span>{formatMoney(product.priceCents)}</span>
               <span>{product.stockQuantity}</span>
-              <span>{product.isActive ? "Active" : "Hidden"}</span>
-              <span className="table-actions">
-                <Link href={`/admin/products/${product.id}/edit`}>Edit</Link>
-                <a href={productUrl(product.slug)} rel="noreferrer" target="_blank">Merchant</a>
-                {product.isActive ? (
-                  <form action={hideProductAction.bind(null, product.id)}>
-                    <button type="submit" title="Hide from customers without deleting order history">Hide</button>
+              <span className={product.isActive ? "status-pill active" : "status-pill"}>{product.isActive ? "Active" : "Hidden"}</span>
+              <details className="row-action-menu">
+                <summary>Actions</summary>
+                <div>
+                  <Link href={`/admin/products/${product.id}/edit`}>Edit product</Link>
+                  <a href={productUrl(product.slug)} rel="noreferrer" target="_blank">Merchant link</a>
+                  {product.isActive ? (
+                    <form action={hideProductAction.bind(null, product.id)}>
+                      <button type="submit" title="Hide from customers without deleting order history">Hide product</button>
+                    </form>
+                  ) : null}
+                  <form action={deleteProductAction.bind(null, product.id)}>
+                    <button className="danger-btn" type="submit">Delete product</button>
                   </form>
-                ) : null}
-                <form action={deleteProductAction.bind(null, product.id)}>
-                  <button className="danger-btn" type="submit">Delete</button>
-                </form>
-              </span>
+                </div>
+              </details>
             </div>
           ))}
           {!products.length ? <p className="empty-state">No products yet. Add the first Sunspark product.</p> : null}

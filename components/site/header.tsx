@@ -1,20 +1,18 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getCart } from "@/lib/cart/cart-service";
+import { getStoreCategories } from "@/lib/products/queries";
 import { siteConfig } from "@/lib/site-config";
 
-const navItems = [
-  { label: "Home", href: "/" },
-  { label: "Store", href: "/store" },
-  { label: "Solar", href: "/category/solar" },
-  { label: "Electricals", href: "/category/electricals" },
-  { label: "Electronics", href: "/category/electronics" },
-  { label: "Account", href: "/account" }
-];
-
 export async function Header() {
-  const cart = await getCart();
+  const [cart, categories] = await Promise.all([getCart(), getStoreCategories()]);
   const cartCount = cart.items.reduce((total, item) => total + item.quantity, 0);
+  const navItems = [
+    { label: "Home", href: "/" },
+    { label: "Store", href: "/store" },
+    ...categories.slice(0, 5).map((category) => ({ label: category.name, href: `/category/${category.slug}` })),
+    { label: "Account", href: "/account" }
+  ];
 
   return (
     <header>
@@ -39,9 +37,9 @@ export async function Header() {
           <form action="/store" className="header-search">
             <select aria-label="Product category" name="category">
               <option value="">All Categories</option>
-              <option value="electricals">Electricals</option>
-              <option value="solar">Solar</option>
-              <option value="electronics">Electronics</option>
+              {categories.map((category) => (
+                <option value={category.slug} key={category.id}>{category.name}</option>
+              ))}
             </select>
             <input aria-label="Search products" name="q" placeholder="Search products" />
             <button aria-label="Search products" type="submit">Go</button>

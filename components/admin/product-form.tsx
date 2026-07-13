@@ -1,5 +1,6 @@
 import type { Category, Product, ProductImage } from "@/lib/types";
 import { PendingButton } from "@/components/ui/pending-button";
+import { publicImageUrl } from "@/lib/products/images";
 
 type ProductWithImages = Product & {
   images: ProductImage[];
@@ -71,7 +72,7 @@ export function ProductForm({
             <div className="admin-image-grid product-image-manager">
               {product.images.map((image) => (
                 <div className="admin-image-card" key={image.id}>
-                  <img alt={image.alt ?? product.name} src={image.url} />
+                  <img alt={image.alt ?? product.name} src={publicImageUrl(image.url)} />
                   <div className="image-card-controls">
                     <label className="check-label">
                       <input name="primaryImageId" type="radio" value={image.id} defaultChecked={image.isPrimary} />

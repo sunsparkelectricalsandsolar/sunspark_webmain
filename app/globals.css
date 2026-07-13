@@ -1129,7 +1129,7 @@ textarea {
 
 .admin-filter {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) repeat(2, minmax(150px, 220px)) auto;
+  grid-template-columns: minmax(220px, 1fr) repeat(2, minmax(150px, 220px)) auto auto;
   gap: 10px;
   align-items: center;
   border: 1px solid var(--line);
@@ -1156,6 +1156,20 @@ textarea {
   font-weight: 800;
   padding: 0 18px;
   cursor: pointer;
+}
+
+.filter-reset {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--ink);
+  font-weight: 800;
+  padding: 0 14px;
+  white-space: nowrap;
 }
 
 button,
@@ -1239,7 +1253,7 @@ summary:focus-visible {
 
 .admin-table-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 0.7fr 0.8fr 80px;
+  grid-template-columns: minmax(220px, 2fr) minmax(120px, 1fr) minmax(100px, 1fr) 0.65fr 0.75fr 110px;
   gap: 14px;
   min-width: 760px;
   padding: 14px 16px;
@@ -1283,6 +1297,25 @@ summary:focus-visible {
   background: var(--green);
 }
 
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: max-content;
+  min-width: 68px;
+  border-radius: 999px;
+  background: #eef2f7;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 900;
+  padding: 5px 9px;
+}
+
+.status-pill.active {
+  background: #dcfce7;
+  color: #166534;
+}
+
 .table-link {
   border: 1px solid var(--line);
   border-radius: 5px;
@@ -1315,6 +1348,73 @@ summary:focus-visible {
 .table-actions button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+.row-action-menu {
+  position: relative;
+  justify-self: end;
+}
+
+.row-action-menu summary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 88px;
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  font-weight: 800;
+  list-style: none;
+}
+
+.row-action-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.row-action-menu[open] summary {
+  border-color: var(--spark);
+  color: var(--spark);
+}
+
+.row-action-menu > div {
+  position: absolute;
+  z-index: 5;
+  right: 0;
+  top: calc(100% + 6px);
+  display: grid;
+  gap: 4px;
+  min-width: 180px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 8px;
+  box-shadow: 0 16px 38px rgba(17, 24, 39, 0.16);
+}
+
+.row-action-menu a,
+.row-action-menu button {
+  display: block;
+  width: 100%;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+  padding: 9px 10px;
+  text-align: left;
+}
+
+.row-action-menu a:hover,
+.row-action-menu button:hover {
+  background: var(--soft);
+}
+
+.row-action-menu .danger-btn {
+  color: #b91c1c;
 }
 
 .admin-table-row.heading {
@@ -1805,16 +1905,33 @@ summary:focus-visible {
 
 .category-empty a { color: var(--spark); font-weight: 800; }
 
-.document-create-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
-  gap: 16px;
-  align-items: start;
+.document-create-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
-.document-create-grid .admin-disclosure {
-  min-width: 0;
-  overflow: hidden;
+.document-editor-panel {
+  display: grid;
+  gap: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 18px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
+}
+
+.document-editor-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 14px;
+}
+
+.document-editor-heading h2 {
+  margin: 0;
 }
 
 .table-actions {
@@ -2161,11 +2278,18 @@ summary:focus-visible {
     position: static;
   }
 
-  .document-create-grid,
   .sales-document-header,
   .sales-document-summary,
   .sales-document-bottom {
     grid-template-columns: 1fr;
+  }
+
+  .document-create-actions {
+    display: grid;
+  }
+
+  .document-editor-heading {
+    display: grid;
   }
 
   .sales-document-title {

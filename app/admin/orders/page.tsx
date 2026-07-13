@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AdminLayout } from "@/components/admin/admin-layout";
 import type { OrderStatus, PaymentStatus, Order } from "@/lib/types";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -12,12 +13,13 @@ const paymentStatuses: PaymentStatus[] = ["UNPAID", "PENDING", "PAID", "FAILED",
 export default async function AdminOrdersPage({
   searchParams
 }: {
-  searchParams?: Promise<{ q?: string; status?: string; paymentStatus?: string }>;
+  searchParams?: Promise<{ q?: string; status?: string; paymentStatus?: string; customerId?: string }>;
 }) {
   await requireAdmin();
   const params = await searchParams;
   const orders = await getOrders({
     paymentStatus: params?.paymentStatus,
+    customerId: params?.customerId,
     q: params?.q,
     status: params?.status
   });
@@ -25,7 +27,7 @@ export default async function AdminOrdersPage({
   return (
     <AdminLayout title="Orders" subtitle="Review order checks, fulfillment status, and payment state.">
       <form action="/admin/orders" className="admin-filter">
-        <input name="q" defaultValue={params?.q ?? ""} placeholder="Search order, customer, email, phone, location..." />
+        <input name="q" defaultValue={params?.q ?? ""} placeholder="Search order number, customer name, email, phone, location..." />
         <select name="status" defaultValue={params?.status ?? ""}>
           <option value="">All order status</option>
           <option value="PENDING">Pending</option>
@@ -44,6 +46,7 @@ export default async function AdminOrdersPage({
           <option value="REFUNDED">Refunded</option>
         </select>
         <button type="submit">Filter</button>
+        <Link className="filter-reset" href="/admin/orders">All orders</Link>
       </form>
       <div className="admin-table">
         <div className="admin-table-row order-admin-heading">
@@ -89,11 +92,12 @@ export default async function AdminOrdersPage({
   );
 }
 
-async function getOrders(input: { q?: string; status?: string; paymentStatus?: string }) {
+async function getOrders(input: { q?: string; status?: string; paymentStatus?: string; customerId?: string }) {
   const terms = input.q?.trim().split(/\s+/).filter(Boolean) ?? [];
   try {
     return apiFetch<Order[]>(`/admin/orders${toQueryString({
       q: terms.join(" "),
+      customerId: input.customerId,
       status: orderStatuses.includes(input.status as OrderStatus) ? input.status : undefined,
       paymentStatus: paymentStatuses.includes(input.paymentStatus as PaymentStatus) ? input.paymentStatus : undefined
     })}`);

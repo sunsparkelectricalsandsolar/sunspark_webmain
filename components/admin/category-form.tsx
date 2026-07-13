@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Category, CategoryImage } from "@/lib/types";
 import { PendingButton } from "@/components/ui/pending-button";
+import { publicImageUrl } from "@/lib/products/images";
 
 type CategoryWithImages = Category & { images: CategoryImage[] };
 
@@ -44,7 +45,7 @@ export function CategoryForm({
         <div className="admin-image-grid">
           {category.images.map((image) => (
             <div className="admin-image-card" key={image.id}>
-              <img alt={image.alt ?? category.name} src={image.url} />
+              <img alt={image.alt ?? category.name} src={publicImageUrl(image.url)} />
               <label className="check-label">
                 <input defaultChecked={image.isPrimary} name="primaryImageId" type="radio" value={image.id} />
                 Cover image

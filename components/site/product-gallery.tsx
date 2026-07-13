@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useMemo, useState } from "react";
-import { getPrimaryImage } from "@/lib/products/images";
+import { getPrimaryImage, publicImageUrl } from "@/lib/products/images";
 
 type GalleryImage = {
   url: string;
@@ -12,14 +12,14 @@ type GalleryImage = {
 
 export function ProductGallery({ images, name }: { images: GalleryImage[]; name: string }) {
   const primary = useMemo(() => getPrimaryImage(images), [images]);
-  const [activeUrl, setActiveUrl] = useState(primary?.url ?? null);
-  const active = images.find((image) => image.url === activeUrl) ?? primary;
+  const [activeUrl, setActiveUrl] = useState(primary ? publicImageUrl(primary.url) : null);
+  const active = images.find((image) => publicImageUrl(image.url) === activeUrl) ?? primary;
 
   return (
     <div className="product-gallery">
       <div className="gallery-main">
         {active ? (
-          <Image src={active.url} alt={active.alt ?? name} fill sizes="(max-width: 860px) 100vw, 50vw" priority />
+          <Image src={publicImageUrl(active.url)} alt={active.alt ?? name} fill sizes="(max-width: 860px) 100vw, 50vw" priority />
         ) : (
           <span>No product image</span>
         )}
@@ -29,12 +29,12 @@ export function ProductGallery({ images, name }: { images: GalleryImage[]; name:
           {images.map((image) => (
             <button
               aria-label={`Show ${image.alt ?? name}`}
-              className={image.url === active?.url ? "active" : ""}
+              className={publicImageUrl(image.url) === active?.url ? "active" : ""}
               key={image.url}
-              onClick={() => setActiveUrl(image.url)}
+              onClick={() => setActiveUrl(publicImageUrl(image.url))}
               type="button"
             >
-              <Image src={image.url} alt={image.alt ?? name} fill sizes="96px" />
+              <Image src={publicImageUrl(image.url)} alt={image.alt ?? name} fill sizes="96px" />
             </button>
           ))}
         </div>

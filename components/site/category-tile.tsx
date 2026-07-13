@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { publicImageUrl } from "@/lib/products/images";
 
 export type CategoryTileCategory = {
   name: string;
@@ -17,7 +18,7 @@ export function CategoryTile({ category }: { category: CategoryTileCategory }) {
       {category.images?.length ? (
         <span className={`category-tile-media${category.images.length > 1 ? " is-carousel" : ""}`} aria-hidden="true">
           {category.images.map((image, index) => (
-            <img alt="" key={image.url} src={image.url} style={category.images && category.images.length > 1 ? { animationDelay: `${index * 2.4}s` } : undefined} />
+            <img alt="" key={image.url} src={publicImageUrl(image.url)} style={category.images && category.images.length > 1 ? { animationDelay: `${index * 2.4}s` } : undefined} />
           ))}
         </span>
       ) : null}

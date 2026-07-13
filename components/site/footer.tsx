@@ -1,7 +1,10 @@
 import Link from "next/link";
+import { getStoreCategories } from "@/lib/products/queries";
 import { siteConfig } from "@/lib/site-config";
 
-export function Footer() {
+export async function Footer() {
+  const categories = await getStoreCategories();
+
   return (
     <footer className="site-footer">
       <div className="container footer-grid">
@@ -14,9 +17,10 @@ export function Footer() {
         </section>
         <section>
           <h2>Shop</h2>
-          <Link href="/category/solar">Solar</Link>
-          <Link href="/category/electricals">Electricals</Link>
-          <Link href="/category/electronics">Electronics</Link>
+          {categories.slice(0, 5).map((category) => (
+            <Link href={`/category/${category.slug}`} key={category.id}>{category.name}</Link>
+          ))}
+          {!categories.length ? <Link href="/store">Store</Link> : null}
         </section>
         <section>
           <h2>Support</h2>
