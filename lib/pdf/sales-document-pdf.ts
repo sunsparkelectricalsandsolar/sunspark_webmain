@@ -64,7 +64,7 @@ export function createSalesDocumentPdf(input: PdfDocumentInput) {
 function buildPageContent(input: PdfDocumentInput, _logoObject: number, logoWidth: number, logoHeight: number) {
   const date = new Date(input.date).toLocaleDateString("en-KE", { day: "2-digit", month: "short", year: "numeric" });
   const lines: string[] = ["q", "1 1 1 rg 0 0 595.28 841.89 re f", "Q"];
-  const text = (x: number, y: number, value: string, size = 10, bold = false, color = "24 32 45") => {
+  const text = (x: number, y: number, value: string, size = 10, bold = false, color = rgb(24, 32, 45)) => {
     lines.push("BT", `/${bold ? "F2" : "F1"} ${size} Tf`, `${color} rg`, `${x.toFixed(2)} ${y.toFixed(2)} Td`, `(${escapePdf(value)}) Tj`, "ET");
   };
   const rect = (x: number, y: number, w: number, h: number, color: string) => {
@@ -76,44 +76,44 @@ function buildPageContent(input: PdfDocumentInput, _logoObject: number, logoWidt
   lines.push("q", `${logoW.toFixed(2)} 0 0 ${logoH.toFixed(2)} ${margin} ${(pageHeight - margin - logoH).toFixed(2)} cm`, "/Logo Do", "Q");
 
   let y = pageHeight - margin - 12;
-  text(146, y, siteConfig.name, 15, true, "14 82 164");
+  text(146, y, siteConfig.name, 15, true, rgb(14, 82, 164));
   y -= 15;
-  text(146, y, siteConfig.location, 8.8, false, "82 91 107");
+  text(146, y, siteConfig.location, 8.8, false, rgb(82, 91, 107));
   y -= 12;
-  text(146, y, `${siteConfig.phone} | ${siteConfig.email} | ${siteConfig.url.replace(/^https?:\/\//, "")}`, 8.8, false, "82 91 107");
+  text(146, y, `${siteConfig.phone} | ${siteConfig.email} | ${siteConfig.url.replace(/^https?:\/\//, "")}`, 8.8, false, rgb(82, 91, 107));
 
-  rect(426, pageHeight - 110, 130, 72, "239 246 255");
-  rect(426, pageHeight - 110, 5, 72, "14 82 164");
-  text(444, pageHeight - 60, titleCase(input.kind), 18, true, "14 82 164");
+  rect(426, pageHeight - 110, 130, 72, rgb(239, 246, 255));
+  rect(426, pageHeight - 110, 5, 72, rgb(14, 82, 164));
+  text(444, pageHeight - 60, titleCase(input.kind), 18, true, rgb(14, 82, 164));
   text(444, pageHeight - 78, input.number || "Pending", 9.5, true);
-  text(444, pageHeight - 94, date, 8.8, false, "82 91 107");
-  rect(margin, pageHeight - 126, pageWidth - margin * 2, 2.5, "243 111 33");
+  text(444, pageHeight - 94, date, 8.8, false, rgb(82, 91, 107));
+  rect(margin, pageHeight - 126, pageWidth - margin * 2, 2.5, rgb(243, 111, 33));
 
   const summaryTop = pageHeight - 154;
-  rect(margin, summaryTop - 49, 250, 52, "248 250 252");
-  rect(308, summaryTop - 49, 249, 52, "248 250 252");
-  text(margin + 10, summaryTop - 12, "Bill to", 8, true, "82 91 107");
+  rect(margin, summaryTop - 49, 250, 52, rgb(248, 250, 252));
+  rect(308, summaryTop - 49, 249, 52, rgb(248, 250, 252));
+  text(margin + 10, summaryTop - 12, "Bill to", 8, true, rgb(82, 91, 107));
   text(margin + 10, summaryTop - 27, input.customerName, 11, true);
   if (input.customerPhone) text(margin + 10, summaryTop - 40, input.customerPhone, 9);
   if (input.customerEmail) text(155, summaryTop - 40, input.customerEmail, 9);
-  text(318, summaryTop - 12, "Document details", 8, true, "82 91 107");
+  text(318, summaryTop - 12, "Document details", 8, true, rgb(82, 91, 107));
   text(318, summaryTop - 29, `Payment: ${input.paymentLabel ?? "Cash"}`, 9.5);
   text(318, summaryTop - 43, `Status: ${input.statusLabel ?? "Draft"}`, 9.5);
 
   let tableY = summaryTop - 76;
-  rect(margin, tableY - 19, pageWidth - margin * 2, 22, "14 82 164");
-  text(margin + 10, tableY - 12, "No.", 8.5, true, "255 255 255");
-  text(margin + 48, tableY - 12, "Item description", 8.5, true, "255 255 255");
-  text(340, tableY - 12, "Qty", 8.5, true, "255 255 255");
-  text(390, tableY - 12, "Unit price", 8.5, true, "255 255 255");
-  text(492, tableY - 12, "Amount", 8.5, true, "255 255 255");
+  rect(margin, tableY - 19, pageWidth - margin * 2, 22, rgb(14, 82, 164));
+  text(margin + 10, tableY - 12, "No.", 8.5, true, rgb(255, 255, 255));
+  text(margin + 48, tableY - 12, "Item description", 8.5, true, rgb(255, 255, 255));
+  text(340, tableY - 12, "Qty", 8.5, true, rgb(255, 255, 255));
+  text(390, tableY - 12, "Unit price", 8.5, true, rgb(255, 255, 255));
+  text(492, tableY - 12, "Amount", 8.5, true, rgb(255, 255, 255));
   tableY -= 31;
 
   input.items.slice(0, 18).forEach((item, index) => {
-    if (index % 2 === 0) rect(margin, tableY - 16, pageWidth - margin * 2, 24, "250 252 255");
+    if (index % 2 === 0) rect(margin, tableY - 16, pageWidth - margin * 2, 24, rgb(250, 252, 255));
     text(margin + 10, tableY, String(index + 1), 9);
     text(margin + 48, tableY, truncate(item.productName, 46), 9.5, true);
-    if (item.sku) text(margin + 48, tableY - 10, `SKU: ${item.sku}`, 7.5, false, "82 91 107");
+    if (item.sku) text(margin + 48, tableY - 10, `SKU: ${item.sku}`, 7.5, false, rgb(82, 91, 107));
     text(340, tableY, String(item.quantity), 9);
     text(390, tableY, formatMoney(item.unitCents), 9);
     text(492, tableY, formatMoney(item.totalCents), 9, true);
@@ -122,13 +122,13 @@ function buildPageContent(input: PdfDocumentInput, _logoObject: number, logoWidt
 
   const bottomY = Math.max(92, tableY - 8);
   text(margin, bottomY + 30, "Notes", 9, true);
-  text(margin, bottomY + 16, truncate(input.note ?? "Thank you for choosing Sunspark Electrical and Solar.", 68), 8.5, false, "82 91 107");
-  rect(372, bottomY, 184, 58, "248 250 252");
+  text(margin, bottomY + 16, truncate(input.note ?? "Thank you for choosing Sunspark Electrical and Solar.", 68), 8.5, false, rgb(82, 91, 107));
+  rect(372, bottomY, 184, 58, rgb(248, 250, 252));
   text(386, bottomY + 37, "Subtotal", 9);
   text(492, bottomY + 37, formatMoney(input.subtotalCents), 9, true);
-  text(386, bottomY + 16, "Total", 13, true, "14 82 164");
-  text(478, bottomY + 16, formatMoney(input.totalCents), 13, true, "14 82 164");
-  text(margin, 34, "This document is computer generated by Sunspark Electrical and Solar.", 7.5, false, "100 116 139");
+  text(386, bottomY + 16, "Total", 13, true, rgb(14, 82, 164));
+  text(478, bottomY + 16, formatMoney(input.totalCents), 13, true, rgb(14, 82, 164));
+  text(margin, 34, "This document is computer generated by Sunspark Electrical and Solar.", 7.5, false, rgb(100, 116, 139));
 
   const content = lines.join("\n");
   return `<< /Length ${Buffer.byteLength(content)} >>\nstream\n${content}\nendstream`;
@@ -190,4 +190,8 @@ function truncate(value: string, length: number) {
 
 function titleCase(value: string) {
   return value.charAt(0) + value.slice(1).toLowerCase();
+}
+
+function rgb(red: number, green: number, blue: number) {
+  return [red, green, blue].map((value) => (value / 255).toFixed(4)).join(" ");
 }
