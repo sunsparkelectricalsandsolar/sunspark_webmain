@@ -10,6 +10,7 @@ export const pool = mariadb.createPool({
   password: decodeURIComponent(databaseUrl.password),
   database: databaseUrl.pathname.replace(/^\//, ""),
   connectionLimit: Number(process.env.DB_POOL_SIZE ?? 5),
+  allowPublicKeyRetrieval: true,
   timezone: "Z"
 });
 

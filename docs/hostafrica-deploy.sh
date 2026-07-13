@@ -14,6 +14,7 @@ INSTALL_DEPS="${INSTALL_DEPS:-0}"
 RUN_MIGRATE="${RUN_MIGRATE:-1}"
 RUN_SEED="${RUN_SEED:-0}"
 RUN_LEGACY_IMPORT="${RUN_LEGACY_IMPORT:-0}"
+BUILD_ON_HOST="${BUILD_ON_HOST:-0}"
 API_ROOT="$APP_DIR/apps/api"
 
 find_node_env_dir() {
@@ -105,8 +106,12 @@ if [ "$RUN_LEGACY_IMPORT" = "1" ]; then
   npm run import:legacy
 fi
 
-echo "==> Building backend"
-npm run build
+if [ "$BUILD_ON_HOST" = "1" ]; then
+  echo "==> Building backend on host"
+  npm run build
+else
+  echo "==> Skipping host build. Using committed apps/api/dist."
+fi
 
 echo "==> Restarting cPanel Node app"
 mkdir -p "$API_ROOT/tmp"
