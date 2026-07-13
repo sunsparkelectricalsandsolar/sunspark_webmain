@@ -5,7 +5,12 @@ type ProductImageLike = {
 };
 
 function imageBaseUrl() {
-  return (process.env.NEXT_PUBLIC_API_URL ?? process.env.API_INTERNAL_URL ?? "http://localhost:4000").replace(/\/+$/, "");
+  return (
+    process.env.NEXT_PUBLIC_BACKEND_URL ??
+    process.env.NEXT_PUBLIC_API_URL ??
+    process.env.API_INTERNAL_URL ??
+    "http://localhost:4000"
+  ).replace(/\/+$/, "");
 }
 
 export function publicImageUrl(url: string | null | undefined) {

@@ -168,12 +168,6 @@ const uploadContentTypes = new Map([
   ["image/webp", "webp"]
 ]);
 
-function publicApiBase(request: express.Request) {
-  const configured = env("API_PUBLIC_URL", env("NEXT_PUBLIC_API_URL", ""));
-  if (configured) return configured.replace(/\/+$/, "");
-  return `${request.protocol}://${request.get("host")}`;
-}
-
 function safeUploadName(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80) || "image";
 }
@@ -628,7 +622,7 @@ app.post("/admin/uploads", asyncRoute(async (request, response) => {
     const filename = `${crypto.randomUUID()}-${safeUploadName(file.filename).replace(/\.[a-z0-9]+$/i, "")}.${extension}`;
     await writeFile(path.join(targetDir, filename), buffer, { flag: "wx" });
     images.push({
-      url: `${publicApiBase(request)}/uploads/${input.folder}/${filename}`,
+      url: `/uploads/${input.folder}/${filename}`,
       alt: input.name
     });
   }

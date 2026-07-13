@@ -1,4 +1,5 @@
 import { siteConfig } from "@/lib/site-config";
+import { publicImageUrl } from "@/lib/products/images";
 
 type MerchantImage = {
   url: string;
@@ -69,8 +70,8 @@ export function buildMerchantFeed(products: MerchantProduct[]) {
       <g:description>${xml(productDescription(product))}</g:description>
       <g:link>${xml(productUrl(product.slug))}</g:link>
       <g:canonical_link>${xml(productUrl(product.slug))}</g:canonical_link>
-      ${primaryImage ? `<g:image_link>${xml(absoluteUrl(primaryImage.url))}</g:image_link>` : ""}
-      ${additionalImages.map((image) => `<g:additional_image_link>${xml(absoluteUrl(image.url))}</g:additional_image_link>`).join("\n      ")}
+      ${primaryImage ? `<g:image_link>${xml(publicImageUrl(primaryImage.url))}</g:image_link>` : ""}
+      ${additionalImages.map((image) => `<g:additional_image_link>${xml(publicImageUrl(image.url))}</g:additional_image_link>`).join("\n      ")}
       <g:availability>${product.stockQuantity > 0 ? "in_stock" : "out_of_stock"}</g:availability>
       <g:price>${merchantPrice(product.priceCents)}</g:price>
       <g:condition>new</g:condition>

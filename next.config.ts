@@ -1,6 +1,12 @@
 import type { NextConfig } from "next";
 import path from "node:path";
 
+const backendImageUrl = new URL(
+  process.env.NEXT_PUBLIC_BACKEND_URL ??
+    process.env.NEXT_PUBLIC_API_URL ??
+    "https://backend.sunsparkelectricals.co.ke"
+);
+
 const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true
@@ -22,12 +28,15 @@ const nextConfig: NextConfig = {
         hostname: "sunspark.co.ke"
       },
       {
-        protocol: "https",
-        hostname: "backend.sunsparkelectricals.co.ke"
+        protocol: backendImageUrl.protocol.replace(":", "") as "http" | "https",
+        hostname: backendImageUrl.hostname,
+        port: backendImageUrl.port,
+        pathname: "/uploads/**"
       },
       {
         protocol: "http",
-        hostname: "localhost"
+        hostname: "localhost",
+        pathname: "/uploads/**"
       }
     ]
   },
