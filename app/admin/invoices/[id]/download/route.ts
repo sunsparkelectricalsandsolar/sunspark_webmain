@@ -41,7 +41,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
   return new NextResponse(pdf, {
     headers: {
-      "content-disposition": `attachment; filename="${salesDocumentFilename({ kind: document.kind, number: document.reference })}"`,
+      "content-disposition": `attachment; filename="${salesDocumentFilename({ kind: document.kind, number: document.reference, customerName: document.customerName })}"`,
       "content-type": "application/pdf"
     }
   });

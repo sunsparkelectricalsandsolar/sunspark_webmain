@@ -37,9 +37,10 @@ const pageHeight = 841.89;
 const margin = 38;
 const logoPath = join(process.cwd(), "public", "logo.jpg");
 
-export function salesDocumentFilename(input: Pick<PdfDocumentInput, "kind" | "number">) {
+export function salesDocumentFilename(input: Pick<PdfDocumentInput, "kind" | "number"> & { customerName?: string | null }) {
   const number = (input.number || "draft").replace(/[^a-z0-9-]+/gi, "-").replace(/^-|-$/g, "");
-  return `Sunspark_${titleCase(input.kind)}_${number}.pdf`;
+  const customer = (input.customerName || "customer").replace(/[^a-z0-9-]+/gi, "-").replace(/^-|-$/g, "");
+  return `Sunspark_${titleCase(input.kind)}_${customer}_${number}.pdf`;
 }
 
 export function createSalesDocumentPdf(input: PdfDocumentInput) {

@@ -19,15 +19,19 @@ const messages: Record<string, string> = {
 export default async function AdminProductsPage({
   searchParams
 }: {
-  searchParams?: Promise<{ q?: string; category?: string; status?: string; error?: string; notice?: string }>;
+  searchParams?: Promise<{ q?: string; category?: string; status?: string; page?: string; error?: string; notice?: string }>;
 }) {
   await requireAdmin();
   const params = await searchParams;
-  const products = await getProducts({
+  const allProducts = await getProducts({
     category: params?.category,
     q: params?.q,
     status: params?.status
   });
+  const perPage = 25;
+  const page = Math.min(Math.max(Number(params?.page ?? 1) || 1, 1), Math.max(Math.ceil(allProducts.length / perPage), 1));
+  const products = allProducts.slice((page - 1) * perPage, page * perPage);
+  const pageCount = Math.max(Math.ceil(allProducts.length / perPage), 1);
   const categories = await getCategories();
   const feedback = params?.error ? messages[params.error] : params?.notice ? messages[params.notice] : null;
 
@@ -59,7 +63,7 @@ export default async function AdminProductsPage({
           <button type="submit">Filter</button>
           <Link className="filter-reset" href="/admin/products">All products</Link>
         </form>
-        <div className="admin-table">
+        <div className="admin-table product-admin-table">
           <div className="admin-table-row heading">
             <span>Product</span>
             <span>Category</span>
@@ -92,10 +96,31 @@ export default async function AdminProductsPage({
               </details>
             </div>
           ))}
-          {!products.length ? <p className="empty-state">No products yet. Add the first Sunspark product.</p> : null}
+          {!allProducts.length ? <p className="empty-state">No products yet. Add the first Sunspark product.</p> : null}
         </div>
+        {allProducts.length > perPage ? (
+          <nav className="pagination" aria-label="Product pages">
+            <Link className={page <= 1 ? "disabled" : ""} href={productPageHref(params, page - 1)}>Previous</Link>
+            {Array.from({ length: pageCount }, (_, index) => index + 1).map((item) => (
+              <Link className={item === page ? "active" : ""} href={productPageHref(params, item)} key={item}>{item}</Link>
+            ))}
+            <Link className={page >= pageCount ? "disabled" : ""} href={productPageHref(params, page + 1)}>Next</Link>
+          </nav>
+        ) : null}
     </AdminLayout>
   );
+}
+
+function productPageHref(
+  params: { q?: string; category?: string; status?: string } | undefined,
+  page: number
+) {
+  return `/admin/products${toQueryString({
+    q: params?.q,
+    category: params?.category,
+    status: params?.status,
+    page: Math.max(page, 1)
+  })}`;
 }
 
 async function getProducts(input: { q?: string; category?: string; status?: string }) {

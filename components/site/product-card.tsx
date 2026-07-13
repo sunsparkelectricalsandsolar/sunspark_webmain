@@ -44,7 +44,7 @@ export function ProductCard({ product }: { product: ProductCardProduct }) {
                 key={item.url}
                 sizes="(max-width: 700px) 50vw, 25vw"
                 src={publicImageUrl(item.url)}
-                style={{ animationDelay: `${index * 2.4}s` }}
+                style={{ animationDelay: `${index * 2.6}s` }}
               />
             ))}
           </span>

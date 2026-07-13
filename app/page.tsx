@@ -26,7 +26,7 @@ export default async function HomePage() {
           ))}
         </div>
       </section>
-      {brands.length ? <section className="section brand-section"><div className="container"><div className="section-title"><h3>Shop by Brand</h3><Link href="/store">View all</Link></div><div className="brand-list">{brands.map((brand) => <Link href={`/store?q=${encodeURIComponent(brand)}`} key={brand}>{brand}</Link>)}</div></div></section> : null}
+      {brands.length ? <section className="section brand-section"><div className="container"><details className="brand-disclosure"><summary><span>Shop by Brand</span><Link href="/store">View all</Link></summary><div className="brand-list">{brands.map((brand) => <Link href={`/store?q=${encodeURIComponent(brand)}`} key={brand}>{brand}</Link>)}</div></details></div></section> : null}
       {productSections.map((category) => (
           <section className="section product-section" key={category.id}>
             <div className="container">

@@ -5,7 +5,7 @@ import { siteConfig } from "@/lib/site-config";
 
 export function SupportChat() {
   const [open, setOpen] = useState(false);
-  const message = "Hello Sunspark, I need help choosing a product.";
+  const message = "Hello Sunspark, I have loved the electricals you are selling, I have a request to make.";
   const whatsappUrl = `https://wa.me/${siteConfig.whatsappPhone}?text=${encodeURIComponent(message)}`;
 
   return <aside className="support-chat">
