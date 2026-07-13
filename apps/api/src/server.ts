@@ -468,7 +468,7 @@ app.get("/home", asyncRoute(async (_request, response) => {
     ...mapCategory(row, categoryImages.get(row.id) ?? []),
     products: await listProducts({ categoryId: row.id, limit: 24 })
   })));
-  const products = categorySections.flatMap((section) => section.products).slice(0, 12);
+  const products = await listProducts({ limit: 48 });
   const brandRows = await query<{ brand: string }>(
     "SELECT DISTINCT brand FROM products WHERE is_active = TRUE AND brand IS NOT NULL AND brand <> '' ORDER BY brand ASC LIMIT 20"
   );

@@ -27,10 +27,11 @@ export async function getHomeData() {
     apiFetch<{ categories: Category[]; categorySections: Category[]; products: Product[]; brands: string[] }>("/home"),
     { categories: [], categorySections: [], products: [], brands: [] }
   );
+  const products = data.products.length ? data.products : await getStoreProducts({});
 
   return {
     categories: data.categories.sort((a, b) => storefrontCategoryRank(a.slug) - storefrontCategoryRank(b.slug)),
-    products: data.products,
+    products,
     categorySections: data.categorySections.sort((a, b) => storefrontCategoryRank(a.slug) - storefrontCategoryRank(b.slug)),
     brands: data.brands
   };
