@@ -3,28 +3,35 @@
 Run this on SSH for `backend.sunsparkelectricals.co.ke`:
 
 ```bash
-cd ~/sunspark
+cd ~/sunsparkbackend
 bash docs/hostafrica-deploy.sh
 ```
 
 First deploy or dependency changes:
 
 ```bash
-cd ~/sunspark
+cd ~/sunsparkbackend
 INSTALL_DEPS=1 RUN_SEED=1 bash docs/hostafrica-deploy.sh
+```
+
+On CloudLinux, if `INSTALL_DEPS=1` still refuses to install, use the cPanel Node.js screen's **Run NPM Install** button for the `sunsparkbackend/apps/api` app, then run:
+
+```bash
+cd ~/sunsparkbackend
+RUN_SEED=1 bash docs/hostafrica-deploy.sh
 ```
 
 If the database already has the old Prisma tables and you want to copy those products/categories/users into the new backend tables, run this once:
 
 ```bash
-cd ~/sunspark
+cd ~/sunsparkbackend
 RUN_LEGACY_IMPORT=1 bash docs/hostafrica-deploy.sh
 ```
 
 Daily update after pushing code:
 
 ```bash
-cd ~/sunspark
+cd ~/sunsparkbackend
 bash docs/hostafrica-deploy.sh
 ```
 
