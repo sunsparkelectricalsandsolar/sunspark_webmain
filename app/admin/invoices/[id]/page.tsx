@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { PrintReceiptButton } from "@/components/admin/print-receipt-button";
 import { SalesDocument } from "@/components/admin/sales-document";
@@ -31,7 +32,7 @@ export default async function AdminInvoiceDocumentPage({ params }: { params: Pro
 
   return (
     <AdminLayout title={title} subtitle="Review the customer document before printing or sharing.">
-      <div className="receipt-actions"><PrintReceiptButton label={`Print ${title.toLowerCase()}`} /></div>
+      <div className="receipt-actions">{document.status === "DRAFT" ? <Link className="secondary-btn" href={`/admin/invoices/${document.id}/edit`}>Edit {title.toLowerCase()}</Link> : null}<PrintReceiptButton label={`Download ${title.toLowerCase()} PDF`} /></div>
       <SalesDocument
         customerEmail={document.customerEmail}
         customerName={document.customerName}

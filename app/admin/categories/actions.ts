@@ -16,6 +16,13 @@ function getDeleteImageIds(formData: FormData) {
   return formData.getAll("deleteImageIds").map(String).filter(Boolean);
 }
 
+function categoryErrorUrl(path: string, error: unknown) {
+  if (!(error instanceof ApiError)) throw error;
+  const reason = error.status === 409 ? "duplicate" : error.status === 413 ? "image" : "save";
+  const message = encodeURIComponent(error.message || "The category could not be saved.");
+  return `${path}?error=${reason}&message=${message}`;
+}
+
 export async function createCategoryAction(formData: FormData) {
   await requireAdmin();
 
@@ -31,9 +38,8 @@ export async function createCategoryAction(formData: FormData) {
   if (getImageUploadError(files)) redirect("/admin/categories?error=image");
 
   const slug = slugifyProductName(name);
-  const images = await saveCategoryImages(files, name);
-
   try {
+    const images = await saveCategoryImages(files, name);
     await apiFetch("/admin/categories", {
       method: "POST",
       body: JSON.stringify({
@@ -46,8 +52,7 @@ export async function createCategoryAction(formData: FormData) {
       })
     });
   } catch (error) {
-    if (!(error instanceof ApiError)) throw error;
-    redirect(`/admin/categories?error=${error.status === 409 ? "duplicate" : "save"}`);
+    redirect(categoryErrorUrl("/admin/categories", error));
   }
 
   revalidatePath("/");
@@ -72,9 +77,8 @@ export async function updateCategoryAction(categoryId: string, formData: FormDat
   if (getImageUploadError(files)) redirect(`/admin/categories/${categoryId}/edit?error=image`);
 
   const slug = slugifyProductName(name);
-  const images = await saveCategoryImages(files, name);
-
   try {
+    const images = await saveCategoryImages(files, name);
     await apiFetch(`/admin/categories/${categoryId}`, {
       method: "PATCH",
       body: JSON.stringify({
@@ -89,8 +93,7 @@ export async function updateCategoryAction(categoryId: string, formData: FormDat
       })
     });
   } catch (error) {
-    if (!(error instanceof ApiError)) throw error;
-    redirect(`/admin/categories/${categoryId}/edit?error=${error.status === 409 ? "duplicate" : "save"}`);
+    redirect(categoryErrorUrl(`/admin/categories/${categoryId}/edit`, error));
   }
 
   revalidatePath("/");

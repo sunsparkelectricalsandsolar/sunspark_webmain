@@ -19,14 +19,23 @@ function money(cents: number) {
 
 export function WalkInSaleForm({
   action,
+  initialCustomer,
+  initialLines = [],
   products,
   submitLabel = "Complete sale"
 }: {
   action: (formData: FormData) => Promise<void>;
+  initialCustomer?: {
+    name?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    paymentMethod?: "CASH" | "MPESA" | "WHATSAPP" | string | null;
+  };
+  initialLines?: SaleLine[];
   products: SaleProduct[];
   submitLabel?: string;
 }) {
-  const [lines, setLines] = useState<SaleLine[]>([]);
+  const [lines, setLines] = useState<SaleLine[]>(initialLines);
   const [selectedProductId, setSelectedProductId] = useState(products[0]?.id ?? "");
   const [productQuery, setProductQuery] = useState("");
   const [formError, setFormError] = useState("");
@@ -66,12 +75,12 @@ export function WalkInSaleForm({
       <section className="sale-panel">
         <div className="sale-panel-heading"><h2>Customer</h2><p>Capture the details needed for the receipt.</p></div>
         <div className="form-grid two">
-          <label>Customer name<input name="customerName" placeholder="Walk-in customer" required /></label>
-          <label>Phone number<input name="customerPhone" inputMode="tel" placeholder="Optional" /></label>
+          <label>Customer name<input defaultValue={initialCustomer?.name ?? ""} name="customerName" placeholder="Walk-in customer" required /></label>
+          <label>Phone number<input defaultValue={initialCustomer?.phone ?? ""} name="customerPhone" inputMode="tel" placeholder="Optional" /></label>
         </div>
-        <label>Email address<input name="customerEmail" placeholder="Optional - useful for emailed invoices" type="email" /></label>
+        <label>Email address<input defaultValue={initialCustomer?.email ?? ""} name="customerEmail" placeholder="Optional - useful for emailed invoices" type="email" /></label>
         <label>Payment method
-          <select defaultValue="CASH" name="paymentMethod"><option value="CASH">Cash</option><option value="MPESA">M-Pesa</option></select>
+          <select defaultValue={initialCustomer?.paymentMethod ?? "CASH"} name="paymentMethod"><option value="CASH">Cash</option><option value="MPESA">M-Pesa</option><option value="WHATSAPP">WhatsApp</option></select>
         </label>
       </section>
       <section className="sale-panel">

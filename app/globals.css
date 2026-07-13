@@ -512,17 +512,11 @@ textarea {
 
 .category-tile-media.is-carousel img,
 .product-image-stack img {
-  opacity: 0;
-  animation: imageFade 7.2s infinite;
+  opacity: 1;
 }
 
 .category-tile-media::after {
-  content: "";
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 82%;
-  background: rgba(12, 60, 116, 0.84);
-  clip-path: polygon(0 0, 76% 0, 48% 100%, 0 100%);
+  display: none;
 }
 
 @keyframes imageFade {
@@ -546,6 +540,7 @@ textarea {
   position: relative;
   z-index: 2;
   max-width: 260px;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.75);
 }
 
 .category-tile-copy strong {
@@ -651,6 +646,11 @@ textarea {
 .product-image-stack img {
   object-fit: contain !important;
   padding: 12px;
+}
+
+.category-tile-media.is-carousel img:not(:first-child),
+.product-image-stack img:not(:first-child) {
+  display: none;
 }
 
 .badge {
@@ -1121,6 +1121,27 @@ textarea {
   color: var(--muted);
 }
 
+.admin-topbar-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.admin-back-button {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--brand);
+  cursor: pointer;
+  font-weight: 800;
+  padding: 7px 12px;
+}
+
+.admin-back-button:hover {
+  border-color: var(--spark);
+  color: var(--spark);
+}
+
 .admin-content {
   display: grid;
   gap: 24px;
@@ -1254,11 +1275,12 @@ summary:focus-visible {
 .admin-table-row {
   display: grid;
   grid-template-columns: minmax(220px, 2fr) minmax(120px, 1fr) minmax(100px, 1fr) 0.65fr 0.75fr 110px;
-  gap: 14px;
+  gap: 10px;
   min-width: 760px;
-  padding: 14px 16px;
+  padding: 10px 12px;
   border-bottom: 1px solid var(--line);
   align-items: center;
+  font-size: 13px;
 }
 
 .admin-table-row.customer-heading,
@@ -1322,6 +1344,16 @@ summary:focus-visible {
   padding: 7px 11px;
   font-weight: 700;
   text-align: center;
+}
+
+.map-text-link {
+  display: inline-block;
+  margin-top: 4px;
+  color: var(--brand);
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .table-actions {
@@ -1950,27 +1982,28 @@ summary:focus-visible {
 .sales-document,
 .receipt {
   display: grid;
-  gap: 18px;
+  gap: 12px;
   width: min(100%, 820px);
   margin: 0 auto;
   border: 1px solid var(--line);
   background: #fff;
-  padding: 26px;
+  padding: 18px 22px;
+  font-size: 14px;
   box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
 }
 
 .sales-document-header {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 190px;
-  gap: 24px;
+  grid-template-columns: minmax(0, 1fr) 160px;
+  gap: 16px;
   align-items: start;
-  border-bottom: 4px solid var(--spark);
-  padding-bottom: 18px;
+  border-bottom: 3px solid var(--spark);
+  padding-bottom: 10px;
 }
 
 .sales-document-brand {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   align-items: center;
 }
 
@@ -1979,8 +2012,8 @@ summary:focus-visible {
 }
 
 .sales-document-brand h2 {
-  margin: 0 0 6px;
-  font-size: 20px;
+  margin: 0 0 4px;
+  font-size: 16px;
 }
 
 .sales-document-brand p,
@@ -1989,21 +2022,21 @@ summary:focus-visible {
   margin: 0;
   color: var(--muted);
   font-size: 13px;
-  line-height: 1.55;
+  line-height: 1.35;
 }
 
 .sales-document-title {
   display: grid;
-  gap: 6px;
-  border-left: 6px solid var(--brand);
+  gap: 4px;
+  border-left: 5px solid var(--brand);
   background: linear-gradient(135deg, rgba(14, 82, 164, 0.1), rgba(214, 40, 40, 0.08));
-  padding: 16px;
+  padding: 10px;
   text-align: right;
 }
 
 .sales-document-title span {
   color: var(--brand);
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 900;
   letter-spacing: 0;
 }
@@ -2024,13 +2057,13 @@ summary:focus-visible {
 .sales-document-summary {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(220px, 0.75fr);
-  gap: 18px;
+  gap: 12px;
 }
 
 .sales-document-summary > div {
   border: 1px solid var(--line);
   background: var(--soft);
-  padding: 14px;
+  padding: 9px 11px;
 }
 
 .sales-document-summary strong {
@@ -2046,9 +2079,9 @@ summary:focus-visible {
 .sales-document-row {
   display: grid;
   grid-template-columns: 54px minmax(0, 1fr) 70px 120px 120px;
-  gap: 12px;
+  gap: 10px;
   align-items: center;
-  padding: 11px 14px;
+  padding: 8px 11px;
   border-top: 1px solid var(--line);
 }
 
@@ -2078,7 +2111,7 @@ summary:focus-visible {
 .sales-document-bottom {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 260px;
-  gap: 20px;
+  gap: 16px;
   align-items: start;
 }
 
@@ -2104,7 +2137,7 @@ summary:focus-visible {
 .sales-document-totals .grand-total {
   border: 0;
   color: var(--brand);
-  font-size: 20px;
+  font-size: 17px;
   font-weight: 900;
 }
 
@@ -2585,9 +2618,7 @@ summary:focus-visible {
   }
 
   .category-tile-media::after {
-    width: 100%;
-    background: linear-gradient(135deg, rgba(12, 60, 116, 0.86), rgba(243, 111, 33, 0.58));
-    clip-path: polygon(0 0, 100% 0, 100% 58%, 74% 100%, 0 100%);
+    display: none;
   }
 
   .category-tile-copy {

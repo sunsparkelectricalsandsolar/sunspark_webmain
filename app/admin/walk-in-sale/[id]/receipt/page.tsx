@@ -17,7 +17,7 @@ export default async function WalkInReceiptPage({ params }: { params: Promise<{ 
   const title = order.paymentStatus === "PAID" ? "Receipt" : "Invoice";
 
   return <AdminLayout title="Sale Complete" subtitle="The sale is recorded, stock is updated, and the document is ready.">
-    <div className="receipt-actions"><PrintReceiptButton label={`Print ${title.toLowerCase()}`} /></div>
+    <div className="receipt-actions"><PrintReceiptButton label={`Download ${title.toLowerCase()} PDF`} /></div>
     <SalesDocument
       customerEmail={order.customerEmail}
       customerName={order.customerName}

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { CategoryTile } from "@/components/site/category-tile";
 import { ProductCard } from "@/components/site/product-card";
-import { defaultCategories } from "@/lib/products/default-categories";
 import { getHomeData } from "@/lib/products/queries";
 
 export const dynamic = "force-dynamic";
@@ -15,14 +14,7 @@ function chunkProducts<T>(products: T[], size: number) {
 }
 
 export default async function HomePage() {
-  const { categories: dbCategories, categorySections, products, brands } = await getHomeData();
-  const displayCategories = dbCategories.length
-    ? dbCategories
-    : defaultCategories.map((category) => ({
-        name: category.name,
-        slug: category.slug,
-        description: category.description
-      }));
+  const { categories: displayCategories, categorySections, products, brands } = await getHomeData();
 
   return (
     <>
@@ -55,7 +47,7 @@ export default async function HomePage() {
         <section className="section product-section">
           <div className="container">
             <div className="section-title">
-              <h3>Solar Products</h3>
+              <h3>Electrical Products</h3>
               <div className="section-tabs">
                 {displayCategories.map((category) => (
                   <Link href={`/category/${category.slug}`} key={category.slug}>

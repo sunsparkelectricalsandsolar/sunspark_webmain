@@ -65,7 +65,7 @@ export default async function AdminOrdersPage({
               {order.customerName}<br />
               <small>{order.customerPhone ?? order.customerEmail}</small>
               {order.deliveryLocation ? <small>{order.deliveryLocation}</small> : null}
-              {order.deliveryMapUrl ? <a className="table-link" href={order.deliveryMapUrl} rel="noreferrer" target="_blank">Map</a> : null}
+              {order.deliveryMapUrl ? <a className="map-text-link" href={order.deliveryMapUrl} rel="noreferrer" target="_blank">Open map</a> : null}
             </span>
             <span>{formatMoney(order.totalCents)}</span>
             <select name="paymentStatus" defaultValue={order.paymentStatus}>

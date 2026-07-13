@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { adminLogoutAction } from "@/app/admin/logout-action";
+import { AdminBackButton } from "@/components/admin/admin-back-button";
 
 const adminLinks = [
   { href: "/admin", label: "Dashboard" },
@@ -65,10 +66,13 @@ export function AdminLayout({
       </aside>
       <div className="admin-main">
         <header className="admin-topbar">
-          <div>
-            <p className="eyebrow">Admin</p>
-            <h1>{title}</h1>
-            {subtitle ? <p>{subtitle}</p> : null}
+          <div className="admin-topbar-title">
+            <AdminBackButton />
+            <div>
+              <p className="eyebrow">Admin</p>
+              <h1>{title}</h1>
+              {subtitle ? <p>{subtitle}</p> : null}
+            </div>
           </div>
           {actions ? <div className="admin-topbar-actions">{actions}</div> : null}
         </header>

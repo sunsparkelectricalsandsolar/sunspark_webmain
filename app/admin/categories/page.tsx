@@ -23,12 +23,12 @@ const messages: Record<string, string> = {
 export default async function AdminCategoriesPage({
   searchParams
 }: {
-  searchParams?: Promise<{ q?: string; status?: string; error?: string; notice?: string }>;
+  searchParams?: Promise<{ q?: string; status?: string; error?: string; notice?: string; message?: string }>;
 }) {
   await requireAdmin("/admin/categories");
   const params = await searchParams;
   const categories = await getCategories({ q: params?.q, status: params?.status });
-  const feedback = params?.error ? messages[params.error] : params?.notice ? messages[params.notice] : null;
+  const feedback = params?.error ? params.message ?? messages[params.error] : params?.notice ? messages[params.notice] : null;
 
   return (
     <AdminLayout title="Categories" subtitle="Homepage categories and their imagery are managed here.">

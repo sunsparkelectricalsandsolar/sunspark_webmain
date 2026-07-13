@@ -20,7 +20,7 @@ export default async function EditCategoryPage({
   searchParams
 }: {
   params: Promise<{ id: string }>;
-  searchParams?: Promise<{ error?: string }>;
+  searchParams?: Promise<{ error?: string; message?: string }>;
 }) {
   const { id } = await params;
   const query = await searchParams;
@@ -32,7 +32,7 @@ export default async function EditCategoryPage({
   return (
     <AdminLayout title="Edit Category" subtitle={`Update ${category.name} and the homepage category card.`}>
       <div className="admin-shell narrow">
-        {query?.error && messages[query.error] ? <p className="admin-feedback error" role="alert">{messages[query.error]}</p> : null}
+        {query?.error ? <p className="admin-feedback error" role="alert">{query.message ?? messages[query.error] ?? messages.save}</p> : null}
         <CategoryForm action={updateCategoryAction.bind(null, category.id)} cancelHref="/admin/categories" category={category} />
       </div>
     </AdminLayout>

@@ -45,12 +45,46 @@ async function createSalesDocument(formData: FormData, kind: DraftInvoiceKind) {
   redirect(`/admin/invoices?notice=${kind === "QUOTATION" ? "quotation" : "created"}`);
 }
 
+async function salesDocumentPayload(formData: FormData) {
+  const customerName = String(formData.get("customerName") ?? "").trim();
+  const customerEmail = String(formData.get("customerEmail") ?? "").trim() || null;
+  const customerPhone = String(formData.get("customerPhone") ?? "").trim() || null;
+  const paymentMethod = String(formData.get("paymentMethod") ?? "CASH");
+  const requested = requestedItems(formData);
+  if (customerName.length < 2 || !requested) return null;
+  return {
+    customerName,
+    customerEmail,
+    customerPhone,
+    paymentMethod,
+    items: [...requested.entries()].map(([productId, quantity]) => ({ productId, quantity }))
+  };
+}
+
 export async function createDraftInvoiceAction(formData: FormData) {
   await createSalesDocument(formData, "INVOICE");
 }
 
 export async function createQuotationAction(formData: FormData) {
   await createSalesDocument(formData, "QUOTATION");
+}
+
+export async function updateDraftDocumentAction(draftId: string, formData: FormData) {
+  await requireAdmin(`/admin/invoices/${draftId}/edit`);
+  const payload = await salesDocumentPayload(formData);
+  if (!payload) redirect(`/admin/invoices/${draftId}/edit?error=details`);
+
+  await apiFetch(`/admin/draft-documents/${draftId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload)
+  }).catch((error: unknown) => {
+    if (error instanceof ApiError) redirect(`/admin/invoices/${draftId}/edit?error=items`);
+    throw error;
+  });
+
+  revalidatePath("/admin/invoices");
+  revalidatePath(`/admin/invoices/${draftId}`);
+  redirect(`/admin/invoices/${draftId}?notice=updated`);
 }
 
 export async function finalizeDraftInvoiceAction(draftId: string) {

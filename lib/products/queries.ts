@@ -1,5 +1,4 @@
 import { apiFetch, toQueryString } from "@/lib/api/client";
-import { getDefaultCategory } from "@/lib/products/default-categories";
 import type { Category, Product } from "@/lib/types";
 
 const queryTimeoutMs = 2500;
@@ -47,26 +46,7 @@ export async function getStoreProducts(input: { q?: string; category?: string })
 }
 
 export async function getCategoryBySlug(slug: string) {
-  const category = await withFallback(apiFetch<Category>(`/categories/${encodeURIComponent(slug)}`), null);
-  if (category) return category;
-
-  const fallbackCategory = getDefaultCategory(slug);
-  return fallbackCategory
-    ? {
-        id: `default-${fallbackCategory.slug}`,
-        name: fallbackCategory.name,
-        slug: fallbackCategory.slug,
-        description: fallbackCategory.description,
-        parentId: null,
-        isActive: true,
-        sortOrder: 0,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        images: [],
-        products: [],
-        children: []
-      }
-    : null;
+  return withFallback(apiFetch<Category>(`/categories/${encodeURIComponent(slug)}`), null);
 }
 
 export async function getProductBySlug(slug: string) {

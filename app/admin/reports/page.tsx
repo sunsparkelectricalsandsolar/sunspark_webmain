@@ -3,16 +3,25 @@ import { requireAdmin } from "@/lib/auth/guards";
 import { apiFetch } from "@/lib/api/client";
 import { formatMoney } from "@/lib/money";
 import type { Order } from "@/lib/types";
+import { emailDailyReportAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-export default async function ReportsPage({ searchParams }: { searchParams?: Promise<{ date?: string }> }) {
+const messages: Record<string, string> = {
+  emailed: "Daily report emailed to the configured report address.",
+  date: "Choose a valid report date.",
+  email: "The report could not be emailed. Check SMTP settings and try again."
+};
+
+export default async function ReportsPage({ searchParams }: { searchParams?: Promise<{ date?: string; error?: string; notice?: string; message?: string }> }) {
   await requireAdmin("/admin/reports");
   const params = await searchParams;
   const date = /^\d{4}-\d{2}-\d{2}$/.test(params?.date ?? "") ? params!.date! : new Date().toLocaleDateString("en-CA", { timeZone: "Africa/Nairobi" });
   const report = await getDailyReport(date);
+  const feedback = params?.error ? params.message ?? messages[params.error] : params?.notice ? messages[params.notice] : null;
   return <AdminLayout title="Daily Reports" subtitle="Sales, revenue, and gross profit based on the buying cost saved with each sold item.">
-    <form action="/admin/reports" className="admin-filter"><input defaultValue={date} name="date" type="date" /><button type="submit">Run report</button></form>
+    {feedback ? <p className={`admin-feedback ${params?.error ? "error" : "success"}`} role="status">{feedback}</p> : null}
+    <form action="/admin/reports" className="admin-filter"><input defaultValue={date} name="date" type="date" /><button type="submit">Run report</button><button formAction={emailDailyReportAction} type="submit">Email report</button></form>
     <div className="admin-stats report-stats"><Stat label="Completed sales" value={String(report.orders)} /><Stat label="Revenue" value={formatMoney(report.revenueCents)} /><Stat label="Gross profit" value={formatMoney(report.profitCents)} /></div>
     <div className="admin-table"><div className="admin-table-row report-row heading"><span>Product</span><span>Quantity</span><span>Revenue</span><span>Buying cost</span><span>Profit</span></div>
       {report.items.map((item) => <div className="admin-table-row report-row" key={item.key}><strong>{item.name}</strong><span>{item.quantity}</span><span>{formatMoney(item.revenueCents)}</span><span>{formatMoney(item.costCents)}</span><strong>{formatMoney(item.profitCents)}</strong></div>)}

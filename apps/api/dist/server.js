@@ -203,6 +203,15 @@ function publicUser(row) {
 function hashToken(token) {
     return crypto.createHash("sha256").update(token).digest("hex");
 }
+function money(cents) {
+    return new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 }).format(cents / 100);
+}
+function reportWindow(date) {
+    return {
+        start: new Date(`${date}T00:00:00+03:00`),
+        end: new Date(`${date}T23:59:59.999+03:00`)
+    };
+}
 app.get("/health", (_request, response) => {
     response.json({ ok: true, service: "sunspark-api" });
 });
@@ -427,6 +436,60 @@ app.patch("/admin/categories/:id", asyncRoute(async (request, response) => {
         }
     });
     response.json({ ok: true });
+}));
+app.post("/admin/reports/daily-email", asyncRoute(async (request, response) => {
+    const input = z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }).parse(request.body);
+    const { start, end } = reportWindow(input.date);
+    const [settingsRows, orderRows, itemRows] = await Promise.all([
+        query("SELECT report_email FROM site_settings WHERE id = 'default' LIMIT 1"),
+        query("SELECT COUNT(*) AS count FROM orders WHERE created_at BETWEEN ? AND ? AND status <> 'CANCELLED'", [start, end]),
+        query(`SELECT
+         oi.product_name AS name,
+         SUM(oi.quantity) AS quantity,
+         SUM(oi.total_cents) AS revenueCents,
+         SUM(oi.cost_cents * oi.quantity) AS costCents,
+         SUM(oi.total_cents - (oi.cost_cents * oi.quantity)) AS profitCents
+       FROM order_items oi
+       INNER JOIN orders o ON o.id = oi.order_id
+       WHERE o.created_at BETWEEN ? AND ? AND o.status <> 'CANCELLED'
+       GROUP BY oi.product_id, oi.product_name
+       ORDER BY revenueCents DESC`, [start, end])
+    ]);
+    const to = settingsRows[0]?.report_email || env("REPORT_EMAIL", "sunsparkelectricalsandsolar@gmail.com");
+    const orders = Number(orderRows[0]?.count ?? 0);
+    const items = itemRows.map((item) => ({
+        name: item.name,
+        quantity: Number(item.quantity ?? 0),
+        revenueCents: Number(item.revenueCents ?? 0),
+        costCents: Number(item.costCents ?? 0),
+        profitCents: Number(item.profitCents ?? 0)
+    }));
+    const revenueCents = items.reduce((sum, item) => sum + item.revenueCents, 0);
+    const profitCents = items.reduce((sum, item) => sum + item.profitCents, 0);
+    const rows = items.length
+        ? items.map((item) => `<tr><td>${item.name}</td><td>${item.quantity}</td><td>${money(item.revenueCents)}</td><td>${money(item.costCents)}</td><td><strong>${money(item.profitCents)}</strong></td></tr>`).join("")
+        : `<tr><td colspan="5">No completed sales for this date.</td></tr>`;
+    await sendEmail({
+        to,
+        subject: `Sunspark daily report - ${input.date}`,
+        text: `Sunspark daily report for ${input.date}\nOrders: ${orders}\nRevenue: ${money(revenueCents)}\nGross profit: ${money(profitCents)}`,
+        html: `
+      <div style="font-family:Arial,sans-serif;color:#172033;line-height:1.45">
+        <h2 style="margin:0 0 8px">Sunspark Daily Report</h2>
+        <p style="margin:0 0 16px;color:#64748b">${input.date}</p>
+        <div style="display:flex;gap:12px;margin-bottom:18px">
+          <div><strong>Completed sales</strong><br>${orders}</div>
+          <div><strong>Revenue</strong><br>${money(revenueCents)}</div>
+          <div><strong>Gross profit</strong><br>${money(profitCents)}</div>
+        </div>
+        <table cellpadding="8" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:13px">
+          <thead><tr style="background:#0f65c8;color:#fff"><th align="left">Product</th><th align="left">Qty</th><th align="left">Revenue</th><th align="left">Buying cost</th><th align="left">Profit</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    `
+    });
+    response.json({ ok: true, to });
 }));
 app.patch("/admin/categories/:id/hide", asyncRoute(async (request, response) => {
     await execute("UPDATE categories SET is_active = FALSE WHERE id = ?", [request.params.id]);
@@ -699,6 +762,50 @@ app.post("/admin/draft-documents", asyncRoute(async (request, response) => {
         }
     });
     response.status(201).json({ id: documentId });
+}));
+app.patch("/admin/draft-documents/:id", asyncRoute(async (request, response) => {
+    const input = z.object({
+        customerName: z.string().min(2),
+        customerEmail: z.string().optional().nullable(),
+        customerPhone: z.string().optional().nullable(),
+        paymentMethod: z.enum(["WHATSAPP", "MPESA", "CASH"]).default("CASH"),
+        items: z.array(z.object({ productId: z.string(), quantity: z.number().int().positive() })).min(1)
+    }).parse(request.body);
+    const documents = await query("SELECT * FROM draft_documents WHERE id = ? LIMIT 1", [request.params.id]);
+    const document = documents[0];
+    if (!document || document.status !== "DRAFT")
+        throw new HttpError(400, "Only draft invoices and quotations can be edited.");
+    const productIds = [...new Set(input.items.map((item) => item.productId))];
+    const rows = await query(`SELECT * FROM products WHERE is_active = TRUE AND id IN (${productIds.map(() => "?").join(",")})`, productIds);
+    if (rows.length !== productIds.length)
+        throw new HttpError(400, "One or more selected products are unavailable.");
+    const products = new Map(rows.map((row) => [row.id, row]));
+    const lines = input.items.map((item) => {
+        const product = products.get(item.productId);
+        if (!product)
+            throw new HttpError(400, "One or more selected products are unavailable.");
+        return {
+            product,
+            quantity: item.quantity,
+            totalCents: product.price_cents * item.quantity
+        };
+    });
+    const totalCents = lines.reduce((sum, line) => sum + line.totalCents, 0);
+    await transaction(async (connection) => {
+        await connection.query(`UPDATE draft_documents
+       SET customer_name = ?, customer_email = ?, customer_phone = ?, payment_method = ?, subtotal_cents = ?, total_cents = ?
+       WHERE id = ?`, [input.customerName, input.customerEmail ?? null, input.customerPhone ?? null, input.paymentMethod, totalCents, totalCents, request.params.id]);
+        await connection.query("DELETE FROM draft_document_items WHERE document_id = ?", [request.params.id]);
+        for (const line of lines) {
+            await connection.query(`INSERT INTO draft_document_items
+         (id, document_id, product_id, product_name, sku, unit_cents, cost_cents, quantity, total_cents)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
+                id("ddi"), request.params.id, line.product.id, line.product.name, line.product.sku,
+                line.product.price_cents, line.product.cost_cents, line.quantity, line.totalCents
+            ]);
+        }
+    });
+    response.json({ ok: true });
 }));
 app.post("/admin/draft-documents/:id/finalize", asyncRoute(async (request, response) => {
     const documentRows = await query("SELECT * FROM draft_documents WHERE id = ? LIMIT 1", [request.params.id]);

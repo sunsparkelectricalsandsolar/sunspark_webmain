@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { siteConfig } from "@/lib/site-config";
 import { formatMoney } from "@/lib/money";
 
@@ -48,12 +47,11 @@ export function SalesDocument({
     <article className="sales-document" id="admin-print-document">
       <header className="sales-document-header">
         <div className="sales-document-brand">
-          <Image alt={siteConfig.name} height={72} priority src="/logo.jpg" width={150} />
+          <img alt={siteConfig.name} height={54} src="/logo.jpg" width={118} />
           <div>
             <h2>{siteConfig.name}</h2>
             <p>{siteConfig.location}</p>
-            <p>{siteConfig.phone} | {siteConfig.email}</p>
-            <p>{siteConfig.url.replace(/^https?:\/\//, "")}</p>
+            <p>{siteConfig.phone} | {siteConfig.email} | {siteConfig.url.replace(/^https?:\/\//, "")}</p>
           </div>
         </div>
         <div className="sales-document-title">
