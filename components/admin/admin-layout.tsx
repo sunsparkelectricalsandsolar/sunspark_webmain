@@ -42,16 +42,18 @@ export function AdminLayout({
             <span aria-hidden="true"></span>
             <span aria-hidden="true"></span>
           </summary>
-          <nav aria-label="Admin mobile navigation">
-            {adminLinks.map((link) => (
-              <Link href={link.href} key={link.href}>
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-          <form action={adminLogoutAction} className="admin-mobile-logout">
-            <button type="submit">Log out</button>
-          </form>
+          <div className="admin-mobile-panel">
+            <nav aria-label="Admin mobile navigation">
+              {adminLinks.map((link) => (
+                <Link href={link.href} key={link.href}>
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+            <form action={adminLogoutAction} className="admin-mobile-logout">
+              <button type="submit">Log out</button>
+            </form>
+          </div>
         </details>
         <nav aria-label="Admin navigation">
           {adminLinks.map((link) => (

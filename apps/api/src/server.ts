@@ -181,6 +181,10 @@ function routeParam(value: string | string[]) {
 }
 
 async function assertUniqueCategorySlug(slug: string, currentId?: string) {
+  if (currentId) {
+    const current = await query<{ slug: string }>("SELECT slug FROM categories WHERE id = ? LIMIT 1", [currentId]);
+    if (current[0]?.slug === slug) return;
+  }
   const rows = await query<{ id: string }>("SELECT id FROM categories WHERE slug = ? LIMIT 1", [slug]);
   if (rows[0] && rows[0].id !== currentId) {
     throw new HttpError(409, "A category with that name already exists.");

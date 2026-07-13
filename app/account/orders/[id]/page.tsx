@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { PrintReceiptButton } from "@/components/admin/print-receipt-button";
 import { SalesDocument } from "@/components/admin/sales-document";
 import { getOrderInvoice } from "@/lib/invoices/invoice-service";
 
@@ -18,7 +17,6 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       <div className="container invoice-page">
         <div className="section-title">
           <h3>Invoice {order.invoice?.invoiceNumber}</h3>
-          <PrintReceiptButton label="Print invoice" />
         </div>
         <SalesDocument
           customerEmail={order.customerEmail}

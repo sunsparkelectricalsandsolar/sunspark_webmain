@@ -32,7 +32,7 @@ export default async function AdminInvoiceDocumentPage({ params }: { params: Pro
 
   return (
     <AdminLayout title={title} subtitle="Review the customer document before printing or sharing.">
-      <div className="receipt-actions">{document.status === "DRAFT" ? <Link className="secondary-btn" href={`/admin/invoices/${document.id}/edit`}>Edit {title.toLowerCase()}</Link> : null}<PrintReceiptButton label={`Download ${title.toLowerCase()} PDF`} /></div>
+      <div className="receipt-actions">{document.status === "DRAFT" ? <Link className="secondary-btn" href={`/admin/invoices/${document.id}/edit`}>Edit {title.toLowerCase()}</Link> : null}<PrintReceiptButton href={`/admin/invoices/${document.id}/download`} label={`Download ${title.toLowerCase()} PDF`} /></div>
       <SalesDocument
         customerEmail={document.customerEmail}
         customerName={document.customerName}
