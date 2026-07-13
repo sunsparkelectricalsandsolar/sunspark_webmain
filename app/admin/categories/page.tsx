@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { CategoryForm } from "@/components/admin/category-form";
-import { createCategoryAction } from "@/app/admin/categories/actions";
+import { createCategoryAction, deleteCategoryAction } from "@/app/admin/categories/actions";
 import { requireAdmin } from "@/lib/auth/guards";
 import { apiFetch, toQueryString } from "@/lib/api/client";
 import type { Category } from "@/lib/types";
@@ -13,7 +13,8 @@ const messages: Record<string, string> = {
   image: "The image could not be uploaded. Use a JPEG, PNG, or WebP below 2 MB.",
   invalid: "Enter a category name with at least two characters.",
   save: "The category could not be saved. Please review the form and try again.",
-  saved: "Category saved successfully."
+  saved: "Category saved successfully.",
+  hidden: "Category hidden from the storefront."
 };
 
 export default async function AdminCategoriesPage({
@@ -53,7 +54,14 @@ export default async function AdminCategoriesPage({
             <span>{category.images.length}</span>
             <span><i className={category.isActive ? "status-dot active" : "status-dot"} />{category.isActive ? "Active" : "Hidden"}</span>
             <span>{new Date(category.updatedAt).toLocaleDateString("en-KE")}</span>
-            <Link className="table-link" href={`/admin/categories/${category.id}/edit`}>Edit</Link>
+            <span className="table-actions">
+              <Link className="table-link" href={`/admin/categories/${category.id}/edit`}>Edit</Link>
+              {category.isActive ? (
+                <form action={deleteCategoryAction.bind(null, category.id)}>
+                  <button type="submit">Hide</button>
+                </form>
+              ) : null}
+            </span>
           </div>
         ))}
         {!categories.length ? <p className="empty-state">No categories match this filter.</p> : null}

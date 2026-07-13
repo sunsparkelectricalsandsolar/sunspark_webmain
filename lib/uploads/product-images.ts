@@ -1,8 +1,6 @@
 import "server-only";
 
-import { randomUUID } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
+import { apiFetch } from "@/lib/api/client";
 
 const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const maxBytes = 2 * 1024 * 1024;
@@ -38,33 +36,31 @@ function safeExtension(file: File) {
   return "jpg";
 }
 
+async function fileToUpload(file: File) {
+  const buffer = Buffer.from(await file.arrayBuffer());
+
+  return {
+    filename: file.name || `image.${safeExtension(file)}`,
+    type: file.type,
+    dataBase64: buffer.toString("base64")
+  };
+}
+
 export async function saveUploadedImages(
   files: File[],
   name: string,
   folder: "products" | "categories"
 ): Promise<SavedProductImage[]> {
-  const uploadDir = path.join(process.cwd(), "public", "uploads", folder);
-  await mkdir(uploadDir, { recursive: true });
+  const validFiles = files.filter((file) => file.size && allowedTypes.has(file.type) && file.size <= maxBytes);
+  if (!validFiles.length) return [];
 
-  const saved: SavedProductImage[] = [];
+  const payload = await Promise.all(validFiles.map(fileToUpload));
+  const result = await apiFetch<{ images: SavedProductImage[] }>("/admin/uploads", {
+    method: "POST",
+    body: JSON.stringify({ folder, name, files: payload })
+  });
 
-  for (const file of files) {
-    if (!file.size || !allowedTypes.has(file.type) || file.size > maxBytes) {
-      continue;
-    }
-
-    const filename = `${randomUUID()}.${safeExtension(file)}`;
-    const destination = path.join(uploadDir, filename);
-    const buffer = Buffer.from(await file.arrayBuffer());
-
-    await writeFile(destination, buffer);
-    saved.push({
-      url: `/uploads/${folder}/${filename}`,
-      alt: name
-    });
-  }
-
-  return saved;
+  return result.images;
 }
 
 export async function saveProductImages(files: File[], productName: string): Promise<SavedProductImage[]> {

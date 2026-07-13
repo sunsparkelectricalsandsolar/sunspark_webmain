@@ -1,4 +1,7 @@
 import crypto from "node:crypto";
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import bcrypt from "bcryptjs";
 import cors from "cors";
 import express from "express";
@@ -60,9 +63,12 @@ type ImageRow = {
 };
 
 const app = express();
+const appRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const uploadRoot = path.join(appRoot, "public", "uploads");
 
 app.use(cors({ origin: env("FRONTEND_ORIGIN", "*"), credentials: true }));
-app.use(express.json({ limit: "2mb" }));
+app.use(express.json({ limit: "24mb" }));
+app.use("/uploads", express.static(uploadRoot, { maxAge: "30d", immutable: true }));
 
 function truthy(value: 0 | 1 | boolean) {
   return value === true || value === 1;
@@ -143,6 +149,26 @@ function mapProduct(row: ProductRow, images: ImageRow[] = []) {
       createdAt: image.created_at
     }))
   };
+}
+
+const uploadContentTypes = new Map([
+  ["image/jpeg", "jpg"],
+  ["image/png", "png"],
+  ["image/webp", "webp"]
+]);
+
+function publicApiBase(request: express.Request) {
+  const configured = env("API_PUBLIC_URL", env("NEXT_PUBLIC_API_URL", ""));
+  if (configured) return configured.replace(/\/+$/, "");
+  return `${request.protocol}://${request.get("host")}`;
+}
+
+function safeUploadName(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80) || "image";
+}
+
+function frontendOrigin() {
+  return env("FRONTEND_ORIGIN", env("NEXT_PUBLIC_SITE_URL", "http://localhost:3000")).replace(/\/+$/, "");
 }
 
 async function imagesForProducts(productIds: string[]) {
@@ -510,6 +536,46 @@ app.patch("/admin/categories/:id", asyncRoute(async (request, response) => {
     }
   });
   response.json({ ok: true });
+}));
+
+app.patch("/admin/categories/:id/hide", asyncRoute(async (request, response) => {
+  await execute("UPDATE categories SET is_active = FALSE WHERE id = ?", [request.params.id]);
+  response.json({ ok: true });
+}));
+
+app.post("/admin/uploads", asyncRoute(async (request, response) => {
+  const input = z.object({
+    folder: z.enum(["products", "categories"]),
+    name: z.string().min(1).default("Image"),
+    files: z.array(z.object({
+      filename: z.string().optional().default("image"),
+      type: z.string(),
+      dataBase64: z.string().min(1)
+    })).max(8)
+  }).parse(request.body);
+
+  const targetDir = path.join(uploadRoot, input.folder);
+  await mkdir(targetDir, { recursive: true });
+
+  const images = [];
+  for (const file of input.files) {
+    const extension = uploadContentTypes.get(file.type);
+    if (!extension) throw new HttpError(400, "Images must be JPEG, PNG, or WebP.");
+
+    const buffer = Buffer.from(file.dataBase64, "base64");
+    if (!buffer.byteLength || buffer.byteLength > 2 * 1024 * 1024) {
+      throw new HttpError(400, "Each image must be smaller than 2 MB.");
+    }
+
+    const filename = `${crypto.randomUUID()}-${safeUploadName(file.filename).replace(/\.[a-z0-9]+$/i, "")}.${extension}`;
+    await writeFile(path.join(targetDir, filename), buffer, { flag: "wx" });
+    images.push({
+      url: `${publicApiBase(request)}/uploads/${input.folder}/${filename}`,
+      alt: input.name
+    });
+  }
+
+  response.status(201).json({ images });
 }));
 
 app.post("/admin/products", asyncRoute(async (request, response) => {
@@ -884,7 +950,7 @@ app.post("/auth/forgot-password", asyncRoute(async (request, response) => {
       "INSERT INTO password_reset_tokens (id, user_id, token_hash, expires_at) VALUES (?, ?, ?, ?)",
       [id("rst"), rows[0].id, hashToken(token), expires]
     );
-    const resetUrl = `${env("FRONTEND_ORIGIN", "http://localhost:3000")}/reset-password?token=${encodeURIComponent(token)}`;
+    const resetUrl = `${frontendOrigin()}/reset-password?token=${encodeURIComponent(token)}`;
     await sendEmail({
       to: email,
       subject: "Reset your Sunspark password",

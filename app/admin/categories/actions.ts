@@ -98,3 +98,14 @@ export async function updateCategoryAction(categoryId: string, formData: FormDat
   revalidatePath(`/category/${slug}`);
   redirect("/admin/categories");
 }
+
+export async function deleteCategoryAction(categoryId: string) {
+  await requireAdmin();
+
+  await apiFetch(`/admin/categories/${categoryId}/hide`, { method: "PATCH" });
+
+  revalidatePath("/");
+  revalidatePath("/store");
+  revalidatePath("/admin/categories");
+  redirect("/admin/categories?notice=hidden");
+}

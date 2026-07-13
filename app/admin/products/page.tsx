@@ -68,9 +68,11 @@ export default async function AdminProductsPage({
               <span className="table-actions">
                 <Link href={`/admin/products/${product.id}/edit`}>Edit</Link>
                 <a href={productUrl(product.slug)} rel="noreferrer" target="_blank">Merchant</a>
-                <form action={deleteProductAction.bind(null, product.id)}>
-                  <button type="submit">Hide</button>
-                </form>
+                {product.isActive ? (
+                  <form action={deleteProductAction.bind(null, product.id)}>
+                    <button type="submit" title="Hide from customers without deleting order history">Hide</button>
+                  </form>
+                ) : null}
               </span>
             </div>
           ))}

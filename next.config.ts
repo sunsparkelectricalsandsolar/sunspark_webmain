@@ -12,7 +12,7 @@ const nextConfig: NextConfig = {
     // Images are limited to 2 MB each in the upload service. Allow a small gallery
     // to reach its Server Action without exposing an unnecessarily large payload.
     serverActions: {
-      bodySizeLimit: "12mb"
+      bodySizeLimit: "24mb"
     }
   },
   images: {
@@ -20,6 +20,14 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "sunspark.co.ke"
+      },
+      {
+        protocol: "https",
+        hostname: "backend.sunsparkelectricals.co.ke"
+      },
+      {
+        protocol: "http",
+        hostname: "localhost"
       }
     ]
   },
