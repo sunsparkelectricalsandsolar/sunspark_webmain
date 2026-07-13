@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { PendingButton } from "@/components/ui/pending-button";
+import { PasswordField } from "@/components/ui/password-field";
 import { apiFetch, ApiError } from "@/lib/api/client";
 import { setSession } from "@/lib/auth/session";
 import type { PublicUser } from "@/lib/types";
@@ -47,10 +48,7 @@ export default function RegisterPage({ searchParams }: { searchParams?: Promise<
             Email
             <input name="email" type="email" required />
           </label>
-          <label>
-            Password
-            <input name="password" type="password" minLength={8} required />
-          </label>
+          <PasswordField autoComplete="new-password" minLength={8} />
           <PendingButton pendingText="Creating account...">Register</PendingButton>
         </form>
         <RegisterError searchParams={searchParams} />

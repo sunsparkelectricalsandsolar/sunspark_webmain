@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PendingButton } from "@/components/ui/pending-button";
+import { PasswordField } from "@/components/ui/password-field";
 import { apiFetch, ApiError } from "@/lib/api/client";
 import { setSession } from "@/lib/auth/session";
 import type { PublicUser } from "@/lib/types";
@@ -46,10 +47,7 @@ export default async function AdminLoginPage({ searchParams }: { searchParams?: 
             Email
             <input name="email" type="email" required />
           </label>
-          <label>
-            Password
-            <input name="password" type="password" required />
-          </label>
+          <PasswordField autoComplete="current-password" />
           <PendingButton pendingText="Signing in...">Sign in</PendingButton>
         </form>
         {params?.error ? <p className="form-error" role="alert">Invalid admin credentials.</p> : null}

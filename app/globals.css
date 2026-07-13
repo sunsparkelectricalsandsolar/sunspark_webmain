@@ -311,6 +311,35 @@ textarea {
   padding: 0 12px;
 }
 
+.password-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.password-field input {
+  border: 0;
+}
+
+.password-field button {
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-left: 1px solid var(--line);
+  background: #f8fafc;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.password-field svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
 .form-error {
   color: #b91c1c;
   font-weight: 700;
@@ -1001,6 +1030,40 @@ textarea {
   gap: 6px;
 }
 
+.admin-mobile-menu {
+  display: none;
+}
+
+.admin-mobile-menu summary {
+  display: grid;
+  gap: 4px;
+  width: 42px;
+  height: 38px;
+  place-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 7px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.admin-mobile-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.admin-mobile-menu summary span {
+  display: block;
+  width: 20px;
+  height: 2px;
+  border-radius: 999px;
+  background: #fff;
+}
+
+.admin-mobile-menu nav {
+  display: grid;
+  gap: 6px;
+  padding-top: 12px;
+}
+
 .admin-logout {
   margin-top: auto;
   padding: 26px 8px 0;
@@ -1371,6 +1434,17 @@ summary:focus-visible {
   min-height: 18px;
 }
 
+.admin-mobile-logout button {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 6px;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 700;
+}
+
 .form-section {
   display: grid;
   gap: 16px;
@@ -1568,8 +1642,14 @@ summary:focus-visible {
 
 .document-create-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
   gap: 16px;
+  align-items: start;
+}
+
+.document-create-grid .admin-disclosure {
+  min-width: 0;
+  overflow: hidden;
 }
 
 .table-actions {
@@ -1814,18 +1894,70 @@ summary:focus-visible {
   }
 
   .admin-sidebar {
-    position: relative;
+    position: sticky;
+    z-index: 20;
+    top: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
     min-height: 0;
+    padding: 10px 14px;
   }
 
-  .admin-sidebar nav {
+  .admin-brand {
+    margin: 0;
+    padding: 0;
+  }
+
+  .admin-brand span {
+    font-size: 18px;
+  }
+
+  .admin-brand small {
+    font-size: 10px;
+  }
+
+  .admin-sidebar > nav,
+  .admin-sidebar > .admin-logout {
+    display: none;
+  }
+
+  .admin-mobile-menu {
+    display: block;
+    justify-self: end;
+    position: relative;
+  }
+
+  .admin-mobile-menu[open] {
+    grid-column: 1 / -1;
+  }
+
+  .admin-mobile-menu[open] summary {
+    margin-left: auto;
+  }
+
+  .admin-mobile-menu nav {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-mobile-logout {
+    margin: 10px 0 0;
   }
 
   .admin-topbar {
     align-items: flex-start;
     flex-direction: column;
-    padding: 20px 16px;
+    gap: 8px;
+    padding: 14px 16px;
+  }
+
+  .admin-topbar h1 {
+    font-size: 24px;
+  }
+
+  .admin-topbar p {
+    margin-top: 4px;
   }
 
   .admin-content {
@@ -1942,12 +2074,16 @@ summary:focus-visible {
   }
 
   .admin-sidebar {
-    position: static;
+    position: sticky;
     min-height: 0;
   }
 
-  .admin-sidebar nav {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .admin-sidebar > nav {
+    display: none;
+  }
+
+  .admin-mobile-menu nav {
+    grid-template-columns: 1fr;
   }
 
   .admin-topbar {
