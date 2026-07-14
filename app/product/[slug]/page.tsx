@@ -60,7 +60,6 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
-    sku: product.sku,
     brand: {
       "@type": "Brand",
       name: product.brand || siteConfig.name
@@ -91,7 +90,6 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             <p className="eyebrow">{product.category.name}</p>
             {product.brand ? <p className="product-brand">{product.brand}</p> : null}
             <h1>{product.name}</h1>
-            <p className="sku">SKU: {product.sku}</p>
             <div className="detail-price">
               <strong>{formatMoney(product.priceCents)} / {sellingUnitLabel(product.sellingUnit ?? "UNIT")}</strong>
               {product.compareAtCents ? <span>{formatMoney(product.compareAtCents)}</span> : null}

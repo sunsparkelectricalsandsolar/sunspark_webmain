@@ -6,7 +6,6 @@ import { PendingButton } from "@/components/ui/pending-button";
 type SaleProduct = {
   id: string;
   name: string;
-  sku: string | null;
   priceCents: number;
   stockQuantity: number;
 };
@@ -43,7 +42,7 @@ export function WalkInSaleForm({
   const matchingProducts = useMemo(() => {
     const query = productQuery.trim().toLowerCase();
     if (!query) return products;
-    return products.filter((product) => `${product.name} ${product.sku}`.toLowerCase().includes(query));
+    return products.filter((product) => product.name.toLowerCase().includes(query));
   }, [productQuery, products]);
   const total = lines.reduce((sum, line) => sum + (productById.get(line.productId)?.priceCents ?? 0) * line.quantity, 0);
 
@@ -88,7 +87,7 @@ export function WalkInSaleForm({
         <div className="sale-product-picker">
           <label className="sale-search-field">
             <span>Find product</span>
-            <input aria-label="Search walk-in products" onChange={(event) => setProductQuery(event.target.value)} placeholder="Search by product name or SKU" type="search" value={productQuery} />
+            <input aria-label="Search walk-in products" onChange={(event) => setProductQuery(event.target.value)} placeholder="Search by product name" type="search" value={productQuery} />
           </label>
           <label className="sale-select-field">
             <span>Select product</span>
@@ -105,7 +104,7 @@ export function WalkInSaleForm({
             if (!product) return null;
             return <div className="sale-line" key={product.id}>
               <input name="productId" type="hidden" value={product.id} />
-              <span><strong>{product.name}</strong><small>{product.sku} · {money(product.priceCents)} each</small></span>
+              <span><strong>{product.name}</strong><small>{money(product.priceCents)} each</small></span>
               <input aria-label={`${product.name} quantity`} max={product.stockQuantity} min="1" name="quantity" onChange={(event) => setLines((current) => current.map((item) => item.productId === product.id ? { ...item, quantity: Math.max(1, Math.min(product.stockQuantity, Number(event.target.value) || 1)) } : item))} type="number" value={line.quantity} />
               <strong>{money(product.priceCents * line.quantity)}</strong>
               <button aria-label={`Remove ${product.name}`} className="remove-line" onClick={() => setLines((current) => current.filter((item) => item.productId !== product.id))} type="button">Remove</button>

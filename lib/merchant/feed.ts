@@ -12,7 +12,6 @@ export type MerchantProduct = {
   id: string;
   name: string;
   slug: string;
-  sku: string | null;
   brand: string | null;
   shortDescription: string | null;
   description: string | null;
@@ -65,7 +64,7 @@ export function buildMerchantFeed(products: MerchantProduct[]) {
     const additionalImages = images.slice(1, 11);
 
     return `<item>
-      <g:id>${xml(product.sku || product.id)}</g:id>
+      <g:id>${xml(product.id)}</g:id>
       <g:title>${xml(product.name)}</g:title>
       <g:description>${xml(productDescription(product))}</g:description>
       <g:link>${xml(productUrl(product.slug))}</g:link>

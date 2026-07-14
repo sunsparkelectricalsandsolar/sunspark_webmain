@@ -15,7 +15,6 @@ function amountToCents(value: FormDataEntryValue | null) {
 function parseProductForm(formData: FormData) {
   return productInputSchema.parse({
     name: formData.get("name"),
-    sku: String(formData.get("sku") ?? "").trim() || undefined,
     brand: String(formData.get("brand") ?? "").trim() || undefined,
     categoryId: formData.get("categoryId"),
     shortDescription: String(formData.get("shortDescription") ?? "").trim() || undefined,

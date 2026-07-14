@@ -28,7 +28,6 @@ type ProductRow = {
   id: string;
   name: string;
   slug: string;
-  sku: string | null;
   brand: string | null;
   short_description: string | null;
   description: string | null;
@@ -131,7 +130,6 @@ function mapProduct(row: ProductRow, images: ImageRow[] = []) {
     id: row.id,
     name: row.name,
     slug: row.slug,
-    sku: row.sku,
     brand: row.brand,
     shortDescription: row.short_description,
     description: row.description,
@@ -225,17 +223,10 @@ async function assertUniqueCategorySlug(slug: string, currentId?: string) {
   }
 }
 
-async function assertUniqueProductSlugAndSku(slug: string, sku?: string | null, currentId?: string) {
+async function assertUniqueProductSlug(slug: string, currentId?: string) {
   const slugRows = await query<{ id: string }>("SELECT id FROM products WHERE slug = ? LIMIT 1", [slug]);
   if (slugRows[0] && slugRows[0].id !== currentId) {
     throw new HttpError(409, "A product with that name already exists.");
-  }
-
-  if (sku) {
-    const skuRows = await query<{ id: string }>("SELECT id FROM products WHERE sku = ? LIMIT 1", [sku]);
-    if (skuRows[0] && skuRows[0].id !== currentId) {
-      throw new HttpError(409, "A product with that SKU already exists.");
-    }
   }
 }
 
@@ -291,10 +282,10 @@ async function listProducts(filters: { q?: string; category?: string; categoryId
   const terms = filters.q?.trim().split(/\s+/).filter(Boolean) ?? [];
   for (const term of terms) {
     where.push(`(
-      p.name LIKE ? OR p.slug LIKE ? OR p.sku LIKE ? OR p.brand LIKE ? OR p.short_description LIKE ? OR
+      p.name LIKE ? OR p.slug LIKE ? OR p.brand LIKE ? OR p.short_description LIKE ? OR
       p.description LIKE ? OR p.seo_title LIKE ? OR p.seo_description LIKE ? OR p.seo_keywords LIKE ? OR c.name LIKE ?
     )`);
-    values.push(...Array(10).fill(`%${term}%`));
+    values.push(...Array(9).fill(`%${term}%`));
   }
 
   const limit = Math.min(Math.max(filters.limit ?? 100, 1), 500);
@@ -747,7 +738,6 @@ app.post("/admin/products", asyncRoute(async (request, response) => {
   const input = z.object({
     name: z.string().min(2),
     slug: z.string().min(2),
-    sku: z.string().optional().nullable(),
     brand: z.string().optional().nullable(),
     categoryId: z.string(),
     shortDescription: z.string().optional().nullable(),
@@ -766,17 +756,17 @@ app.post("/admin/products", asyncRoute(async (request, response) => {
     seoKeywords: z.string().optional().nullable(),
     images: z.array(z.object({ url: z.string(), alt: z.string().optional().nullable(), isPrimary: z.boolean(), sortOrder: z.number().int() })).default([])
   }).parse(request.body);
-  await assertUniqueProductSlugAndSku(input.slug, input.sku);
+  await assertUniqueProductSlug(input.slug);
   const productId = id("prd");
   await transaction(async (connection) => {
     await connection.query(
       `INSERT INTO products
-       (id, name, slug, sku, brand, category_id, short_description, description, price_cents, compare_at_cents,
+       (id, name, slug, brand, category_id, short_description, description, price_cents, compare_at_cents,
         cost_cents, selling_unit, stock_quantity, low_stock_threshold, is_active, is_featured, is_hot_deal,
         seo_title, seo_description, seo_keywords)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        productId, input.name, input.slug, input.sku ?? null, input.brand ?? null, input.categoryId,
+        productId, input.name, input.slug, input.brand ?? null, input.categoryId,
         input.shortDescription ?? null, input.description ?? null, input.priceCents, input.compareAtCents ?? null,
         input.costCents, input.sellingUnit, input.stockQuantity, input.lowStockThreshold, input.isActive,
         input.isFeatured, input.isHotDeal, input.seoTitle ?? null, input.seoDescription ?? null, input.seoKeywords ?? null
@@ -796,7 +786,6 @@ app.patch("/admin/products/:id", asyncRoute(async (request, response) => {
   const input = z.object({
     name: z.string().min(2),
     slug: z.string().min(2),
-    sku: z.string().optional().nullable(),
     brand: z.string().optional().nullable(),
     categoryId: z.string(),
     shortDescription: z.string().optional().nullable(),
@@ -817,15 +806,15 @@ app.patch("/admin/products/:id", asyncRoute(async (request, response) => {
     deleteImageIds: z.array(z.string()).default([]),
     primaryImageId: z.string().optional().nullable()
   }).parse(request.body);
-  await assertUniqueProductSlugAndSku(input.slug, input.sku, routeParam(request.params.id));
+  await assertUniqueProductSlug(input.slug, routeParam(request.params.id));
   await transaction(async (connection) => {
     await connection.query(
-      `UPDATE products SET name = ?, slug = ?, sku = ?, brand = ?, category_id = ?, short_description = ?,
+      `UPDATE products SET name = ?, slug = ?, brand = ?, category_id = ?, short_description = ?,
        description = ?, price_cents = ?, compare_at_cents = ?, cost_cents = ?, selling_unit = ?, stock_quantity = ?,
        low_stock_threshold = ?, is_active = ?, is_featured = ?, is_hot_deal = ?, seo_title = ?, seo_description = ?,
        seo_keywords = ? WHERE id = ?`,
       [
-        input.name, input.slug, input.sku ?? null, input.brand ?? null, input.categoryId,
+        input.name, input.slug, input.brand ?? null, input.categoryId,
         input.shortDescription ?? null, input.description ?? null, input.priceCents, input.compareAtCents ?? null,
         input.costCents, input.sellingUnit, input.stockQuantity, input.lowStockThreshold, input.isActive,
         input.isFeatured, input.isHotDeal, input.seoTitle ?? null, input.seoDescription ?? null, input.seoKeywords ?? null,
@@ -950,7 +939,7 @@ app.get("/admin/draft-documents", asyncRoute(async (request, response) => {
   const items = ids.length
     ? await query<Record<string, unknown>>(
         `SELECT id, document_id AS documentId, product_id AS productId, product_name AS productName,
-          sku, unit_cents AS unitCents, cost_cents AS costCents, quantity, total_cents AS totalCents
+          unit_cents AS unitCents, cost_cents AS costCents, quantity, total_cents AS totalCents
          FROM draft_document_items WHERE document_id IN (${ids.map(() => "?").join(",")})`,
         ids
       )
@@ -970,7 +959,7 @@ app.get("/admin/draft-documents/:id", asyncRoute(async (request, response) => {
   if (!documents[0]) throw new HttpError(404, "Document not found.");
   const items = await query<Record<string, unknown>>(
     `SELECT id, document_id AS documentId, product_id AS productId, product_name AS productName,
-      sku, unit_cents AS unitCents, cost_cents AS costCents, quantity, total_cents AS totalCents
+      unit_cents AS unitCents, cost_cents AS costCents, quantity, total_cents AS totalCents
      FROM draft_document_items WHERE document_id = ?`,
     [request.params.id]
   );
@@ -1025,9 +1014,9 @@ app.post("/admin/draft-documents", asyncRoute(async (request, response) => {
     for (const line of lines) {
       await connection.query(
         `INSERT INTO draft_document_items
-         (id, document_id, product_id, product_name, sku, unit_cents, cost_cents, quantity, total_cents)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [id("dit"), documentId, line.product.id, line.product.name, line.product.sku, line.product.price_cents, line.product.cost_cents, line.quantity, line.lineTotal]
+         (id, document_id, product_id, product_name, unit_cents, cost_cents, quantity, total_cents)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [id("dit"), documentId, line.product.id, line.product.name, line.product.price_cents, line.product.cost_cents, line.quantity, line.lineTotal]
       );
     }
   });
@@ -1078,10 +1067,10 @@ app.patch("/admin/draft-documents/:id", asyncRoute(async (request, response) => 
     for (const line of lines) {
       await connection.query(
         `INSERT INTO draft_document_items
-         (id, document_id, product_id, product_name, sku, unit_cents, cost_cents, quantity, total_cents)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         (id, document_id, product_id, product_name, unit_cents, cost_cents, quantity, total_cents)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          id("ddi"), request.params.id, line.product.id, line.product.name, line.product.sku,
+          id("ddi"), request.params.id, line.product.id, line.product.name,
           line.product.price_cents, line.product.cost_cents, line.quantity, line.totalCents
         ]
       );
@@ -1129,9 +1118,9 @@ app.post("/admin/draft-documents/:id/finalize", asyncRoute(async (request, respo
 
     for (const item of items) {
       await connection.query(
-        `INSERT INTO order_items (id, order_id, product_id, product_name, sku, unit_cents, cost_cents, quantity, total_cents)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [id("itm"), orderId, item.product_id, item.product_name, item.sku, item.unit_cents, item.cost_cents, item.quantity, item.total_cents]
+        `INSERT INTO order_items (id, order_id, product_id, product_name, unit_cents, cost_cents, quantity, total_cents)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [id("itm"), orderId, item.product_id, item.product_name, item.unit_cents, item.cost_cents, item.quantity, item.total_cents]
       );
       await connection.query("UPDATE products SET stock_quantity = stock_quantity - ? WHERE id = ?", [item.quantity, item.product_id]);
     }
@@ -1294,9 +1283,9 @@ app.post("/orders/checkout", asyncRoute(async (request, response) => {
 
     for (const line of lines) {
       await connection.query(
-        `INSERT INTO order_items (id, order_id, product_id, product_name, sku, unit_cents, cost_cents, quantity, total_cents)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [id("itm"), orderId, line.product.id, line.product.name, line.product.sku, line.product.price_cents, line.product.cost_cents, line.quantity, line.total]
+        `INSERT INTO order_items (id, order_id, product_id, product_name, unit_cents, cost_cents, quantity, total_cents)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [id("itm"), orderId, line.product.id, line.product.name, line.product.price_cents, line.product.cost_cents, line.quantity, line.total]
       );
       await connection.query("UPDATE products SET stock_quantity = stock_quantity - ? WHERE id = ?", [line.quantity, line.product.id]);
     }
@@ -1324,7 +1313,6 @@ app.post("/orders/checkout", asyncRoute(async (request, response) => {
       items: lines.map((line) => ({
         productId: line.product.id,
         productName: line.product.name,
-        sku: line.product.sku,
         unitCents: line.product.price_cents,
         costCents: line.product.cost_cents,
         quantity: line.quantity,
@@ -1417,7 +1405,7 @@ app.get("/admin/orders", asyncRoute(async (request, response) => {
   const ids = orders.map((order) => String(order.id));
   const items = ids.length
     ? await query<Record<string, unknown>>(
-        `SELECT id, order_id AS orderId, product_id AS productId, product_name AS productName, sku,
+        `SELECT id, order_id AS orderId, product_id AS productId, product_name AS productName,
          unit_cents AS unitCents, cost_cents AS costCents, quantity, total_cents AS totalCents
          FROM order_items WHERE order_id IN (${ids.map(() => "?").join(",")})`,
         ids
@@ -1441,7 +1429,7 @@ app.get("/admin/orders/:id", asyncRoute(async (request, response) => {
   if (!orders[0]) throw new HttpError(404, "Order not found.");
   const [items, invoices] = await Promise.all([
     query<Record<string, unknown>>(
-      `SELECT id, order_id AS orderId, product_id AS productId, product_name AS productName, sku,
+      `SELECT id, order_id AS orderId, product_id AS productId, product_name AS productName,
        unit_cents AS unitCents, cost_cents AS costCents, quantity, total_cents AS totalCents
        FROM order_items WHERE order_id = ?`,
       [request.params.id]

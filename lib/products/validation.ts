@@ -2,7 +2,6 @@ import { z } from "zod";
 
 export const productInputSchema = z.object({
   name: z.string().trim().min(2),
-  sku: z.string().trim().optional(),
   brand: z.string().trim().optional(),
   categoryId: z.string().min(1),
   shortDescription: z.string().trim().optional(),

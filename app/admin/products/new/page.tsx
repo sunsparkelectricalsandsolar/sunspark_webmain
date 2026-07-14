@@ -8,7 +8,7 @@ import { createProductAction } from "../actions";
 export const dynamic = "force-dynamic";
 
 const messages: Record<string, string> = {
-  duplicate: "A product with that name or SKU already exists.",
+  duplicate: "A product with that name already exists.",
   save: "The product could not be saved. Please try again."
 };
 

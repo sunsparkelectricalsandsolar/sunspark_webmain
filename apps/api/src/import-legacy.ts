@@ -65,12 +65,12 @@ async function main() {
     ["product", "category"],
     "products",
     `INSERT INTO products (
-       id, name, slug, sku, brand, short_description, description, price_cents, compare_at_cents,
+       id, name, slug, brand, short_description, description, price_cents, compare_at_cents,
        cost_cents, selling_unit, stock_quantity, low_stock_threshold, is_active, is_featured, is_hot_deal,
        seo_title, seo_description, seo_keywords, category_id, created_at, updated_at
      )
      SELECT
-       p.id, p.name, p.slug, p.sku, p.brand, p.shortDescription, p.description, p.priceCents,
+       p.id, p.name, p.slug, p.brand, p.shortDescription, p.description, p.priceCents,
        p.compareAtCents, COALESCE(p.costCents, 0), COALESCE(p.sellingUnit, 'UNIT'), p.stockQuantity,
        p.lowStockThreshold, p.isActive, p.isFeatured, p.isHotDeal, p.seoTitle, p.seoDescription,
        p.seoKeywords, COALESCE(cn.id, p.categoryId), p.createdAt, p.updatedAt
@@ -79,7 +79,6 @@ async function main() {
      LEFT JOIN categories cn ON cn.slug = co.slug
      ON DUPLICATE KEY UPDATE
        name = VALUES(name),
-       sku = VALUES(sku),
        brand = VALUES(brand),
        short_description = VALUES(short_description),
        description = VALUES(description),

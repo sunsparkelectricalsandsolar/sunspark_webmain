@@ -46,7 +46,6 @@ export type Product = {
   id: string;
   name: string;
   slug: string;
-  sku: string | null;
   brand: string | null;
   shortDescription: string | null;
   description: string | null;
@@ -83,7 +82,6 @@ export type OrderItem = {
   orderId: string;
   productId: string | null;
   productName: string;
-  sku: string | null;
   unitCents: number;
   costCents: number;
   quantity: number;

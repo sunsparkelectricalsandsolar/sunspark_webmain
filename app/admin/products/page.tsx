@@ -47,7 +47,7 @@ export default async function AdminProductsPage({
     >
         {feedback ? <p className={params?.error ? "admin-feedback error" : "admin-feedback success"} role="status">{feedback}</p> : null}
         <form action="/admin/products" className="admin-filter">
-          <input name="q" defaultValue={params?.q ?? ""} placeholder="Search product, SKU, description..." />
+          <input name="q" defaultValue={params?.q ?? ""} placeholder="Search product, brand, description..." />
           <select name="category" defaultValue={params?.category ?? ""}>
             <option value="">All categories</option>
             {categories.map((category) => (

@@ -878,8 +878,7 @@ textarea {
   min-width: 0;
 }
 
-.product-body p,
-.sku {
+.product-body p {
   margin: 0;
   color: var(--muted);
   font-size: 13px;
@@ -2271,6 +2270,7 @@ summary:focus-visible {
 }
 
 .campaign-editor,
+.campaign-edit-shell,
 .campaign-admin-card {
   display: grid;
   gap: 16px;
@@ -2279,6 +2279,19 @@ summary:focus-visible {
   background: #fff;
   padding: 18px;
   box-shadow: 0 8px 24px rgba(29, 36, 51, 0.05);
+}
+
+.campaign-edit-shell {
+  margin-top: 18px;
+  border-color: rgba(15, 101, 200, 0.26);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.campaign-edit-form {
+  border: 0;
+  padding: 0;
+  box-shadow: none;
+  background: transparent;
 }
 
 .campaign-editor-heading {
@@ -2329,7 +2342,7 @@ summary:focus-visible {
 
 .campaign-admin-row {
   display: grid;
-  grid-template-columns: 58px minmax(0, 1fr) 82px 92px;
+  grid-template-columns: 58px minmax(0, 1fr) 82px auto;
   align-items: center;
   gap: 10px;
   border: 1px solid var(--line);
@@ -2364,26 +2377,39 @@ summary:focus-visible {
   font-size: 12px;
 }
 
-.campaign-row-actions > div {
-  width: min(720px, calc(100vw - 40px));
-  max-height: min(76vh, 680px);
-  overflow-y: auto;
+.campaign-row-actions,
+.campaign-action-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
-.campaign-inline-editor {
+.campaign-row-actions .secondary-btn,
+.campaign-row-actions .danger-btn {
+  min-height: 34px;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+.campaign-current-image {
   display: grid;
-}
-
-.campaign-inline-editor > summary {
-  cursor: pointer;
+  grid-template-columns: 86px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  border: 1px dashed #b7c6d6;
+  border-radius: 8px;
+  padding: 10px;
+  color: var(--muted);
+  font-size: 12px;
   font-weight: 800;
-  padding: 8px;
 }
 
-.campaign-inline-editor form {
-  display: grid;
-  gap: 10px;
-  padding: 8px;
+.campaign-current-image img {
+  width: 86px;
+  aspect-ratio: 1.4 / 1;
+  object-fit: cover;
+  border-radius: 6px;
 }
 
 .campaign-admin-card {
@@ -3107,7 +3133,7 @@ summary:focus-visible {
   }
 
   .campaign-admin-row {
-    grid-template-columns: 46px minmax(0, 1fr) 72px;
+    grid-template-columns: 46px minmax(0, 1fr) 70px;
   }
 
   .campaign-row-thumb {
@@ -3116,10 +3142,13 @@ summary:focus-visible {
 
   .campaign-row-actions {
     grid-column: 1 / -1;
-    justify-self: stretch;
+    justify-content: stretch;
   }
 
-  .campaign-row-actions summary {
+  .campaign-row-actions .secondary-btn,
+  .campaign-row-actions form,
+  .campaign-row-actions button {
+    flex: 1;
     width: 100%;
   }
 
@@ -3339,8 +3368,7 @@ summary:focus-visible {
     padding: 8px;
   }
 
-  .product-body p,
-  .sku {
+  .product-body p {
     font-size: 10px;
   }
 

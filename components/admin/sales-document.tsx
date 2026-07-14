@@ -6,7 +6,6 @@ export type SalesDocumentKind = "INVOICE" | "RECEIPT" | "QUOTATION";
 type SalesDocumentItem = {
   id?: string;
   productName: string;
-  sku?: string | null;
   quantity: number;
   unitCents: number;
   totalCents: number;
@@ -87,7 +86,7 @@ export function SalesDocument({
         {items.map((item, index) => (
           <div className="sales-document-row" key={item.id ?? `${item.productName}-${index}`} role="row">
             <span>{index + 1}</span>
-            <span><strong>{item.productName}</strong>{item.sku ? <small>SKU: {item.sku}</small> : null}</span>
+            <span><strong>{item.productName}</strong></span>
             <span>{item.quantity}</span>
             <span>{formatMoney(item.unitCents)}</span>
             <strong>{formatMoney(item.totalCents)}</strong>

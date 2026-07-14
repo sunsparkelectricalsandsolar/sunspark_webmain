@@ -60,7 +60,7 @@ export function ProductForm({
             <span>02</span>
             <div>
               <h2>Product gallery</h2>
-              <p>Use clean photos with enough contrast. WebP, PNG, or JPEG under 2MB each.</p>
+              <p>Use clean WebP photos where possible. PNG and JPEG are accepted under 2MB each.</p>
             </div>
           </div>
           <label className="file-drop product-file-drop">
@@ -155,13 +155,9 @@ export function ProductForm({
           <div className="editor-card-heading compact">
             <div>
               <h2>Inventory</h2>
-              <p>Stock, SKU, and selling unit.</p>
+              <p>Stock controls and selling unit.</p>
             </div>
           </div>
-          <label>
-            SKU
-            <input name="sku" defaultValue={product?.sku ?? ""} />
-          </label>
           <label>
             Selling unit
             <select defaultValue={product?.sellingUnit ?? "UNIT"} name="sellingUnit">
