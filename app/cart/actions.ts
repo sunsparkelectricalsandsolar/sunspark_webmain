@@ -18,11 +18,20 @@ export async function addToCartAndRedirectAction(slug: string) {
   redirect("/cart");
 }
 
+export async function addSelectedToCartAndRedirectAction(slug: string, formData: FormData) {
+  await preventAdminShopping();
+  const optionId = String(formData.get("optionId") ?? "") || null;
+  await addCartItem(slug, 1, optionId);
+  revalidatePath("/", "layout");
+  redirect("/cart");
+}
+
 export async function updateCartAction(formData: FormData) {
   await preventAdminShopping();
   const slug = String(formData.get("slug") ?? "");
+  const optionId = String(formData.get("optionId") ?? "") || null;
   const quantity = Number(formData.get("quantity") ?? 0);
 
-  await updateCartItem(slug, Number.isFinite(quantity) ? quantity : 0);
+  await updateCartItem(slug, Number.isFinite(quantity) ? quantity : 0, optionId);
   revalidatePath("/", "layout");
 }

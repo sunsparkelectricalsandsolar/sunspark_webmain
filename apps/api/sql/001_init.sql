@@ -88,6 +88,24 @@ CREATE TABLE IF NOT EXISTS product_images (
   CONSTRAINT product_images_product_fk FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS product_options (
+  id VARCHAR(64) PRIMARY KEY,
+  product_id VARCHAR(64) NOT NULL,
+  label VARCHAR(64) NOT NULL,
+  selling_unit VARCHAR(32) NOT NULL DEFAULT 'UNIT',
+  price_cents INT NOT NULL,
+  compare_at_cents INT NULL,
+  cost_cents INT NOT NULL DEFAULT 0,
+  stock_multiplier DECIMAL(10,2) NOT NULL DEFAULT 1,
+  is_default BOOLEAN NOT NULL DEFAULT FALSE,
+  sort_order INT NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX product_options_product_idx (product_id),
+  INDEX product_options_default_idx (product_id, is_default),
+  CONSTRAINT product_options_product_fk FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS wishlist_items (
   id VARCHAR(64) PRIMARY KEY,
   user_id VARCHAR(64) NOT NULL,
@@ -127,13 +145,18 @@ CREATE TABLE IF NOT EXISTS order_items (
   id VARCHAR(64) PRIMARY KEY,
   order_id VARCHAR(64) NOT NULL,
   product_id VARCHAR(64) NULL,
+  product_option_id VARCHAR(64) NULL,
   product_name VARCHAR(191) NOT NULL,
+  option_label VARCHAR(64) NULL,
+  selling_unit VARCHAR(32) NOT NULL DEFAULT 'UNIT',
   unit_cents INT NOT NULL,
   cost_cents INT NOT NULL DEFAULT 0,
   quantity INT NOT NULL,
   total_cents INT NOT NULL,
+  stock_deducted DECIMAL(10,2) NOT NULL DEFAULT 0,
   CONSTRAINT order_items_order_fk FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
-  CONSTRAINT order_items_product_fk FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL
+  CONSTRAINT order_items_product_fk FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL,
+  CONSTRAINT order_items_option_fk FOREIGN KEY (product_option_id) REFERENCES product_options(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS invoices (
@@ -200,11 +223,26 @@ CREATE TABLE IF NOT EXISTS draft_document_items (
   id VARCHAR(64) PRIMARY KEY,
   document_id VARCHAR(64) NOT NULL,
   product_id VARCHAR(64) NOT NULL,
+  product_option_id VARCHAR(64) NULL,
   product_name VARCHAR(191) NOT NULL,
+  option_label VARCHAR(64) NULL,
+  selling_unit VARCHAR(32) NOT NULL DEFAULT 'UNIT',
   unit_cents INT NOT NULL,
   cost_cents INT NOT NULL DEFAULT 0,
   quantity INT NOT NULL,
   total_cents INT NOT NULL,
+  stock_deducted DECIMAL(10,2) NOT NULL DEFAULT 0,
   CONSTRAINT draft_document_items_document_fk FOREIGN KEY (document_id) REFERENCES draft_documents(id) ON DELETE CASCADE,
-  CONSTRAINT draft_document_items_product_fk FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT
+  CONSTRAINT draft_document_items_product_fk FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT,
+  CONSTRAINT draft_document_items_option_fk FOREIGN KEY (product_option_id) REFERENCES product_options(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+ALTER TABLE order_items ADD COLUMN IF NOT EXISTS product_option_id VARCHAR(64) NULL AFTER product_id;
+ALTER TABLE order_items ADD COLUMN IF NOT EXISTS option_label VARCHAR(64) NULL AFTER product_name;
+ALTER TABLE order_items ADD COLUMN IF NOT EXISTS selling_unit VARCHAR(32) NOT NULL DEFAULT 'UNIT' AFTER option_label;
+ALTER TABLE order_items ADD COLUMN IF NOT EXISTS stock_deducted DECIMAL(10,2) NOT NULL DEFAULT 0 AFTER total_cents;
+ALTER TABLE draft_document_items ADD COLUMN IF NOT EXISTS product_option_id VARCHAR(64) NULL AFTER product_id;
+ALTER TABLE draft_document_items ADD COLUMN IF NOT EXISTS option_label VARCHAR(64) NULL AFTER product_name;
+ALTER TABLE draft_document_items ADD COLUMN IF NOT EXISTS selling_unit VARCHAR(32) NOT NULL DEFAULT 'UNIT' AFTER option_label;
+ALTER TABLE draft_document_items ADD COLUMN IF NOT EXISTS stock_deducted DECIMAL(10,2) NOT NULL DEFAULT 0 AFTER total_cents;
+ALTER TABLE product_options ADD COLUMN IF NOT EXISTS stock_multiplier DECIMAL(10,2) NOT NULL DEFAULT 1 AFTER cost_cents;

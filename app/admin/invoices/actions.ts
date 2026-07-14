@@ -8,13 +8,21 @@ import { requireAdmin } from "@/lib/auth/guards";
 
 function requestedItems(formData: FormData) {
   const productIds = formData.getAll("productId").map(String);
+  const optionIds = formData.getAll("productOptionId").map((value) => String(value) || null);
   const quantities = formData.getAll("quantity").map((value) => Number(value));
   if (!productIds.length || productIds.length !== quantities.length) return null;
-  const requested = new Map<string, number>();
+  const requested = new Map<string, { productId: string; productOptionId: string | null; quantity: number }>();
   for (let index = 0; index < productIds.length; index += 1) {
     const quantity = quantities[index];
     if (!productIds[index] || !Number.isInteger(quantity) || quantity < 1) return null;
-    requested.set(productIds[index], (requested.get(productIds[index]) ?? 0) + quantity);
+    const productOptionId = optionIds[index] ?? null;
+    const key = `${productIds[index]}::${productOptionId ?? ""}`;
+    const existing = requested.get(key);
+    requested.set(key, {
+      productId: productIds[index],
+      productOptionId,
+      quantity: (existing?.quantity ?? 0) + quantity
+    });
   }
   return requested;
 }
@@ -35,7 +43,7 @@ async function createSalesDocument(formData: FormData, kind: DraftInvoiceKind) {
       customerEmail,
       customerPhone,
       paymentMethod,
-      items: [...requested.entries()].map(([productId, quantity]) => ({ productId, quantity }))
+      items: [...requested.values()]
     })
   }).catch((error: unknown) => {
     if (error instanceof ApiError) redirect(`/admin/invoices?error=items&tab=${kind.toLowerCase()}`);
@@ -57,7 +65,7 @@ async function salesDocumentPayload(formData: FormData) {
     customerEmail,
     customerPhone,
     paymentMethod,
-    items: [...requested.entries()].map(([productId, quantity]) => ({ productId, quantity }))
+    items: [...requested.values()]
   };
 }
 

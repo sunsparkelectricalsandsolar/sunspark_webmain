@@ -30,7 +30,7 @@ export async function createOrderFromCart(input: CheckoutInput) {
     body: JSON.stringify({
       ...input,
       userId: session?.role === "CUSTOMER" ? session.id : null,
-      items: cart.items.map((item) => ({ productId: item.product.id, quantity: item.quantity }))
+      items: cart.items.map((item) => ({ productId: item.product.id, productOptionId: item.option?.id || null, quantity: item.quantity }))
     })
   });
 

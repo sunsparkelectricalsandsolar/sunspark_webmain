@@ -707,9 +707,14 @@ textarea {
 }
 
 .category-tile-media.is-carousel img,
-.product-image-stack img {
+.product-image-stack img:not(:first-child) {
   opacity: 0;
   animation: productImageFade 7.8s infinite;
+}
+
+.product-image-stack img:first-child {
+  opacity: 1;
+  animation: none;
 }
 
 .category-tile-media::after {
@@ -854,8 +859,9 @@ textarea {
 }
 
 @keyframes productImageFade {
-  0%, 38% { opacity: 1; }
-  43%, 100% { opacity: 0; }
+  0%, 12% { opacity: 0; }
+  18%, 48% { opacity: 1; }
+  56%, 100% { opacity: 0; }
 }
 
 .badge {
@@ -917,6 +923,38 @@ textarea {
 .detail-price span {
   color: var(--muted);
   text-decoration: line-through;
+}
+
+.product-option-purchase {
+  display: grid;
+  gap: 10px;
+  min-width: min(100%, 320px);
+}
+
+.product-option-purchase label {
+  display: grid;
+  gap: 6px;
+  color: var(--brand);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.product-option-purchase select {
+  min-height: 42px;
+  border: 1px solid #cfd8e3;
+  border-radius: 6px;
+  background: #fff;
+  padding: 8px 12px;
+  color: var(--brand);
+  font-weight: 800;
+}
+
+.option-price {
+  justify-content: flex-start;
+  border-radius: 7px;
+  background: #f8fafc;
+  padding: 10px 12px;
 }
 
 .product-actions {
@@ -2147,6 +2185,65 @@ summary:focus-visible {
   background: #fff;
 }
 
+.product-options-card {
+  gap: 12px;
+}
+
+.option-editor-grid {
+  display: grid;
+  grid-template-columns: 72px minmax(120px, 1.1fr) 112px 92px 92px 92px 78px 76px;
+  gap: 8px;
+  align-items: center;
+}
+
+.option-editor-head {
+  border-radius: 6px;
+  background: #f1f6fb;
+  color: #42526a;
+  padding: 8px;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.option-editor-grid input,
+.option-editor-grid select {
+  min-height: 36px;
+  padding: 7px 9px;
+  font-size: 13px;
+}
+
+.option-editor-new {
+  border-top: 1px dashed #d7e1eb;
+  padding-top: 10px;
+}
+
+.icon-radio,
+.muted-cell {
+  display: flex !important;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.icon-radio input {
+  width: 16px;
+  min-height: 16px;
+}
+
+.editor-help {
+  margin: 0;
+  border-radius: 6px;
+  background: #fff7ed;
+  color: #8a3b12;
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
 .editor-submit-bar {
   position: sticky;
   bottom: 0;
@@ -2972,6 +3069,14 @@ summary:focus-visible {
 
   .product-editor-side {
     position: static;
+  }
+
+  .option-editor-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .option-editor-head {
+    display: none;
   }
 
   .sales-document-header,

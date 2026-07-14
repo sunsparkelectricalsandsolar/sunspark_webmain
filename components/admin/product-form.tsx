@@ -6,6 +6,19 @@ type ProductWithImages = Product & {
   images: ProductImage[];
 };
 
+const sellingUnits = [
+  ["UNIT", "Unit / piece"],
+  ["METRE", "Metre"],
+  ["ROLL", "Roll"],
+  ["CARTON", "Carton"],
+  ["BOX", "Box"],
+  ["PACK", "Pack"],
+  ["PAIR", "Pair"],
+  ["SET", "Set"],
+  ["LITRE", "Litre"],
+  ["KILOGRAM", "Kilogram"]
+] as const;
+
 export function ProductForm({
   action,
   categories,
@@ -161,16 +174,7 @@ export function ProductForm({
           <label>
             Selling unit
             <select defaultValue={product?.sellingUnit ?? "UNIT"} name="sellingUnit">
-              <option value="UNIT">Unit / piece</option>
-              <option value="METRE">Metre</option>
-              <option value="ROLL">Roll</option>
-              <option value="CARTON">Carton</option>
-              <option value="BOX">Box</option>
-              <option value="PACK">Pack</option>
-              <option value="PAIR">Pair</option>
-              <option value="SET">Set</option>
-              <option value="LITRE">Litre</option>
-              <option value="KILOGRAM">Kilogram</option>
+              {sellingUnits.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
             </select>
           </label>
           <div className="form-grid two tight">
@@ -183,6 +187,56 @@ export function ProductForm({
               <input name="lowStockThreshold" type="number" min="0" defaultValue={product?.lowStockThreshold ?? 3} />
             </label>
           </div>
+        </section>
+
+        <section className="editor-card product-options-card">
+          <div className="editor-card-heading compact">
+            <div>
+              <h2>Selling options</h2>
+              <p>Use this when one product sells as unit, metre, roll, carton, or pack.</p>
+            </div>
+          </div>
+          <div className="option-editor-grid option-editor-head">
+            <span>Default</span>
+            <span>Label</span>
+            <span>Unit</span>
+            <span>Sell</span>
+            <span>Compare</span>
+            <span>Cost</span>
+            <span>Stock x</span>
+            <span>Remove</span>
+          </div>
+          {(product?.options ?? []).map((option) => (
+            <div className="option-editor-grid" key={option.id}>
+              <label className="icon-radio"><input type="radio" name="defaultOptionId" value={option.id} defaultChecked={option.isDefault} /><span>Default</span></label>
+              <input name="optionId" type="hidden" value={option.id} />
+              <input name="optionLabel" defaultValue={option.label} aria-label="Option label" />
+              <select name="optionSellingUnit" defaultValue={option.sellingUnit} aria-label="Option unit">
+                {sellingUnits.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              </select>
+              <input name="optionPriceKsh" type="number" min="0" step="0.01" defaultValue={option.priceCents / 100} aria-label="Selling price" />
+              <input name="optionCompareAtKsh" type="number" min="0" step="0.01" defaultValue={option.compareAtCents ? option.compareAtCents / 100 : ""} aria-label="Compare price" />
+              <input name="optionCostKsh" type="number" min="0" step="0.01" defaultValue={option.costCents / 100} aria-label="Buying cost" />
+              <input name="optionStockMultiplier" type="number" min="0.01" step="0.01" defaultValue={option.stockMultiplier ?? 1} aria-label="Stock multiplier" />
+              <label className="check-label danger-label"><input name="deleteOptionIds" type="checkbox" value={option.id} />Remove</label>
+            </div>
+          ))}
+          {[0, 1, 2].map((index) => (
+            <div className="option-editor-grid option-editor-new" key={`new-${index}`}>
+              <label className="icon-radio"><input type="radio" name="defaultOptionIndex" value={(product?.options.length ?? 0) + index} /><span>Default</span></label>
+              <input name="optionId" type="hidden" value="" />
+              <input name="optionLabel" placeholder={index === 0 ? "Per metre" : index === 1 ? "Roll" : "Unit"} aria-label="New option label" />
+              <select name="optionSellingUnit" defaultValue={index === 0 ? "METRE" : index === 1 ? "ROLL" : "UNIT"} aria-label="New option unit">
+                {sellingUnits.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              </select>
+              <input name="optionPriceKsh" type="number" min="0" step="0.01" placeholder="Sell" aria-label="New selling price" />
+              <input name="optionCompareAtKsh" type="number" min="0" step="0.01" placeholder="Compare" aria-label="New compare price" />
+              <input name="optionCostKsh" type="number" min="0" step="0.01" placeholder="Cost" aria-label="New buying cost" />
+              <input name="optionStockMultiplier" type="number" min="0.01" step="0.01" defaultValue={1} aria-label="New stock multiplier" />
+              <span className="muted-cell">New</span>
+            </div>
+          ))}
+          <p className="editor-help">Stock x means how much product stock one option consumes. Example: per metre = 1, a 100m roll = 100.</p>
         </section>
 
         <div className="editor-submit-bar">

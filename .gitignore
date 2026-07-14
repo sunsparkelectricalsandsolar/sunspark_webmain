@@ -12,4 +12,5 @@ test-results/
 public/uploads/
 .vercel/
 exports/
+outputs/
 *.tsbuildinfo

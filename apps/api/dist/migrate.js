@@ -16,6 +16,7 @@ async function main() {
         await execute(statement);
     }
     await removeLegacySkuColumns();
+    await backfillDefaultProductOptions();
     console.log("Database schema is ready.");
 }
 async function indexExists(table, indexName) {
@@ -45,6 +46,23 @@ async function removeLegacySkuColumns() {
     if (!(await indexExists("products", "products_search_idx"))) {
         await execute("ALTER TABLE `products` ADD FULLTEXT `products_search_idx` (`name`, `brand`, `short_description`, `description`, `seo_title`, `seo_description`, `seo_keywords`)");
     }
+}
+async function backfillDefaultProductOptions() {
+    await execute(`INSERT INTO product_options
+       (id, product_id, label, selling_unit, price_cents, compare_at_cents, cost_cents, stock_multiplier, is_default, sort_order)
+     SELECT
+       CONCAT('opt_', REPLACE(UUID(), '-', '')), p.id,
+       CASE
+         WHEN p.selling_unit = 'METRE' THEN 'Per metre'
+         WHEN p.selling_unit = 'ROLL' THEN 'Roll'
+         WHEN p.selling_unit = 'CARTON' THEN 'Carton'
+         WHEN p.selling_unit = 'BOX' THEN 'Box'
+         WHEN p.selling_unit = 'PACK' THEN 'Pack'
+         ELSE 'Unit'
+       END,
+       p.selling_unit, p.price_cents, p.compare_at_cents, p.cost_cents, 1, TRUE, 0
+     FROM products p
+     WHERE NOT EXISTS (SELECT 1 FROM product_options po WHERE po.product_id = p.id)`);
 }
 main()
     .catch((error) => {

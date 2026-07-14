@@ -9,6 +9,8 @@ export type PdfDocumentKind = "INVOICE" | "RECEIPT" | "QUOTATION";
 
 export type PdfDocumentItem = {
   productName: string;
+  optionLabel?: string | null;
+  sellingUnit?: string | null;
   quantity: number;
   unitCents: number;
   totalCents: number;
@@ -113,6 +115,7 @@ function buildPageContent(input: PdfDocumentInput, _logoObject: number, logoWidt
     if (index % 2 === 0) rect(margin, tableY - 16, pageWidth - margin * 2, 24, rgb(250, 252, 255));
     text(margin + 10, tableY, String(index + 1), 9);
     text(margin + 48, tableY, truncate(item.productName, 46), 9.5, true);
+    if (item.optionLabel) text(margin + 48, tableY - 10, truncate(item.optionLabel, 32), 7.5, false, rgb(82, 91, 107));
     text(340, tableY, String(item.quantity), 9);
     text(390, tableY, formatMoney(item.unitCents), 9);
     text(492, tableY, formatMoney(item.totalCents), 9, true);

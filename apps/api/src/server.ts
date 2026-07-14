@@ -6,7 +6,7 @@ import bcrypt from "bcryptjs";
 import cors from "cors";
 import express from "express";
 import { z } from "zod";
-import { execute, query, transaction } from "./db.js";
+import { execute, pool, query, transaction } from "./db.js";
 import { sendEmail } from "./email.js";
 import { env } from "./env.js";
 import { id, slugify } from "./id.js";
@@ -48,6 +48,21 @@ type ProductRow = {
   updated_at: Date;
   category_name?: string;
   category_slug?: string;
+};
+
+type ProductOptionRow = {
+  id: string;
+  product_id: string;
+  label: string;
+  selling_unit: string;
+  price_cents: number;
+  compare_at_cents: number | null;
+  cost_cents: number;
+  stock_multiplier: number | string;
+  is_default: 0 | 1 | boolean;
+  sort_order: number;
+  created_at: Date;
+  updated_at: Date;
 };
 
 type ImageRow = {
@@ -125,7 +140,59 @@ function mapCategory(row: CategoryRow, images: ImageRow[] = [], products: unknow
   };
 }
 
-function mapProduct(row: ProductRow, images: ImageRow[] = []) {
+function mapProductOption(row: ProductOptionRow) {
+  return {
+    id: row.id,
+    productId: row.product_id,
+    label: row.label,
+    sellingUnit: row.selling_unit,
+    priceCents: row.price_cents,
+    compareAtCents: row.compare_at_cents,
+    costCents: row.cost_cents,
+    stockMultiplier: Number(row.stock_multiplier ?? 1),
+    isDefault: truthy(row.is_default),
+    sortOrder: row.sort_order,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function fallbackProductOption(row: ProductRow) {
+  return {
+    id: "",
+    productId: row.id,
+    label: unitLabel(row.selling_unit),
+    sellingUnit: row.selling_unit,
+    priceCents: row.price_cents,
+    compareAtCents: row.compare_at_cents,
+    costCents: row.cost_cents,
+    stockMultiplier: 1,
+    isDefault: true,
+    sortOrder: 0,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function unitLabel(unit: string) {
+  const labels: Record<string, string> = {
+    UNIT: "Unit",
+    METRE: "Per metre",
+    ROLL: "Roll",
+    CARTON: "Carton",
+    BOX: "Box",
+    PACK: "Pack",
+    PAIR: "Pair",
+    SET: "Set",
+    LITRE: "Litre",
+    KILOGRAM: "Kilogram"
+  };
+  return labels[unit] ?? "Unit";
+}
+
+function mapProduct(row: ProductRow, images: ImageRow[] = [], options: ProductOptionRow[] = []) {
+  const mappedOptions = options.length ? options.map(mapProductOption) : [fallbackProductOption(row)];
+  const defaultOption = mappedOptions.find((option) => option.isDefault) ?? mappedOptions[0];
   return {
     id: row.id,
     name: row.name,
@@ -133,10 +200,10 @@ function mapProduct(row: ProductRow, images: ImageRow[] = []) {
     brand: row.brand,
     shortDescription: row.short_description,
     description: row.description,
-    priceCents: row.price_cents,
-    compareAtCents: row.compare_at_cents,
-    costCents: row.cost_cents,
-    sellingUnit: row.selling_unit,
+    priceCents: defaultOption.priceCents,
+    compareAtCents: defaultOption.compareAtCents,
+    costCents: defaultOption.costCents,
+    sellingUnit: defaultOption.sellingUnit,
     stockQuantity: row.stock_quantity,
     lowStockThreshold: row.low_stock_threshold,
     isActive: truthy(row.is_active),
@@ -172,7 +239,8 @@ function mapProduct(row: ProductRow, images: ImageRow[] = []) {
       isPrimary: truthy(image.is_primary),
       sortOrder: image.sort_order,
       createdAt: image.created_at
-    }))
+    })),
+    options: mappedOptions
   };
 }
 
@@ -260,6 +328,117 @@ async function imagesForCategories(categoryIds: string[]) {
   }, new Map<string, ImageRow[]>());
 }
 
+async function optionsForProducts(productIds: string[]) {
+  if (!productIds.length) return new Map<string, ProductOptionRow[]>();
+  const rows = await query<ProductOptionRow>(
+    `SELECT * FROM product_options WHERE product_id IN (${productIds.map(() => "?").join(",")})
+     ORDER BY is_default DESC, sort_order ASC, created_at ASC`,
+    productIds
+  );
+  return rows.reduce((map, row) => {
+    const list = map.get(row.product_id) ?? [];
+    list.push(row);
+    map.set(row.product_id, list);
+    return map;
+  }, new Map<string, ProductOptionRow[]>());
+}
+
+async function ensureDefaultOption(
+  connection: Awaited<ReturnType<typeof pool.getConnection>> | null,
+  productId: string,
+  input: { sellingUnit: string; priceCents: number; compareAtCents?: number | null; costCents: number }
+) {
+  const runner = connection ?? { query: execute };
+  const rows = await (connection
+    ? connection.query("SELECT id FROM product_options WHERE product_id = ? AND is_default = TRUE LIMIT 1", [productId])
+    : query<{ id: string }>("SELECT id FROM product_options WHERE product_id = ? AND is_default = TRUE LIMIT 1", [productId]));
+  const existing = (rows as { id: string }[])[0];
+
+  if (existing) {
+    await runner.query(
+      "UPDATE product_options SET label = ?, selling_unit = ?, price_cents = ?, compare_at_cents = ?, cost_cents = ?, sort_order = 0 WHERE id = ?",
+      [unitLabel(input.sellingUnit), input.sellingUnit, input.priceCents, input.compareAtCents ?? null, input.costCents, existing.id]
+    );
+    return existing.id;
+  }
+
+  const optionId = id("opt");
+  await runner.query(
+    `INSERT INTO product_options
+     (id, product_id, label, selling_unit, price_cents, compare_at_cents, cost_cents, stock_multiplier, is_default, sort_order)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 1, TRUE, 0)`,
+    [optionId, productId, unitLabel(input.sellingUnit), input.sellingUnit, input.priceCents, input.compareAtCents ?? null, input.costCents]
+  );
+  return optionId;
+}
+
+type ProductOptionInput = {
+  id?: string | null;
+  label: string;
+  sellingUnit: string;
+  priceCents: number;
+  compareAtCents?: number | null;
+  costCents: number;
+  stockMultiplier: number;
+  isDefault: boolean;
+  sortOrder: number;
+};
+
+async function syncProductOptions(
+  connection: Awaited<ReturnType<typeof pool.getConnection>>,
+  productId: string,
+  options: ProductOptionInput[],
+  deleteOptionIds: string[] = []
+) {
+  if (deleteOptionIds.length) {
+    await connection.query(`DELETE FROM product_options WHERE product_id = ? AND id IN (${deleteOptionIds.map(() => "?").join(",")})`, [
+      productId,
+      ...deleteOptionIds
+    ]);
+  }
+
+  const cleaned = options
+    .filter((option) => (!option.id || !deleteOptionIds.includes(option.id)) && option.label.trim() && option.priceCents >= 0)
+    .map((option, index) => ({ ...option, sortOrder: index }));
+
+  if (!cleaned.length) return;
+
+  const hasDefault = cleaned.some((option) => option.isDefault);
+  if (!hasDefault) cleaned[0].isDefault = true;
+
+  for (const option of cleaned) {
+    if (option.id) {
+      await connection.query(
+        `UPDATE product_options
+         SET label = ?, selling_unit = ?, price_cents = ?, compare_at_cents = ?, cost_cents = ?, stock_multiplier = ?, is_default = ?, sort_order = ?
+         WHERE id = ? AND product_id = ?`,
+        [
+          option.label, option.sellingUnit, option.priceCents, option.compareAtCents ?? null, option.costCents,
+          option.stockMultiplier, option.isDefault, option.sortOrder, option.id, productId
+        ]
+      );
+    } else {
+      await connection.query(
+        `INSERT INTO product_options
+         (id, product_id, label, selling_unit, price_cents, compare_at_cents, cost_cents, stock_multiplier, is_default, sort_order)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id("opt"), productId, option.label, option.sellingUnit, option.priceCents, option.compareAtCents ?? null,
+          option.costCents, option.stockMultiplier, option.isDefault, option.sortOrder
+        ]
+      );
+    }
+  }
+
+  const defaults = await connection.query("SELECT id FROM product_options WHERE product_id = ? AND is_default = TRUE ORDER BY sort_order ASC", [productId]) as { id: string }[];
+  if (defaults.length > 1) {
+    await connection.query(
+      `UPDATE product_options SET is_default = FALSE WHERE product_id = ? AND id IN (${defaults.slice(1).map(() => "?").join(",")})`,
+      [productId, ...defaults.slice(1).map((row) => row.id)]
+    );
+  }
+}
+
 async function listProducts(filters: { q?: string; category?: string; categoryId?: string; limit?: number; excludeId?: string } = {}) {
   const where = ["p.is_active = TRUE"];
   const values: unknown[] = [];
@@ -300,8 +479,11 @@ async function listProducts(filters: { q?: string; category?: string; categoryId
      LIMIT ?`,
     values
   );
-  const imageMap = await imagesForProducts(rows.map((row) => row.id));
-  return rows.map((row) => mapProduct(row, imageMap.get(row.id) ?? []));
+  const [imageMap, optionMap] = await Promise.all([
+    imagesForProducts(rows.map((row) => row.id)),
+    optionsForProducts(rows.map((row) => row.id))
+  ]);
+  return rows.map((row) => mapProduct(row, imageMap.get(row.id) ?? [], optionMap.get(row.id) ?? []));
 }
 
 function publicUser(row: { id: string; name: string; email: string; phone: string | null; role: string; created_at?: Date }) {
@@ -439,8 +621,11 @@ app.get("/products/by-slugs", asyncRoute(async (request, response) => {
      ORDER BY p.updated_at DESC`,
     slugs
   );
-  const imageMap = await imagesForProducts(rows.map((row) => row.id));
-  response.json(rows.map((row) => mapProduct(row, imageMap.get(row.id) ?? [])));
+  const [imageMap, optionMap] = await Promise.all([
+    imagesForProducts(rows.map((row) => row.id)),
+    optionsForProducts(rows.map((row) => row.id))
+  ]);
+  response.json(rows.map((row) => mapProduct(row, imageMap.get(row.id) ?? [], optionMap.get(row.id) ?? [])));
 }));
 
 app.get("/products/:slug", asyncRoute(async (request, response) => {
@@ -452,8 +637,8 @@ app.get("/products/:slug", asyncRoute(async (request, response) => {
   );
   const product = rows[0];
   if (!product) throw new HttpError(404, "Product not found.");
-  const imageMap = await imagesForProducts([product.id]);
-  response.json(mapProduct(product, imageMap.get(product.id) ?? []));
+  const [imageMap, optionMap] = await Promise.all([imagesForProducts([product.id]), optionsForProducts([product.id])]);
+  response.json(mapProduct(product, imageMap.get(product.id) ?? [], optionMap.get(product.id) ?? []));
 }));
 
 app.get("/admin/products/:id", asyncRoute(async (request, response) => {
@@ -464,8 +649,8 @@ app.get("/admin/products/:id", asyncRoute(async (request, response) => {
     [request.params.id]
   );
   if (!rows[0]) throw new HttpError(404, "Product not found.");
-  const imageMap = await imagesForProducts([rows[0].id]);
-  response.json(mapProduct(rows[0], imageMap.get(rows[0].id) ?? []));
+  const [imageMap, optionMap] = await Promise.all([imagesForProducts([rows[0].id]), optionsForProducts([rows[0].id])]);
+  response.json(mapProduct(rows[0], imageMap.get(rows[0].id) ?? [], optionMap.get(rows[0].id) ?? []));
 }));
 
 app.get("/products/:id/related", asyncRoute(async (request, response) => {
@@ -734,6 +919,18 @@ app.post("/admin/uploads", asyncRoute(async (request, response) => {
   response.status(201).json({ images });
 }));
 
+const productOptionSchema = z.object({
+  id: z.string().optional().nullable(),
+  label: z.string().min(1),
+  sellingUnit: z.string().default("UNIT"),
+  priceCents: z.number().int().min(0),
+  compareAtCents: z.number().int().optional().nullable(),
+  costCents: z.number().int().min(0).default(0),
+  stockMultiplier: z.number().positive().default(1),
+  isDefault: z.boolean().default(false),
+  sortOrder: z.number().int().default(0)
+});
+
 app.post("/admin/products", asyncRoute(async (request, response) => {
   const input = z.object({
     name: z.string().min(2),
@@ -754,6 +951,7 @@ app.post("/admin/products", asyncRoute(async (request, response) => {
     seoTitle: z.string().optional().nullable(),
     seoDescription: z.string().optional().nullable(),
     seoKeywords: z.string().optional().nullable(),
+    options: z.array(productOptionSchema).default([]),
     images: z.array(z.object({ url: z.string(), alt: z.string().optional().nullable(), isPrimary: z.boolean(), sortOrder: z.number().int() })).default([])
   }).parse(request.body);
   await assertUniqueProductSlug(input.slug);
@@ -772,6 +970,16 @@ app.post("/admin/products", asyncRoute(async (request, response) => {
         input.isFeatured, input.isHotDeal, input.seoTitle ?? null, input.seoDescription ?? null, input.seoKeywords ?? null
       ]
     );
+    if (input.options.length) {
+      await syncProductOptions(connection, productId, input.options);
+    } else {
+      await ensureDefaultOption(connection, productId, {
+        sellingUnit: input.sellingUnit,
+        priceCents: input.priceCents,
+        compareAtCents: input.compareAtCents ?? null,
+        costCents: input.costCents
+      });
+    }
     for (const image of input.images) {
       await connection.query(
         "INSERT INTO product_images (id, product_id, url, alt, is_primary, sort_order) VALUES (?, ?, ?, ?, ?, ?)",
@@ -802,6 +1010,8 @@ app.patch("/admin/products/:id", asyncRoute(async (request, response) => {
     seoTitle: z.string().optional().nullable(),
     seoDescription: z.string().optional().nullable(),
     seoKeywords: z.string().optional().nullable(),
+    options: z.array(productOptionSchema).default([]),
+    deleteOptionIds: z.array(z.string()).default([]),
     images: z.array(z.object({ url: z.string(), alt: z.string().optional().nullable() })).default([]),
     deleteImageIds: z.array(z.string()).default([]),
     primaryImageId: z.string().optional().nullable()
@@ -821,6 +1031,16 @@ app.patch("/admin/products/:id", asyncRoute(async (request, response) => {
         request.params.id
       ]
     );
+    if (input.options.length || input.deleteOptionIds.length) {
+      await syncProductOptions(connection, routeParam(request.params.id), input.options, input.deleteOptionIds);
+    } else {
+      await ensureDefaultOption(connection, routeParam(request.params.id), {
+        sellingUnit: input.sellingUnit,
+        priceCents: input.priceCents,
+        compareAtCents: input.compareAtCents ?? null,
+        costCents: input.costCents
+      });
+    }
     if (input.deleteImageIds.length) {
       await connection.query(`DELETE FROM product_images WHERE product_id = ? AND id IN (${input.deleteImageIds.map(() => "?").join(",")})`, [
         request.params.id,
@@ -938,8 +1158,9 @@ app.get("/admin/draft-documents", asyncRoute(async (request, response) => {
   const ids = documents.map((document) => String(document.id));
   const items = ids.length
     ? await query<Record<string, unknown>>(
-        `SELECT id, document_id AS documentId, product_id AS productId, product_name AS productName,
-          unit_cents AS unitCents, cost_cents AS costCents, quantity, total_cents AS totalCents
+        `SELECT id, document_id AS documentId, product_id AS productId, product_option_id AS productOptionId,
+          product_name AS productName, option_label AS optionLabel, selling_unit AS sellingUnit,
+          unit_cents AS unitCents, cost_cents AS costCents, quantity, total_cents AS totalCents, stock_deducted AS stockDeducted
          FROM draft_document_items WHERE document_id IN (${ids.map(() => "?").join(",")})`,
         ids
       )
@@ -958,8 +1179,9 @@ app.get("/admin/draft-documents/:id", asyncRoute(async (request, response) => {
   );
   if (!documents[0]) throw new HttpError(404, "Document not found.");
   const items = await query<Record<string, unknown>>(
-    `SELECT id, document_id AS documentId, product_id AS productId, product_name AS productName,
-      unit_cents AS unitCents, cost_cents AS costCents, quantity, total_cents AS totalCents
+    `SELECT id, document_id AS documentId, product_id AS productId, product_option_id AS productOptionId,
+      product_name AS productName, option_label AS optionLabel, selling_unit AS sellingUnit,
+      unit_cents AS unitCents, cost_cents AS costCents, quantity, total_cents AS totalCents, stock_deducted AS stockDeducted
      FROM draft_document_items WHERE document_id = ?`,
     [request.params.id]
   );
@@ -973,7 +1195,7 @@ app.post("/admin/draft-documents", asyncRoute(async (request, response) => {
     customerEmail: z.string().optional().nullable(),
     customerPhone: z.string().optional().nullable(),
     paymentMethod: z.enum(["WHATSAPP", "MPESA", "CASH"]).default("CASH"),
-    items: z.array(z.object({ productId: z.string(), quantity: z.number().int().positive() })).min(1)
+    items: z.array(z.object({ productId: z.string(), productOptionId: z.string().optional().nullable(), quantity: z.number().int().positive() })).min(1)
   }).parse(request.body);
   const productIds = [...new Set(input.items.map((item) => item.productId))];
   const rows = await query<ProductRow>(
@@ -982,6 +1204,7 @@ app.post("/admin/draft-documents", asyncRoute(async (request, response) => {
   );
   if (rows.length !== productIds.length) throw new HttpError(400, "One or more selected products are unavailable.");
   const products = new Map(rows.map((row) => [row.id, row]));
+  const optionMap = await optionsForProducts(productIds);
   const documentId = id("doc");
   let totalCents = 0;
 
@@ -989,9 +1212,17 @@ app.post("/admin/draft-documents", asyncRoute(async (request, response) => {
     const lines = input.items.map((item) => {
       const product = products.get(item.productId);
       if (!product) throw new HttpError(400, "One or more selected products are unavailable.");
-      const lineTotal = product.price_cents * item.quantity;
+      const options = optionMap.get(product.id) ?? [];
+      const option = options.find((candidate) => candidate.id === item.productOptionId) ?? options.find((candidate) => truthy(candidate.is_default)) ?? options[0] ?? null;
+      const unitCents = option?.price_cents ?? product.price_cents;
+      const costCents = option?.cost_cents ?? product.cost_cents;
+      const sellingUnit = option?.selling_unit ?? product.selling_unit;
+      const stockMultiplier = Number(option?.stock_multiplier ?? 1);
+      const optionLabel = option?.label ?? unitLabel(sellingUnit);
+      const lineTotal = unitCents * item.quantity;
+      const stockDeducted = stockMultiplier * item.quantity;
       totalCents += lineTotal;
-      return { product, quantity: item.quantity, lineTotal };
+      return { product, option, optionLabel, sellingUnit, unitCents, costCents, stockDeducted, quantity: item.quantity, lineTotal };
     });
 
     await connection.query(
@@ -1014,9 +1245,12 @@ app.post("/admin/draft-documents", asyncRoute(async (request, response) => {
     for (const line of lines) {
       await connection.query(
         `INSERT INTO draft_document_items
-         (id, document_id, product_id, product_name, unit_cents, cost_cents, quantity, total_cents)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [id("dit"), documentId, line.product.id, line.product.name, line.product.price_cents, line.product.cost_cents, line.quantity, line.lineTotal]
+         (id, document_id, product_id, product_option_id, product_name, option_label, selling_unit, unit_cents, cost_cents, quantity, total_cents, stock_deducted)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id("dit"), documentId, line.product.id, line.option?.id ?? null, line.product.name, line.optionLabel,
+          line.sellingUnit, line.unitCents, line.costCents, line.quantity, line.lineTotal, line.stockDeducted
+        ]
       );
     }
   });
@@ -1030,7 +1264,7 @@ app.patch("/admin/draft-documents/:id", asyncRoute(async (request, response) => 
     customerEmail: z.string().optional().nullable(),
     customerPhone: z.string().optional().nullable(),
     paymentMethod: z.enum(["WHATSAPP", "MPESA", "CASH"]).default("CASH"),
-    items: z.array(z.object({ productId: z.string(), quantity: z.number().int().positive() })).min(1)
+    items: z.array(z.object({ productId: z.string(), productOptionId: z.string().optional().nullable(), quantity: z.number().int().positive() })).min(1)
   }).parse(request.body);
 
   const documents = await query<Record<string, unknown>>("SELECT * FROM draft_documents WHERE id = ? LIMIT 1", [request.params.id]);
@@ -1045,13 +1279,27 @@ app.patch("/admin/draft-documents/:id", asyncRoute(async (request, response) => 
   if (rows.length !== productIds.length) throw new HttpError(400, "One or more selected products are unavailable.");
 
   const products = new Map(rows.map((row) => [row.id, row]));
+  const optionMap = await optionsForProducts(productIds);
   const lines = input.items.map((item) => {
     const product = products.get(item.productId);
     if (!product) throw new HttpError(400, "One or more selected products are unavailable.");
+    const options = optionMap.get(product.id) ?? [];
+    const option = options.find((candidate) => candidate.id === item.productOptionId) ?? options.find((candidate) => truthy(candidate.is_default)) ?? options[0] ?? null;
+    const unitCents = option?.price_cents ?? product.price_cents;
+    const costCents = option?.cost_cents ?? product.cost_cents;
+    const sellingUnit = option?.selling_unit ?? product.selling_unit;
+    const optionLabel = option?.label ?? unitLabel(sellingUnit);
+    const stockMultiplier = Number(option?.stock_multiplier ?? 1);
     return {
       product,
+      option,
+      optionLabel,
+      sellingUnit,
+      unitCents,
+      costCents,
+      stockDeducted: stockMultiplier * item.quantity,
       quantity: item.quantity,
-      totalCents: product.price_cents * item.quantity
+      totalCents: unitCents * item.quantity
     };
   });
   const totalCents = lines.reduce((sum, line) => sum + line.totalCents, 0);
@@ -1067,11 +1315,11 @@ app.patch("/admin/draft-documents/:id", asyncRoute(async (request, response) => 
     for (const line of lines) {
       await connection.query(
         `INSERT INTO draft_document_items
-         (id, document_id, product_id, product_name, unit_cents, cost_cents, quantity, total_cents)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+         (id, document_id, product_id, product_option_id, product_name, option_label, selling_unit, unit_cents, cost_cents, quantity, total_cents, stock_deducted)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          id("ddi"), request.params.id, line.product.id, line.product.name,
-          line.product.price_cents, line.product.cost_cents, line.quantity, line.totalCents
+          id("ddi"), request.params.id, line.product.id, line.option?.id ?? null, line.product.name,
+          line.optionLabel, line.sellingUnit, line.unitCents, line.costCents, line.quantity, line.totalCents, line.stockDeducted
         ]
       );
     }
@@ -1095,7 +1343,7 @@ app.post("/admin/draft-documents/:id/finalize", asyncRoute(async (request, respo
     const productMap = new Map(products.map((product) => [product.id, product]));
     for (const item of items) {
       const product = productMap.get(String(item.product_id));
-      if (!product || product.stock_quantity < Number(item.quantity)) throw new HttpError(400, "Stock changed before finalization.");
+      if (!product || Number(product.stock_quantity) < Number(item.stock_deducted ?? item.quantity)) throw new HttpError(400, "Stock changed before finalization.");
     }
 
     const orderId = id("ord");
@@ -1117,12 +1365,17 @@ app.post("/admin/draft-documents/:id/finalize", asyncRoute(async (request, respo
     );
 
     for (const item of items) {
+      const stockDeducted = Number(item.stock_deducted ?? Number(item.quantity));
       await connection.query(
-        `INSERT INTO order_items (id, order_id, product_id, product_name, unit_cents, cost_cents, quantity, total_cents)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [id("itm"), orderId, item.product_id, item.product_name, item.unit_cents, item.cost_cents, item.quantity, item.total_cents]
+        `INSERT INTO order_items
+         (id, order_id, product_id, product_option_id, product_name, option_label, selling_unit, unit_cents, cost_cents, quantity, total_cents, stock_deducted)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id("itm"), orderId, item.product_id, item.product_option_id ?? null, item.product_name,
+          item.option_label ?? null, item.selling_unit ?? "UNIT", item.unit_cents, item.cost_cents, item.quantity, item.total_cents, stockDeducted
+        ]
       );
-      await connection.query("UPDATE products SET stock_quantity = stock_quantity - ? WHERE id = ?", [item.quantity, item.product_id]);
+      await connection.query("UPDATE products SET stock_quantity = stock_quantity - ? WHERE id = ?", [stockDeducted, item.product_id]);
     }
 
     await connection.query("INSERT INTO invoices (id, order_id, invoice_number) VALUES (?, ?, ?)", [id("inv"), orderId, `INV-${orderNumber}`]);
@@ -1236,7 +1489,7 @@ app.post("/orders/checkout", asyncRoute(async (request, response) => {
     deliveryLatitude: z.string().optional().nullable(),
     deliveryLongitude: z.string().optional().nullable(),
     paymentMethod: z.enum(["WHATSAPP", "MPESA", "CASH"]),
-    items: z.array(z.object({ productId: z.string(), quantity: z.number().int().positive() })).min(1)
+    items: z.array(z.object({ productId: z.string(), productOptionId: z.string().optional().nullable(), quantity: z.number().int().positive() })).min(1)
   }).parse(request.body);
   const productIds = [...new Set(input.items.map((item) => item.productId))];
   const rows = await query<ProductRow>(
@@ -1244,6 +1497,7 @@ app.post("/orders/checkout", asyncRoute(async (request, response) => {
     productIds
   );
   const products = new Map(rows.map((row) => [row.id, row]));
+  const optionMap = await optionsForProducts(productIds);
 
   const order = await transaction(async (connection) => {
     const orderId = id("ord");
@@ -1252,10 +1506,21 @@ app.post("/orders/checkout", asyncRoute(async (request, response) => {
     const lines = input.items.map((item) => {
       const product = products.get(item.productId);
       if (!product) throw new HttpError(400, "One cart product is not available.");
-      if (product.stock_quantity < item.quantity) throw new HttpError(400, `${product.name} has insufficient stock.`);
-      const total = product.price_cents * item.quantity;
+      const options = optionMap.get(product.id) ?? [];
+      const selectedOption =
+        options.find((option) => option.id === item.productOptionId) ??
+        options.find((option) => truthy(option.is_default)) ??
+        options[0] ??
+        null;
+      const unitCents = selectedOption?.price_cents ?? product.price_cents;
+      const costCents = selectedOption?.cost_cents ?? product.cost_cents;
+      const sellingUnit = selectedOption?.selling_unit ?? product.selling_unit;
+      const stockMultiplier = Number(selectedOption?.stock_multiplier ?? 1);
+      const stockDeducted = stockMultiplier * item.quantity;
+      if (Number(product.stock_quantity) < stockDeducted) throw new HttpError(400, `${product.name} has insufficient stock.`);
+      const total = unitCents * item.quantity;
       subtotal += total;
-      return { product, quantity: item.quantity, total };
+      return { product, option: selectedOption, sellingUnit, unitCents, costCents, stockDeducted, quantity: item.quantity, total };
     });
 
     await connection.query(
@@ -1283,11 +1548,15 @@ app.post("/orders/checkout", asyncRoute(async (request, response) => {
 
     for (const line of lines) {
       await connection.query(
-        `INSERT INTO order_items (id, order_id, product_id, product_name, unit_cents, cost_cents, quantity, total_cents)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [id("itm"), orderId, line.product.id, line.product.name, line.product.price_cents, line.product.cost_cents, line.quantity, line.total]
+        `INSERT INTO order_items
+         (id, order_id, product_id, product_option_id, product_name, option_label, selling_unit, unit_cents, cost_cents, quantity, total_cents, stock_deducted)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id("itm"), orderId, line.product.id, line.option?.id ?? null, line.product.name, line.option?.label ?? unitLabel(line.sellingUnit),
+          line.sellingUnit, line.unitCents, line.costCents, line.quantity, line.total, line.stockDeducted
+        ]
       );
-      await connection.query("UPDATE products SET stock_quantity = stock_quantity - ? WHERE id = ?", [line.quantity, line.product.id]);
+      await connection.query("UPDATE products SET stock_quantity = stock_quantity - ? WHERE id = ?", [line.stockDeducted, line.product.id]);
     }
 
     const invoiceNumber = `INV-${orderNumber}`;
@@ -1312,11 +1581,15 @@ app.post("/orders/checkout", asyncRoute(async (request, response) => {
       totalCents: subtotal,
       items: lines.map((line) => ({
         productId: line.product.id,
+        productOptionId: line.option?.id ?? null,
         productName: line.product.name,
-        unitCents: line.product.price_cents,
-        costCents: line.product.cost_cents,
+        optionLabel: line.option?.label ?? unitLabel(line.sellingUnit),
+        sellingUnit: line.sellingUnit,
+        unitCents: line.unitCents,
+        costCents: line.costCents,
         quantity: line.quantity,
-        totalCents: line.total
+        totalCents: line.total,
+        stockDeducted: line.stockDeducted
       })),
       invoice: { invoiceNumber }
     };
@@ -1405,8 +1678,9 @@ app.get("/admin/orders", asyncRoute(async (request, response) => {
   const ids = orders.map((order) => String(order.id));
   const items = ids.length
     ? await query<Record<string, unknown>>(
-        `SELECT id, order_id AS orderId, product_id AS productId, product_name AS productName,
-         unit_cents AS unitCents, cost_cents AS costCents, quantity, total_cents AS totalCents
+        `SELECT id, order_id AS orderId, product_id AS productId, product_option_id AS productOptionId,
+         product_name AS productName, option_label AS optionLabel, selling_unit AS sellingUnit,
+         unit_cents AS unitCents, cost_cents AS costCents, quantity, total_cents AS totalCents, stock_deducted AS stockDeducted
          FROM order_items WHERE order_id IN (${ids.map(() => "?").join(",")})`,
         ids
       )
@@ -1429,8 +1703,9 @@ app.get("/admin/orders/:id", asyncRoute(async (request, response) => {
   if (!orders[0]) throw new HttpError(404, "Order not found.");
   const [items, invoices] = await Promise.all([
     query<Record<string, unknown>>(
-      `SELECT id, order_id AS orderId, product_id AS productId, product_name AS productName,
-       unit_cents AS unitCents, cost_cents AS costCents, quantity, total_cents AS totalCents
+      `SELECT id, order_id AS orderId, product_id AS productId, product_option_id AS productOptionId,
+       product_name AS productName, option_label AS optionLabel, selling_unit AS sellingUnit,
+       unit_cents AS unitCents, cost_cents AS costCents, quantity, total_cents AS totalCents, stock_deducted AS stockDeducted
        FROM order_items WHERE order_id = ?`,
       [request.params.id]
     ),

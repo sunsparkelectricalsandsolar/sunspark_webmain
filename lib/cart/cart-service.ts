@@ -8,6 +8,7 @@ const cartCookie = "sunspark_cart";
 
 export type CartCookieItem = {
   slug: string;
+  optionId?: string | null;
   quantity: number;
 };
 
@@ -38,22 +39,34 @@ async function writeCartCookie(items: CartCookieItem[]) {
   });
 }
 
-export async function addCartItem(slug: string, quantity = 1) {
+function cartKey(item: Pick<CartCookieItem, "slug" | "optionId">) {
+  return `${item.slug}::${item.optionId ?? ""}`;
+}
+
+function defaultOption(product: Product) {
+  return product.options?.find((option) => option.isDefault) ?? product.options?.[0] ?? null;
+}
+
+export async function addCartItem(slug: string, quantity = 1, optionId?: string | null) {
   const items = await readCartCookie();
-  const existing = items.find((item) => item.slug === slug);
+  const target = { slug, optionId: optionId || null };
+  const existing = items.find((item) => cartKey(item) === cartKey(target));
 
   if (existing) {
     existing.quantity += quantity;
   } else {
-    items.push({ slug, quantity });
+    items.push({ slug, optionId: optionId || null, quantity });
   }
 
   await writeCartCookie(items);
 }
 
-export async function updateCartItem(slug: string, quantity: number) {
+export async function updateCartItem(slug: string, quantity: number, optionId?: string | null) {
   const items = await readCartCookie();
-  const nextItems = quantity <= 0 ? items.filter((item) => item.slug !== slug) : items.map((item) => item.slug === slug ? { ...item, quantity } : item);
+  const target = { slug, optionId: optionId || null };
+  const nextItems = quantity <= 0
+    ? items.filter((item) => cartKey(item) !== cartKey(target))
+    : items.map((item) => cartKey(item) === cartKey(target) ? { ...item, quantity } : item);
   await writeCartCookie(nextItems);
 }
 
@@ -80,12 +93,17 @@ export async function getCart() {
       }
 
       const quantity = Math.min(item.quantity, Math.max(product.stockQuantity, 0));
+      const option = item.optionId
+        ? product.options?.find((candidate) => candidate.id === item.optionId) ?? defaultOption(product)
+        : defaultOption(product);
+      const priceCents = option?.priceCents ?? product.priceCents;
       return quantity > 0
         ? [
             {
               product,
+              option,
               quantity,
-              lineTotalCents: product.priceCents * quantity
+              lineTotalCents: priceCents * quantity
             }
           ]
         : [];

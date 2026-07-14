@@ -1,15 +1,14 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { addToCartAndRedirectAction } from "@/app/cart/actions";
+import { addSelectedToCartAndRedirectAction } from "@/app/cart/actions";
 import { addWishlistAction } from "@/app/wishlist/actions";
 import { ProductCard } from "@/components/site/product-card";
 import { ProductGallery } from "@/components/site/product-gallery";
+import { ProductOptionPurchase } from "@/components/site/product-option-purchase";
 import { PendingButton } from "@/components/ui/pending-button";
-import { formatMoney } from "@/lib/money";
 import { absoluteUrl, productUrl } from "@/lib/merchant/feed";
 import { getPrimaryImage } from "@/lib/products/images";
-import { sellingUnitLabel } from "@/lib/products/units";
 import { getProductBySlug, getProductCompanions, getRelatedProducts } from "@/lib/products/queries";
 import { siteConfig } from "@/lib/site-config";
 
@@ -90,18 +89,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             <p className="eyebrow">{product.category.name}</p>
             {product.brand ? <p className="product-brand">{product.brand}</p> : null}
             <h1>{product.name}</h1>
-            <div className="detail-price">
-              <strong>{formatMoney(product.priceCents)} / {sellingUnitLabel(product.sellingUnit ?? "UNIT")}</strong>
-              {product.compareAtCents ? <span>{formatMoney(product.compareAtCents)}</span> : null}
-            </div>
             <p className={product.stockQuantity > 0 ? "stock ok" : "stock out"}>
               {product.stockQuantity > 0 ? `${product.stockQuantity} available` : "Out of stock"}
             </p>
             {product.shortDescription ? <p>{product.shortDescription}</p> : null}
             <div className="hero-actions">
-              <form action={addToCartAndRedirectAction.bind(null, product.slug)}>
-                <PendingButton disabled={product.stockQuantity <= 0} pendingText="Adding...">Add to cart</PendingButton>
-              </form>
+              <ProductOptionPurchase action={addSelectedToCartAndRedirectAction.bind(null, product.slug)} disabled={product.stockQuantity <= 0} options={product.options} />
               <form action={addWishlistAction.bind(null, product.slug)}>
                 <PendingButton className="secondary-btn" pendingText="Saving...">Wishlist</PendingButton>
               </form>

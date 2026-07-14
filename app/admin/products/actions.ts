@@ -42,6 +42,38 @@ function getDeleteImageIds(formData: FormData) {
   return formData.getAll("deleteImageIds").map(String).filter(Boolean);
 }
 
+function getDeleteOptionIds(formData: FormData) {
+  return formData.getAll("deleteOptionIds").map(String).filter(Boolean);
+}
+
+function parseOptionRows(formData: FormData) {
+  const ids = formData.getAll("optionId").map((value) => String(value) || null);
+  const labels = formData.getAll("optionLabel").map((value) => String(value).trim());
+  const units = formData.getAll("optionSellingUnit").map((value) => String(value || "UNIT"));
+  const priceValues = formData.getAll("optionPriceKsh");
+  const compareValues = formData.getAll("optionCompareAtKsh");
+  const costValues = formData.getAll("optionCostKsh");
+  const multipliers = formData.getAll("optionStockMultiplier");
+  const defaultOptionId = String(formData.get("defaultOptionId") ?? "");
+  const defaultOptionIndex = Number(formData.get("defaultOptionIndex") ?? -1);
+
+  return labels.flatMap((label, index) => {
+    const hasPrice = String(priceValues[index] ?? "").trim() !== "";
+    if (!label && !hasPrice) return [];
+    return [{
+      id: ids[index],
+      label: label || units[index] || "Unit",
+      sellingUnit: units[index] || "UNIT",
+      priceCents: amountToCents(priceValues[index] ?? null),
+      compareAtCents: String(compareValues[index] ?? "").trim() ? amountToCents(compareValues[index]) : undefined,
+      costCents: String(costValues[index] ?? "").trim() ? amountToCents(costValues[index]) : 0,
+      stockMultiplier: Math.max(Number(String(multipliers[index] ?? "1")) || 1, 0.01),
+      isDefault: ids[index] ? ids[index] === defaultOptionId : index === defaultOptionIndex,
+      sortOrder: index
+    }];
+  });
+}
+
 function errorMessage(error: unknown) {
   if (error instanceof ApiError) {
     return error.message.slice(0, 180);
@@ -68,8 +100,8 @@ export async function createProductAction(formData: FormData) {
   await requireAdmin();
 
   try {
-    const input = parseProductForm(formData);
-    const files = getImageFiles(formData);
+  const input = parseProductForm(formData);
+  const files = getImageFiles(formData);
     const imageError = getImageUploadError(files);
     if (imageError) redirect(productErrorPath("/admin/products/new", "image", imageError));
 
@@ -81,6 +113,7 @@ export async function createProductAction(formData: FormData) {
       body: JSON.stringify({
         ...input,
         slug,
+        options: parseOptionRows(formData),
         images: images.map((image, index) => ({ ...image, isPrimary: index === 0, sortOrder: index }))
       })
     });
@@ -115,6 +148,8 @@ export async function updateProductAction(productId: string, formData: FormData)
       body: JSON.stringify({
         ...input,
         slug: slugifyProductName(input.name),
+        options: parseOptionRows(formData),
+        deleteOptionIds: getDeleteOptionIds(formData),
         images,
         deleteImageIds,
         primaryImageId: primaryImageId || null

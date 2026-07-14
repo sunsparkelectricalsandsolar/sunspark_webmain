@@ -42,6 +42,21 @@ export type ProductImage = {
   createdAt: string | Date;
 };
 
+export type ProductOption = {
+  id: string;
+  productId: string;
+  label: string;
+  sellingUnit: SellingUnit;
+  priceCents: number;
+  compareAtCents: number | null;
+  costCents: number;
+  stockMultiplier: number;
+  isDefault: boolean;
+  sortOrder: number;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+};
+
 export type Product = {
   id: string;
   name: string;
@@ -66,6 +81,7 @@ export type Product = {
   updatedAt: string | Date;
   category: Category;
   images: ProductImage[];
+  options: ProductOption[];
 };
 
 export type PublicUser = {
@@ -81,11 +97,15 @@ export type OrderItem = {
   id: string;
   orderId: string;
   productId: string | null;
+  productOptionId: string | null;
   productName: string;
+  optionLabel: string | null;
+  sellingUnit: SellingUnit;
   unitCents: number;
   costCents: number;
   quantity: number;
   totalCents: number;
+  stockDeducted?: number;
 };
 
 export type Order = {

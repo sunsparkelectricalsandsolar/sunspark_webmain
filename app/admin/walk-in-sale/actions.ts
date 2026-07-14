@@ -13,16 +13,24 @@ export async function createWalkInSaleAction(formData: FormData) {
   const customerPhone = String(formData.get("customerPhone") ?? "").trim() || null;
   const paymentMethod = String(formData.get("paymentMethod") ?? "CASH");
   const productIds = formData.getAll("productId").map(String);
+  const optionIds = formData.getAll("productOptionId").map((value) => String(value) || null);
   const quantities = formData.getAll("quantity").map((value) => Number(value));
 
   if (customerName.length < 2 || !productIds.length || productIds.length !== quantities.length) redirect("/admin/walk-in-sale?error=details");
   if (paymentMethod !== "CASH" && paymentMethod !== "MPESA") redirect("/admin/walk-in-sale?error=payment");
 
-  const requested = new Map<string, number>();
+  const requested = new Map<string, { productId: string; productOptionId: string | null; quantity: number }>();
   for (let index = 0; index < productIds.length; index += 1) {
     const quantity = quantities[index];
     if (!productIds[index] || !Number.isInteger(quantity) || quantity < 1) redirect("/admin/walk-in-sale?error=items");
-    requested.set(productIds[index], (requested.get(productIds[index]) ?? 0) + quantity);
+    const productOptionId = optionIds[index] ?? null;
+    const key = `${productIds[index]}::${productOptionId ?? ""}`;
+    const existing = requested.get(key);
+    requested.set(key, {
+      productId: productIds[index],
+      productOptionId,
+      quantity: (existing?.quantity ?? 0) + quantity
+    });
   }
 
   const order = await apiFetch<Order>("/orders/checkout", {
@@ -33,7 +41,7 @@ export async function createWalkInSaleAction(formData: FormData) {
       customerEmail: customerEmail ?? `walkin-${Date.now()}@sunsparkelectricals.co.ke`,
       customerPhone,
       paymentMethod,
-      items: [...requested.entries()].map(([productId, quantity]) => ({ productId, quantity }))
+      items: [...requested.values()]
     })
   }).catch((error: unknown) => {
     const message = error instanceof Error ? error.message : "";

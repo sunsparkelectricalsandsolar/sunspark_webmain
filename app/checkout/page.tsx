@@ -53,9 +53,9 @@ export default async function CheckoutPage() {
         <aside className="order-summary">
           <h2>Order Summary</h2>
           {cart.items.map((item) => (
-            <div className="summary-line" key={item.product.id}>
+            <div className="summary-line" key={`${item.product.id}-${item.option?.id ?? "default"}`}>
               <span>
-                {item.product.name} x{item.quantity}
+                {item.product.name}{item.option ? ` - ${item.option.label}` : ""} x{item.quantity}
               </span>
               <strong>{formatMoney(item.lineTotalCents)}</strong>
             </div>
