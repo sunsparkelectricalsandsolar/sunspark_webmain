@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { apiFetch, ApiError } from "@/lib/api/client";
 import { requireAdmin } from "@/lib/auth/guards";
-import { saveProductImages } from "@/lib/uploads/product-images";
+import { getImageUploadError, saveProductImages } from "@/lib/uploads/product-images";
 import { productInputSchema, slugifyProductName } from "@/lib/products/validation";
 
 function amountToCents(value: FormDataEntryValue | null) {
@@ -42,14 +42,40 @@ function getDeleteImageIds(formData: FormData) {
   return formData.getAll("deleteImageIds").map(String).filter(Boolean);
 }
 
+function errorMessage(error: unknown) {
+  if (error instanceof ApiError) {
+    return error.message.slice(0, 180);
+  }
+
+  if (error instanceof Error) {
+    return error.message.slice(0, 180);
+  }
+
+  return "The request could not be completed.";
+}
+
+function productErrorPath(path: string, code: string, message?: string) {
+  const params = new URLSearchParams({ error: code });
+  if (message) params.set("message", message);
+  return `${path}?${params.toString()}`;
+}
+
+function isRedirectError(error: unknown) {
+  return typeof error === "object" && error !== null && "digest" in error && String((error as { digest?: unknown }).digest).startsWith("NEXT_REDIRECT");
+}
+
 export async function createProductAction(formData: FormData) {
   await requireAdmin();
 
-  const input = parseProductForm(formData);
-  const images = await saveProductImages(getImageFiles(formData), input.name);
-  const slug = slugifyProductName(input.name);
-
   try {
+    const input = parseProductForm(formData);
+    const files = getImageFiles(formData);
+    const imageError = getImageUploadError(files);
+    if (imageError) redirect(productErrorPath("/admin/products/new", "image", imageError));
+
+    const images = await saveProductImages(files, input.name);
+    const slug = slugifyProductName(input.name);
+
     await apiFetch("/admin/products", {
       method: "POST",
       body: JSON.stringify({
@@ -59,8 +85,11 @@ export async function createProductAction(formData: FormData) {
       })
     });
   } catch (error) {
-    if (!(error instanceof ApiError)) throw error;
-    redirect(`/admin/products/new?error=${error.status === 409 ? "duplicate" : "save"}`);
+    if (isRedirectError(error)) throw error;
+    const status = error instanceof ApiError ? error.status : 0;
+    const message = errorMessage(error);
+    console.error("Product create failed", { status, message });
+    redirect(productErrorPath("/admin/products/new", status === 409 ? "duplicate" : "save", message));
   }
 
   revalidatePath("/");
@@ -71,11 +100,16 @@ export async function createProductAction(formData: FormData) {
 export async function updateProductAction(productId: string, formData: FormData) {
   await requireAdmin();
 
-  const input = parseProductForm(formData);
-  const images = await saveProductImages(getImageFiles(formData), input.name);
-  const primaryImageId = String(formData.get("primaryImageId") ?? "");
-  const deleteImageIds = getDeleteImageIds(formData);
   try {
+    const input = parseProductForm(formData);
+    const files = getImageFiles(formData);
+    const imageError = getImageUploadError(files);
+    if (imageError) redirect(productErrorPath(`/admin/products/${productId}/edit`, "image", imageError));
+
+    const images = await saveProductImages(files, input.name);
+    const primaryImageId = String(formData.get("primaryImageId") ?? "");
+    const deleteImageIds = getDeleteImageIds(formData);
+
     await apiFetch(`/admin/products/${productId}`, {
       method: "PATCH",
       body: JSON.stringify({
@@ -87,8 +121,11 @@ export async function updateProductAction(productId: string, formData: FormData)
       })
     });
   } catch (error) {
-    if (!(error instanceof ApiError)) throw error;
-    redirect(`/admin/products/${productId}/edit?error=${error.status === 409 ? "duplicate" : "save"}`);
+    if (isRedirectError(error)) throw error;
+    const status = error instanceof ApiError ? error.status : 0;
+    const message = errorMessage(error);
+    console.error("Product update failed", { status, message });
+    redirect(productErrorPath(`/admin/products/${productId}/edit`, status === 409 ? "duplicate" : "save", message));
   }
 
   revalidatePath("/");

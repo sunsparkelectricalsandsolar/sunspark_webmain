@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 
 const messages: Record<string, string> = {
   duplicate: "A product with that name already exists.",
+  image: "The image could not be uploaded.",
   save: "The product could not be saved. Please try again."
 };
 
@@ -18,7 +19,7 @@ export default async function EditProductPage({
   searchParams
 }: {
   params: Promise<{ id: string }>;
-  searchParams?: Promise<{ error?: string }>;
+  searchParams?: Promise<{ error?: string; message?: string }>;
 }) {
   await requireAdmin();
   const { id } = await params;
@@ -32,7 +33,7 @@ export default async function EditProductPage({
   return (
     <AdminLayout title="Edit Product" subtitle={product.name}>
       <div className="admin-shell narrow">
-        {query?.error && messages[query.error] ? <p className="admin-feedback error" role="alert">{messages[query.error]}</p> : null}
+        {query?.error && messages[query.error] ? <p className="admin-feedback error" role="alert">{query.message ?? messages[query.error]}</p> : null}
         <ProductForm action={updateProductAction.bind(null, product.id)} categories={categories} product={product} />
       </div>
     </AdminLayout>
