@@ -20,37 +20,9 @@ async function main() {
     await execute(statement);
   }
 
-  await removeLegacySkuColumns();
   await backfillDefaultProductOptions();
 
   console.log("Database schema is ready.");
-}
-
-function isMysqlCode(error: unknown, codes: Array<string | number>) {
-  const maybe = error as { code?: string; errno?: number };
-  return codes.includes(maybe.code ?? "") || codes.includes(maybe.errno ?? -1);
-}
-
-async function ignoreMysqlErrors(work: () => Promise<unknown>, ignoredCodes: Array<string | number>) {
-  try {
-    await work();
-  } catch (error) {
-    if (!isMysqlCode(error, ignoredCodes)) throw error;
-  }
-}
-
-async function removeLegacySkuColumns() {
-  await ignoreMysqlErrors(() => execute("ALTER TABLE `products` DROP INDEX `products_search_idx`"), [1091, "ER_CANT_DROP_FIELD_OR_KEY"]);
-  await ignoreMysqlErrors(() => execute("ALTER TABLE `products` DROP INDEX `sku`"), [1091, "ER_CANT_DROP_FIELD_OR_KEY"]);
-  await ignoreMysqlErrors(() => execute("ALTER TABLE `products` DROP COLUMN `sku`"), [1091, "ER_CANT_DROP_FIELD_OR_KEY"]);
-  await ignoreMysqlErrors(() => execute("ALTER TABLE `draft_document_items` DROP COLUMN `sku`"), [1091, "ER_CANT_DROP_FIELD_OR_KEY"]);
-  await ignoreMysqlErrors(() => execute("ALTER TABLE `order_items` DROP COLUMN `sku`"), [1091, "ER_CANT_DROP_FIELD_OR_KEY"]);
-  await ignoreMysqlErrors(
-    () => execute(
-      "ALTER TABLE `products` ADD FULLTEXT `products_search_idx` (`name`, `brand`, `short_description`, `description`, `seo_title`, `seo_description`, `seo_keywords`)"
-    ),
-    [1061, "ER_DUP_KEYNAME"]
-  );
 }
 
 async function backfillDefaultProductOptions() {
