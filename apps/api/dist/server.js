@@ -294,7 +294,7 @@ async function syncProductOptions(connection, productId, options, deleteOptionId
         await connection.query(`UPDATE product_options SET is_default = FALSE WHERE product_id = ? AND id IN (${defaults.slice(1).map(() => "?").join(",")})`, [productId, ...defaults.slice(1).map((row) => row.id)]);
     }
 }
-async function listProducts(filters = {}) {
+function productWhere(filters) {
     const where = filters.includeInactive ? ["1 = 1"] : ["p.is_active = TRUE"];
     const values = [];
     if (filters.status === "active")
@@ -323,15 +323,28 @@ async function listProducts(filters = {}) {
     )`);
         values.push(...Array(9).fill(`%${term}%`));
     }
+    return { where, values };
+}
+async function countProducts(filters = {}) {
+    const { where, values } = productWhere(filters);
+    const rows = await query(`SELECT COUNT(*) AS count
+     FROM products p
+     JOIN categories c ON c.id = p.category_id
+     WHERE ${where.join(" AND ")}`, values);
+    return Number(rows[0]?.count ?? 0);
+}
+async function listProducts(filters = {}) {
+    const { where, values } = productWhere(filters);
     const maxLimit = filters.includeInactive ? 2000 : 500;
     const limit = Math.min(Math.max(filters.limit ?? 100, 1), maxLimit);
-    values.push(limit);
+    const offset = Math.max(filters.offset ?? 0, 0);
+    values.push(limit, offset);
     const rows = await query(`SELECT p.*, c.name AS category_name, c.slug AS category_slug
      FROM products p
      JOIN categories c ON c.id = p.category_id
      WHERE ${where.join(" AND ")}
      ORDER BY p.is_featured DESC, p.is_hot_deal DESC, p.updated_at DESC
-     LIMIT ?`, values);
+     LIMIT ? OFFSET ?`, values);
     const [imageMap, optionMap] = await Promise.all([
         imagesForProducts(rows.map((row) => row.id)),
         optionsForProducts(rows.map((row) => row.id))
@@ -431,13 +444,18 @@ app.get("/products", asyncRoute(async (request, response) => {
     }));
 }));
 app.get("/admin/products", asyncRoute(async (request, response) => {
-    response.json(await listProducts({
+    const page = Math.max(Number(request.query.page ?? 1) || 1, 1);
+    const perPage = Math.min(Math.max(Number(request.query.perPage ?? 25) || 25, 1), 100);
+    const filters = {
         q: String(request.query.q ?? ""),
         category: String(request.query.category ?? ""),
         status: String(request.query.status ?? ""),
-        limit: Number(request.query.limit ?? 500),
+        limit: perPage,
+        offset: (page - 1) * perPage,
         includeInactive: true
-    }));
+    };
+    const [products, total] = await Promise.all([listProducts(filters), countProducts(filters)]);
+    response.json({ products, total, page, perPage });
 }));
 app.get("/products/by-slugs", asyncRoute(async (request, response) => {
     const slugs = String(request.query.slugs ?? "")
