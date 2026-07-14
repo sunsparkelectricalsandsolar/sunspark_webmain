@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { execute, pool, query } from "./db.js";
+import { execute, pool } from "./db.js";
 const here = dirname(fileURLToPath(import.meta.url));
 const migrationPath = resolve(here, "../sql/001_init.sql");
 function splitStatements(sql) {
@@ -19,33 +19,26 @@ async function main() {
     await backfillDefaultProductOptions();
     console.log("Database schema is ready.");
 }
-async function indexExists(table, indexName) {
-    const rows = await query("SELECT COUNT(*) AS count FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = ? AND index_name = ?", [table, indexName]);
-    return Number(rows[0]?.count ?? 0) > 0;
+function isMysqlCode(error, codes) {
+    const maybe = error;
+    return codes.includes(maybe.code ?? "") || codes.includes(maybe.errno ?? -1);
 }
-async function columnExists(table, column) {
-    const rows = await query("SELECT COUNT(*) AS count FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?", [table, column]);
-    return Number(rows[0]?.count ?? 0) > 0;
-}
-async function dropIndexIfExists(table, indexName) {
-    if (await indexExists(table, indexName)) {
-        await execute(`ALTER TABLE \`${table}\` DROP INDEX \`${indexName}\``);
+async function ignoreMysqlErrors(work, ignoredCodes) {
+    try {
+        await work();
     }
-}
-async function dropColumnIfExists(table, column) {
-    if (await columnExists(table, column)) {
-        await execute(`ALTER TABLE \`${table}\` DROP COLUMN \`${column}\``);
+    catch (error) {
+        if (!isMysqlCode(error, ignoredCodes))
+            throw error;
     }
 }
 async function removeLegacySkuColumns() {
-    await dropIndexIfExists("products", "products_search_idx");
-    await dropIndexIfExists("products", "sku");
-    await dropColumnIfExists("products", "sku");
-    await dropColumnIfExists("draft_document_items", "sku");
-    await dropColumnIfExists("order_items", "sku");
-    if (!(await indexExists("products", "products_search_idx"))) {
-        await execute("ALTER TABLE `products` ADD FULLTEXT `products_search_idx` (`name`, `brand`, `short_description`, `description`, `seo_title`, `seo_description`, `seo_keywords`)");
-    }
+    await ignoreMysqlErrors(() => execute("ALTER TABLE `products` DROP INDEX `products_search_idx`"), [1091, "ER_CANT_DROP_FIELD_OR_KEY"]);
+    await ignoreMysqlErrors(() => execute("ALTER TABLE `products` DROP INDEX `sku`"), [1091, "ER_CANT_DROP_FIELD_OR_KEY"]);
+    await ignoreMysqlErrors(() => execute("ALTER TABLE `products` DROP COLUMN `sku`"), [1091, "ER_CANT_DROP_FIELD_OR_KEY"]);
+    await ignoreMysqlErrors(() => execute("ALTER TABLE `draft_document_items` DROP COLUMN `sku`"), [1091, "ER_CANT_DROP_FIELD_OR_KEY"]);
+    await ignoreMysqlErrors(() => execute("ALTER TABLE `order_items` DROP COLUMN `sku`"), [1091, "ER_CANT_DROP_FIELD_OR_KEY"]);
+    await ignoreMysqlErrors(() => execute("ALTER TABLE `products` ADD FULLTEXT `products_search_idx` (`name`, `brand`, `short_description`, `description`, `seo_title`, `seo_description`, `seo_keywords`)"), [1061, "ER_DUP_KEYNAME"]);
 }
 async function backfillDefaultProductOptions() {
     await execute(`INSERT INTO product_options
