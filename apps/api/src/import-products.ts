@@ -103,7 +103,7 @@ function cents(ksh: number) {
 function categoryName(value: string) {
   const normalized = value.toLowerCase().trim();
   if (normalized === "electrical") return "Electricals";
-  if (normalized === "solar") return "Solar";
+  if (normalized === "solar") return "Electricals";
   if (normalized === "electronics") return "Electronics";
   return value.trim() || "Electricals";
 }

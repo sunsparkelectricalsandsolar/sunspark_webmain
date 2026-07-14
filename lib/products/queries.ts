@@ -4,7 +4,7 @@ import type { Campaign, Category, Product } from "@/lib/types";
 const queryTimeoutMs = 2500;
 
 function storefrontCategoryRank(slug: string) {
-  const order = ["solar", "electricals", "electronics"];
+  const order = ["electricals", "electronics", "solar"];
   const rank = order.indexOf(slug);
   return rank === -1 ? order.length : rank;
 }

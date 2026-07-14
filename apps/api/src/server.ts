@@ -439,9 +439,13 @@ async function syncProductOptions(
   }
 }
 
-async function listProducts(filters: { q?: string; category?: string; categoryId?: string; limit?: number; excludeId?: string } = {}) {
-  const where = ["p.is_active = TRUE"];
+async function listProducts(filters: { q?: string; category?: string; categoryId?: string; limit?: number; excludeId?: string; status?: string; includeInactive?: boolean } = {}) {
+  const where = filters.includeInactive ? ["1 = 1"] : ["p.is_active = TRUE"];
   const values: unknown[] = [];
+
+  if (filters.status === "active") where.push("p.is_active = TRUE");
+  if (filters.status === "hidden") where.push("p.is_active = FALSE");
+  if (filters.status === "low") where.push("p.stock_quantity <= p.low_stock_threshold");
 
   if (filters.category) {
     where.push("c.slug = ?");
@@ -467,7 +471,8 @@ async function listProducts(filters: { q?: string; category?: string; categoryId
     values.push(...Array(9).fill(`%${term}%`));
   }
 
-  const limit = Math.min(Math.max(filters.limit ?? 100, 1), 500);
+  const maxLimit = filters.includeInactive ? 2000 : 500;
+  const limit = Math.min(Math.max(filters.limit ?? 100, 1), maxLimit);
   values.push(limit);
 
   const rows = await query<ProductRow>(
@@ -599,6 +604,16 @@ app.get("/products", asyncRoute(async (request, response) => {
     q: String(request.query.q ?? ""),
     category: String(request.query.category ?? ""),
     limit: Number(request.query.limit ?? 120)
+  }));
+}));
+
+app.get("/admin/products", asyncRoute(async (request, response) => {
+  response.json(await listProducts({
+    q: String(request.query.q ?? ""),
+    category: String(request.query.category ?? ""),
+    status: String(request.query.status ?? ""),
+    limit: Number(request.query.limit ?? 500),
+    includeInactive: true
   }));
 }));
 

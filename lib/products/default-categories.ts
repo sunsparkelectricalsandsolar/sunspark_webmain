@@ -1,10 +1,5 @@
 export const defaultCategories = [
   {
-    name: "Solar",
-    slug: "solar",
-    description: "Panels, inverters, batteries, charge controllers, and complete kits."
-  },
-  {
     name: "Electricals",
     slug: "electricals",
     description: "Cables, switches, breakers, fittings, and installation essentials."

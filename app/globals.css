@@ -816,6 +816,7 @@ textarea {
 
 .product-card {
   display: grid;
+  grid-template-rows: auto 1fr;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 0;
@@ -882,6 +883,7 @@ textarea {
   padding: 12px;
   text-align: center;
   min-width: 0;
+  overflow: hidden;
 }
 
 .product-body p {
@@ -900,6 +902,7 @@ textarea {
   text-transform: uppercase;
   overflow: hidden;
   overflow-wrap: anywhere;
+  word-break: break-word;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -970,11 +973,13 @@ textarea {
   align-items: center;
   justify-content: center;
   width: 100%;
+  min-width: 0;
   min-height: 38px;
   border: 1px solid var(--line);
   border-radius: 5px;
   font-weight: 700;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .product-actions a:first-child {
@@ -3484,6 +3489,7 @@ summary:focus-visible {
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   .price-row {
@@ -3513,12 +3519,16 @@ summary:focus-visible {
   .product-actions {
     gap: 5px;
     margin-top: 5px;
+    grid-template-columns: 0.72fr 1.28fr;
+    min-width: 0;
   }
 
   .product-actions a,
   .product-actions button {
-    min-height: 31px;
-    font-size: 11px;
+    min-height: 30px;
+    padding: 0 4px;
+    font-size: 10px;
+    line-height: 1;
   }
 
   .section-title {

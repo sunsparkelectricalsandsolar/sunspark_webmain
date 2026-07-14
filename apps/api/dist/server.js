@@ -295,8 +295,14 @@ async function syncProductOptions(connection, productId, options, deleteOptionId
     }
 }
 async function listProducts(filters = {}) {
-    const where = ["p.is_active = TRUE"];
+    const where = filters.includeInactive ? ["1 = 1"] : ["p.is_active = TRUE"];
     const values = [];
+    if (filters.status === "active")
+        where.push("p.is_active = TRUE");
+    if (filters.status === "hidden")
+        where.push("p.is_active = FALSE");
+    if (filters.status === "low")
+        where.push("p.stock_quantity <= p.low_stock_threshold");
     if (filters.category) {
         where.push("c.slug = ?");
         values.push(filters.category);
@@ -317,7 +323,8 @@ async function listProducts(filters = {}) {
     )`);
         values.push(...Array(9).fill(`%${term}%`));
     }
-    const limit = Math.min(Math.max(filters.limit ?? 100, 1), 500);
+    const maxLimit = filters.includeInactive ? 2000 : 500;
+    const limit = Math.min(Math.max(filters.limit ?? 100, 1), maxLimit);
     values.push(limit);
     const rows = await query(`SELECT p.*, c.name AS category_name, c.slug AS category_slug
      FROM products p
@@ -421,6 +428,15 @@ app.get("/products", asyncRoute(async (request, response) => {
         q: String(request.query.q ?? ""),
         category: String(request.query.category ?? ""),
         limit: Number(request.query.limit ?? 120)
+    }));
+}));
+app.get("/admin/products", asyncRoute(async (request, response) => {
+    response.json(await listProducts({
+        q: String(request.query.q ?? ""),
+        category: String(request.query.category ?? ""),
+        status: String(request.query.status ?? ""),
+        limit: Number(request.query.limit ?? 500),
+        includeInactive: true
     }));
 }));
 app.get("/products/by-slugs", asyncRoute(async (request, response) => {

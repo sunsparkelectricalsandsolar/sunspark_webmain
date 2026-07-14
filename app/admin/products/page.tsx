@@ -126,13 +126,7 @@ function productPageHref(
 async function getProducts(input: { q?: string; category?: string; status?: string }) {
   const terms = input.q?.trim().split(/\s+/).filter(Boolean) ?? [];
   try {
-    const products = await apiFetch<Product[]>(`/products${toQueryString({ q: terms.join(" "), category: input.category, limit: 500 })}`);
-    return products.filter((product) => {
-      if (input.status === "active") return product.isActive;
-      if (input.status === "hidden") return !product.isActive;
-      if (input.status === "low") return product.stockQuantity <= product.lowStockThreshold;
-      return true;
-    });
+    return apiFetch<Product[]>(`/admin/products${toQueryString({ q: terms.join(" "), category: input.category, status: input.status, limit: 2000 })}`);
   } catch {
     return [];
   }
@@ -140,7 +134,7 @@ async function getProducts(input: { q?: string; category?: string; status?: stri
 
 async function getCategories() {
   try {
-    return apiFetch<Category[]>("/categories");
+    return apiFetch<Category[]>("/admin/categories");
   } catch {
     return [];
   }

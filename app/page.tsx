@@ -59,7 +59,7 @@ export default async function HomePage() {
         <section className="section product-section">
           <div className="container">
             <div className="section-title">
-              <h3>Featured Products</h3>
+              <h3>Shop Sunspark Products</h3>
               <div className="section-tabs">
                 {displayCategories.map((category) => (
                   <Link href={`/category/${category.slug}`} key={category.slug}>
@@ -76,9 +76,9 @@ export default async function HomePage() {
               </div>
             ) : (
               <div className="empty-products">
-                <h2>Products are being updated</h2>
-                <p>Check the store page or contact Sunspark for the latest stock.</p>
-                <Link className="primary-btn" href="/store">Open store</Link>
+                <h2>Shop electrical supplies in Nairobi</h2>
+                <p>Search cables, breakers, switches, sockets, lighting, electronics, and installation materials from Sunspark.</p>
+                <Link className="primary-btn" href="/store">Browse store</Link>
               </div>
             )}
           </div>

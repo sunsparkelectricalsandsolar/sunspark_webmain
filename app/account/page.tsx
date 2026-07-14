@@ -59,8 +59,9 @@ export default async function AccountPage() {
             </div>
           ) : (
             <div className="empty-state">
-              <strong>Products are being updated.</strong>
-              <p>Check the store shortly or contact Sunspark for a quick quote.</p>
+              <strong>Find what you need faster.</strong>
+              <p>Search the store or request a quick quote from Sunspark.</p>
+              <Link className="primary-btn" href="/store">Browse store</Link>
             </div>
           )}
         </div>

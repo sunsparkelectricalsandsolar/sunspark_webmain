@@ -105,7 +105,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       <section className="section soft-section">
         <div className="container product-description">
           <h2>Product Details</h2>
-          <p>{product.description ?? "More specifications can be added from the admin dashboard."}</p>
+          <p>{product.description ?? "Contact Sunspark for specifications, availability, and installation guidance."}</p>
         </div>
       </section>
       {related.length ? (

@@ -36,8 +36,8 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
           </div>
         ) : (
           <div className="empty-state">
-            <h2>No products in {category.name} yet</h2>
-            <p>Products added by admin will appear here.</p>
+            <h2>{category.name} products</h2>
+            <p>Use the store search to browse available stock, or contact Sunspark for current pricing and availability.</p>
           </div>
         )}
       </div>

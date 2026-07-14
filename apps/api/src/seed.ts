@@ -60,9 +60,8 @@ async function ensureSettings() {
 
 async function main() {
   await ensureAdmin();
-  await ensureCategory("Solar", "Solar panels, inverters, batteries, charge controllers and complete solar accessories.", 1);
-  await ensureCategory("Electricals", "Cables, switches, breakers, sockets, conduits, meters and installation materials.", 2);
-  await ensureCategory("Electronics", "Electronics, lighting, accessories and everyday power devices.", 3);
+  await ensureCategory("Electricals", "Cables, switches, breakers, sockets, conduits, meters and installation materials.", 1);
+  await ensureCategory("Electronics", "Electronics, lighting, accessories and everyday power devices.", 2);
   await ensureSettings();
 
   console.log("Seed complete.");

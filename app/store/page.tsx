@@ -53,8 +53,8 @@ export default async function StorePage({
             </div>
           ) : (
             <div className="empty-state">
-              <h2>No products yet</h2>
-              <p>Add products from the admin dashboard and they will appear here.</p>
+              <h2>No matching products</h2>
+              <p>Try a broader search, choose another category, or contact Sunspark for current stock and pricing.</p>
             </div>
           )}
         </div>

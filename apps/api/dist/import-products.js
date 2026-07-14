@@ -65,7 +65,7 @@ function categoryName(value) {
     if (normalized === "electrical")
         return "Electricals";
     if (normalized === "solar")
-        return "Solar";
+        return "Electricals";
     if (normalized === "electronics")
         return "Electronics";
     return value.trim() || "Electricals";
