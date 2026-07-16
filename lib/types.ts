@@ -1,4 +1,4 @@
-export type UserRole = "ADMIN" | "CUSTOMER";
+export type UserRole = "ADMIN" | "STAFF" | "CUSTOMER";
 
 export type OrderStatus = "PENDING" | "CONFIRMED" | "PROCESSING" | "READY" | "COMPLETED" | "CANCELLED";
 export type PaymentMethod = "WHATSAPP" | "MPESA" | "CASH";

@@ -1,6 +1,6 @@
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { PendingButton } from "@/components/ui/pending-button";
-import { requireAdmin } from "@/lib/auth/guards";
+import { requireOwnerAdmin } from "@/lib/auth/guards";
 import { apiFetch } from "@/lib/api/client";
 import { siteConfig } from "@/lib/site-config";
 import { updateSettingsAction } from "./actions";
@@ -39,7 +39,7 @@ export default async function AdminSettingsPage({
 }: {
   searchParams?: Promise<{ error?: string; notice?: string; message?: string }>;
 }) {
-  await requireAdmin();
+  await requireOwnerAdmin();
   const params = await searchParams;
   const settings = await getSettings();
   const feedback = params?.error ? params.message ?? messages[params.error] : params?.notice ? messages[params.notice] : null;

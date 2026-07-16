@@ -20,5 +20,5 @@ export async function updateOrderAction(orderId: string, formData: FormData) {
 
   revalidatePath("/admin/orders");
   revalidatePath("/admin/payments");
-  redirect(returnTo.startsWith("/admin/payments") ? "/admin/payments" : "/admin/orders");
+  redirect(returnTo.startsWith("/admin/payments") ? "/admin/payments?notice=saved" : "/admin/orders?notice=saved");
 }

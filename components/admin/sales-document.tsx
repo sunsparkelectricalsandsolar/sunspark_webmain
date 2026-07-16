@@ -43,6 +43,7 @@ export function SalesDocument({
   totalCents
 }: SalesDocumentProps) {
   const documentDate = date instanceof Date ? date : new Date(date);
+  const visibleEmail = printableEmail(customerEmail);
 
   return (
     <article className="sales-document" id="admin-print-document">
@@ -67,7 +68,7 @@ export function SalesDocument({
           <span>Bill to</span>
           <strong>{customerName}</strong>
           {customerPhone ? <p>{customerPhone}</p> : null}
-          {customerEmail ? <p>{customerEmail}</p> : null}
+          {visibleEmail ? <p>{visibleEmail}</p> : null}
         </div>
         <div>
           <span>Document details</span>
@@ -108,4 +109,9 @@ export function SalesDocument({
       </section>
     </article>
   );
+}
+
+function printableEmail(email?: string | null) {
+  if (!email) return null;
+  return /^(walkin|invoice)-.+@sunsparkelectricals\.co\.ke$/i.test(email) ? null : email;
 }

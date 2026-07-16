@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { requireAdmin } from "@/lib/auth/guards";
+import { canManageCatalog } from "@/lib/auth/roles";
 import { apiFetch, toQueryString } from "@/lib/api/client";
 import { productUrl } from "@/lib/merchant/feed";
 import { formatMoney } from "@/lib/money";
@@ -28,7 +29,8 @@ export default async function AdminProductsPage({
 }: {
   searchParams?: Promise<{ q?: string; category?: string; status?: string; page?: string; error?: string; notice?: string }>;
 }) {
-  await requireAdmin();
+  const admin = await requireAdmin();
+  const canEditProducts = canManageCatalog(admin.role);
   const params = await searchParams;
   const perPage = 25;
   const requestedPage = Math.max(Number(params?.page ?? 1) || 1, 1);
@@ -50,9 +52,11 @@ export default async function AdminProductsPage({
       title="Products"
       subtitle="Manage product pricing, stock, status, and images."
       actions={
+        canEditProducts ? (
         <Link className="primary-btn" href="/admin/products/new">
           Add product
         </Link>
+        ) : null
       }
     >
         {feedback ? <p className={params?.error ? "admin-feedback error" : "admin-feedback success"} role="status">{feedback}</p> : null}
@@ -92,16 +96,16 @@ export default async function AdminProductsPage({
               <details className="row-action-menu">
                 <summary>Actions</summary>
                 <div>
-                  <Link href={`/admin/products/${product.id}/edit`}>Edit product</Link>
                   <a href={productUrl(product.slug)} rel="noreferrer" target="_blank">Merchant link</a>
-                  {product.isActive ? (
+                  {canEditProducts ? <Link href={`/admin/products/${product.id}/edit`}>Edit product</Link> : null}
+                  {canEditProducts && product.isActive ? (
                     <form action={hideProductAction.bind(null, product.id)}>
                       <button type="submit" title="Hide from customers without deleting order history">Hide product</button>
                     </form>
                   ) : null}
-                  <form action={deleteProductAction.bind(null, product.id)}>
+                  {canEditProducts ? <form action={deleteProductAction.bind(null, product.id)}>
                     <button className="danger-btn" type="submit">Delete product</button>
-                  </form>
+                  </form> : null}
                 </div>
               </details>
             </div>

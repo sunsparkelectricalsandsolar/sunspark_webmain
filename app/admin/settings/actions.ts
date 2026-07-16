@@ -2,12 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireAdmin } from "@/lib/auth/guards";
+import { requireOwnerAdmin } from "@/lib/auth/guards";
 import { apiFetch, ApiError } from "@/lib/api/client";
 import { siteConfig } from "@/lib/site-config";
 
 export async function updateSettingsAction(formData: FormData) {
-  await requireAdmin();
+  await requireOwnerAdmin();
 
   try {
     await apiFetch("/admin/settings", {

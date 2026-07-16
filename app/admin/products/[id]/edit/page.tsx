@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { ProductForm } from "@/components/admin/product-form";
-import { requireAdmin } from "@/lib/auth/guards";
+import { requireOwnerAdmin } from "@/lib/auth/guards";
 import { apiFetch } from "@/lib/api/client";
 import type { Category, Product } from "@/lib/types";
 import { updateProductAction } from "../../actions";
@@ -21,7 +21,7 @@ export default async function EditProductPage({
   params: Promise<{ id: string }>;
   searchParams?: Promise<{ error?: string; message?: string }>;
 }) {
-  await requireAdmin();
+  await requireOwnerAdmin();
   const { id } = await params;
   const query = await searchParams;
   const [product, categories] = await Promise.all([getProduct(id), getCategories()]);

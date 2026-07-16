@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireAdmin } from "@/lib/auth/guards";
+import { requireOwnerAdmin } from "@/lib/auth/guards";
 import { apiFetch, ApiError } from "@/lib/api/client";
 import { slugifyProductName } from "@/lib/products/validation";
 import { saveCategoryImages } from "@/lib/uploads/product-images";
@@ -31,7 +31,7 @@ function categoryErrorUrl(path: string, error: unknown) {
 }
 
 export async function createCategoryAction(formData: FormData) {
-  await requireAdmin();
+  await requireOwnerAdmin();
 
   const name = String(formData.get("name") ?? "").trim();
   const description = limitWords(String(formData.get("description") ?? ""), 15);
@@ -68,7 +68,7 @@ export async function createCategoryAction(formData: FormData) {
 }
 
 export async function updateCategoryAction(categoryId: string, formData: FormData) {
-  await requireAdmin();
+  await requireOwnerAdmin();
 
   const name = String(formData.get("name") ?? "").trim();
   const description = limitWords(String(formData.get("description") ?? ""), 15);
@@ -110,7 +110,7 @@ export async function updateCategoryAction(categoryId: string, formData: FormDat
 }
 
 export async function deleteCategoryAction(categoryId: string) {
-  await requireAdmin();
+  await requireOwnerAdmin();
 
   try {
     await apiFetch(`/admin/categories/${categoryId}`, { method: "DELETE" });
@@ -126,7 +126,7 @@ export async function deleteCategoryAction(categoryId: string) {
 }
 
 export async function hideCategoryAction(categoryId: string) {
-  await requireAdmin();
+  await requireOwnerAdmin();
 
   await apiFetch(`/admin/categories/${categoryId}/hide`, { method: "PATCH" });
 

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireAdmin } from "@/lib/auth/guards";
+import { requireOwnerAdmin } from "@/lib/auth/guards";
 import { apiFetch } from "@/lib/api/client";
 import { saveUploadedImages } from "@/lib/uploads/product-images";
 
@@ -11,7 +11,7 @@ function imageFiles(formData: FormData) {
 }
 
 export async function createCampaignAction(formData: FormData) {
-  await requireAdmin();
+  await requireOwnerAdmin();
 
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
@@ -41,7 +41,7 @@ export async function createCampaignAction(formData: FormData) {
 }
 
 export async function updateCampaignAction(campaignId: string, formData: FormData) {
-  await requireAdmin();
+  await requireOwnerAdmin();
 
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
@@ -67,7 +67,7 @@ export async function updateCampaignAction(campaignId: string, formData: FormDat
 }
 
 export async function deleteCampaignAction(campaignId: string) {
-  await requireAdmin();
+  await requireOwnerAdmin();
 
   await apiFetch(`/admin/campaigns/${campaignId}`, { method: "DELETE" });
 

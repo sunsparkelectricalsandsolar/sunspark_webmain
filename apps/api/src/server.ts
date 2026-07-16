@@ -778,6 +778,62 @@ app.get("/admin/stats", asyncRoute(async (_request, response) => {
   });
 }));
 
+app.get("/admin/sales-summary", asyncRoute(async (request, response) => {
+  const period = ["days", "weeks", "months"].includes(String(request.query.period)) ? String(request.query.period) : "days";
+  const limit = period === "months" ? 5 : period === "weeks" ? 4 : 7;
+  const dateExpression = period === "months"
+    ? "DATE_FORMAT(o.created_at, '%Y-%m-01')"
+    : period === "weeks"
+      ? "DATE_SUB(DATE(o.created_at), INTERVAL WEEKDAY(o.created_at) DAY)"
+      : "DATE(o.created_at)";
+  const startCondition = period === "months"
+    ? "o.created_at >= DATE_SUB(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 4 MONTH)"
+    : period === "weeks"
+      ? "o.created_at >= DATE_SUB(DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY), INTERVAL 3 WEEK)"
+      : "o.created_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)";
+
+  const rows = await query<{ bucket: string; orders: number; salesCents: number; profitCents: number }>(
+    `SELECT ${dateExpression} AS bucket,
+       COUNT(DISTINCT o.id) AS orders,
+       COALESCE(SUM(oi.total_cents), 0) AS salesCents,
+       COALESCE(SUM(oi.total_cents - (oi.cost_cents * oi.quantity)), 0) AS profitCents
+     FROM orders o
+     LEFT JOIN order_items oi ON oi.order_id = o.id
+     WHERE ${startCondition}
+       AND o.status <> 'CANCELLED'
+     GROUP BY bucket
+     ORDER BY bucket ASC`,
+  );
+  const rowMap = new Map(rows.map((row) => [new Date(row.bucket).toISOString().slice(0, 10), row]));
+  const buckets = Array.from({ length: limit }, (_, index) => {
+    const date = new Date();
+    if (period === "months") {
+      date.setDate(1);
+      date.setMonth(date.getMonth() - (limit - 1 - index));
+    } else if (period === "weeks") {
+      const day = date.getDay() || 7;
+      date.setDate(date.getDate() - day + 1 - 7 * (limit - 1 - index));
+    } else {
+      date.setDate(date.getDate() - (limit - 1 - index));
+    }
+    const key = date.toISOString().slice(0, 10);
+    const row = rowMap.get(key);
+    return {
+      bucket: key,
+      label: period === "months"
+        ? date.toLocaleDateString("en-KE", { month: "short" })
+        : period === "weeks"
+          ? `Wk ${date.toLocaleDateString("en-KE", { day: "2-digit", month: "short" })}`
+          : date.toLocaleDateString("en-KE", { weekday: "short" }),
+      orders: Number(row?.orders ?? 0),
+      salesCents: Number(row?.salesCents ?? 0),
+      profitCents: Number(row?.profitCents ?? 0)
+    };
+  });
+
+  response.json({ period, buckets });
+}));
+
 app.get("/campaigns", asyncRoute(async (_request, response) => {
   const rows = await query<CampaignRow>(
     "SELECT * FROM campaigns WHERE is_active = TRUE AND (ends_at IS NULL OR ends_at > NOW()) ORDER BY updated_at DESC LIMIT 3"

@@ -1,6 +1,6 @@
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { ProductForm } from "@/components/admin/product-form";
-import { requireAdmin } from "@/lib/auth/guards";
+import { requireOwnerAdmin } from "@/lib/auth/guards";
 import { apiFetch } from "@/lib/api/client";
 import type { Category } from "@/lib/types";
 import { createProductAction } from "../actions";
@@ -14,7 +14,7 @@ const messages: Record<string, string> = {
 };
 
 export default async function NewProductPage({ searchParams }: { searchParams?: Promise<{ error?: string; message?: string }> }) {
-  await requireAdmin();
+  await requireOwnerAdmin();
   const params = await searchParams;
   const categories = await getCategories();
 

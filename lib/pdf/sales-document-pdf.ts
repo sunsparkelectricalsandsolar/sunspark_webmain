@@ -65,6 +65,7 @@ export function createSalesDocumentPdf(input: PdfDocumentInput) {
 
 function buildPageContent(input: PdfDocumentInput, _logoObject: number, logoWidth: number, logoHeight: number) {
   const date = new Date(input.date).toLocaleDateString("en-KE", { day: "2-digit", month: "short", year: "numeric" });
+  const visibleEmail = printableEmail(input.customerEmail);
   const lines: string[] = ["q", "1 1 1 rg 0 0 595.28 841.89 re f", "Q"];
   const text = (x: number, y: number, value: string, size = 10, bold = false, color = rgb(24, 32, 45)) => {
     lines.push("BT", `/${bold ? "F2" : "F1"} ${size} Tf`, `${color} rg`, `${x.toFixed(2)} ${y.toFixed(2)} Td`, `(${escapePdf(value)}) Tj`, "ET");
@@ -102,7 +103,7 @@ function buildPageContent(input: PdfDocumentInput, _logoObject: number, logoWidt
   text(margin + 10, summaryTop - 12, "Bill to", 8, true, rgb(82, 91, 107));
   fitText(margin + 10, summaryTop - 27, input.customerName, 220, 11, true);
   if (input.customerPhone) fitText(margin + 10, summaryTop - 40, input.customerPhone, 96, 9);
-  if (input.customerEmail) fitText(155, summaryTop - 40, input.customerEmail, 122, 9);
+  if (visibleEmail) fitText(155, summaryTop - 40, visibleEmail, 122, 9);
   text(318, summaryTop - 12, "Document details", 8, true, rgb(82, 91, 107));
   const detailLines = [
     input.paymentLabel ? `Payment: ${input.paymentLabel}` : null,
@@ -200,6 +201,11 @@ function escapePdf(value: string) {
 
 function truncate(value: string, length: number) {
   return value.length > length ? `${value.slice(0, length - 1)}...` : value;
+}
+
+function printableEmail(email?: string | null) {
+  if (!email) return null;
+  return /^(walkin|invoice)-.+@sunsparkelectricals\.co\.ke$/i.test(email) ? null : email;
 }
 
 function truncateByWidth(value: string, width: number, fontSize: number) {

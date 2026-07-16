@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { apiFetch, ApiError } from "@/lib/api/client";
-import { requireAdmin } from "@/lib/auth/guards";
+import { requireOwnerAdmin } from "@/lib/auth/guards";
 import { getImageUploadError, saveProductImages } from "@/lib/uploads/product-images";
 import { productInputSchema, slugifyProductName } from "@/lib/products/validation";
 
@@ -97,7 +97,7 @@ function isRedirectError(error: unknown) {
 }
 
 export async function createProductAction(formData: FormData) {
-  await requireAdmin();
+  await requireOwnerAdmin();
 
   try {
   const input = parseProductForm(formData);
@@ -131,7 +131,7 @@ export async function createProductAction(formData: FormData) {
 }
 
 export async function updateProductAction(productId: string, formData: FormData) {
-  await requireAdmin();
+  await requireOwnerAdmin();
 
   try {
     const input = parseProductForm(formData);
@@ -169,7 +169,7 @@ export async function updateProductAction(productId: string, formData: FormData)
 }
 
 export async function deleteProductAction(productId: string) {
-  await requireAdmin();
+  await requireOwnerAdmin();
 
   try {
     await apiFetch(`/admin/products/${productId}`, { method: "DELETE" });
@@ -184,7 +184,7 @@ export async function deleteProductAction(productId: string) {
 }
 
 export async function hideProductAction(productId: string) {
-  await requireAdmin();
+  await requireOwnerAdmin();
 
   await apiFetch(`/admin/products/${productId}/hide`, { method: "PATCH" });
 

@@ -41,6 +41,15 @@ textarea {
   font: inherit;
 }
 
+button,
+a[role="button"],
+.primary-btn,
+.secondary-btn,
+.table-link,
+summary {
+  cursor: pointer;
+}
+
 .container {
   width: min(1180px, calc(100% - 32px));
   margin: 0 auto;
@@ -1620,7 +1629,7 @@ summary:focus-visible {
 
 .admin-stats {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -3007,9 +3016,130 @@ summary:focus-visible {
 .receipt-items { display: grid; gap: 12px; border-block: 1px solid var(--line); padding: 16px 0; }
 .receipt footer { font-size: 20px; }
 
-.invoice-row { grid-template-columns: 1.1fr 1.5fr 0.55fr 0.8fr 0.7fr auto; }
+.invoice-row {
+  grid-template-columns: minmax(170px, 1.15fr) minmax(180px, 1.35fr) minmax(58px, 0.45fr) minmax(100px, 0.7fr) minmax(90px, 0.6fr) minmax(210px, 1fr);
+}
 .invoice-row small { display: block; color: var(--muted); font-size: 12px; font-weight: 500; margin-top: 3px; }
 .report-row { grid-template-columns: 2fr 0.6fr 1fr 1fr 1fr; }
+
+.admin-chart-card {
+  display: grid;
+  gap: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 18px;
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.06);
+}
+
+.admin-chart-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: start;
+}
+
+.admin-chart-heading h2 {
+  margin: 3px 0 4px;
+}
+
+.admin-chart-heading p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.chart-summary {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 3px 10px;
+  min-width: 220px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--soft);
+  padding: 10px 12px;
+  text-align: right;
+}
+
+.chart-summary span {
+  color: var(--brand);
+  font-weight: 900;
+}
+
+.chart-summary small {
+  color: var(--muted);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.chart-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chart-controls a {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  padding: 7px 12px;
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.chart-controls a.active {
+  border-color: var(--brand);
+  background: rgba(14, 82, 164, 0.1);
+  color: var(--brand);
+}
+
+.bar-chart {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(74px, 1fr));
+  gap: 14px;
+  min-height: 260px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
+.bar-chart-column {
+  display: grid;
+  grid-template-rows: 1fr auto auto;
+  gap: 7px;
+  min-width: 0;
+  text-align: center;
+}
+
+.bar-chart-track {
+  display: flex;
+  min-height: 150px;
+  align-items: end;
+  justify-content: center;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #f8fafc, #eef4fb);
+  overflow: hidden;
+}
+
+.bar-chart-track span {
+  width: min(48px, 62%);
+  border-radius: 7px 7px 0 0;
+  background: linear-gradient(180deg, var(--spark), var(--brand));
+  box-shadow: 0 10px 22px rgba(14, 82, 164, 0.22);
+}
+
+.bar-chart-column strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bar-chart-column small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
 
 @media print {
   body * { visibility: hidden; }

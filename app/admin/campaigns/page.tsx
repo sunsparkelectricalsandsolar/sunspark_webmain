@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { PendingButton } from "@/components/ui/pending-button";
-import { requireAdmin } from "@/lib/auth/guards";
+import { requireOwnerAdmin } from "@/lib/auth/guards";
 import { apiFetch } from "@/lib/api/client";
 import { createCampaignAction, deleteCampaignAction, updateCampaignAction } from "./actions";
 import { publicImageUrl } from "@/lib/products/images";
@@ -14,7 +14,7 @@ export default async function AdminCampaignsPage({
 }: {
   searchParams?: Promise<{ q?: string; status?: string; edit?: string }>;
 }) {
-  await requireAdmin();
+  await requireOwnerAdmin();
   const params = await searchParams;
   const campaigns = await getCampaigns({ q: params?.q, status: params?.status });
   const editingCampaign = campaigns.find((campaign) => campaign.id === params?.edit);

@@ -2,7 +2,7 @@ import "server-only";
 
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
-import { canShop } from "@/lib/auth/roles";
+import { canManageCatalog, canShop, canUseBackOffice } from "@/lib/auth/roles";
 
 export async function requireCustomer(nextPath = "/account") {
   const session = await getSession();
@@ -31,8 +31,18 @@ export async function preventAdminShopping() {
 export async function requireAdmin(nextPath = "/admin") {
   const session = await getSession();
 
-  if (!session || session.role !== "ADMIN") {
+  if (!session || !canUseBackOffice(session.role)) {
     redirect(`/admin/login?next=${encodeURIComponent(nextPath)}`);
+  }
+
+  return session;
+}
+
+export async function requireOwnerAdmin(nextPath = "/admin") {
+  const session = await requireAdmin(nextPath);
+
+  if (!canManageCatalog(session.role)) {
+    redirect("/admin?error=permission");
   }
 
   return session;

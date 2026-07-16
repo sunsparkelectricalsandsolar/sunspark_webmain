@@ -2,7 +2,7 @@ import Link from "next/link";
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { CategoryForm } from "@/components/admin/category-form";
 import { createCategoryAction, deleteCategoryAction, hideCategoryAction } from "@/app/admin/categories/actions";
-import { requireAdmin } from "@/lib/auth/guards";
+import { requireOwnerAdmin } from "@/lib/auth/guards";
 import { apiFetch, toQueryString } from "@/lib/api/client";
 import type { Category } from "@/lib/types";
 
@@ -25,7 +25,7 @@ export default async function AdminCategoriesPage({
 }: {
   searchParams?: Promise<{ q?: string; status?: string; error?: string; notice?: string; message?: string }>;
 }) {
-  await requireAdmin("/admin/categories");
+  await requireOwnerAdmin("/admin/categories");
   const params = await searchParams;
   const categories = await getCategories({ q: params?.q, status: params?.status });
   const feedback = params?.error ? params.message ?? messages[params.error] : params?.notice ? messages[params.notice] : null;

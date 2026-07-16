@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AdminLayout } from "@/components/admin/admin-layout";
+import { PendingButton } from "@/components/ui/pending-button";
 import type { OrderStatus, PaymentStatus, Order } from "@/lib/types";
 import { requireAdmin } from "@/lib/auth/guards";
 import { apiFetch, toQueryString } from "@/lib/api/client";
@@ -13,7 +14,7 @@ const paymentStatuses: PaymentStatus[] = ["UNPAID", "PENDING", "PAID", "FAILED",
 export default async function AdminOrdersPage({
   searchParams
 }: {
-  searchParams?: Promise<{ q?: string; status?: string; paymentStatus?: string; customerId?: string }>;
+  searchParams?: Promise<{ q?: string; status?: string; paymentStatus?: string; customerId?: string; notice?: string }>;
 }) {
   await requireAdmin();
   const params = await searchParams;
@@ -26,6 +27,7 @@ export default async function AdminOrdersPage({
 
   return (
     <AdminLayout title="Orders" subtitle="Review order checks, fulfillment status, and payment state.">
+      {params?.notice === "saved" ? <p className="admin-feedback success" role="status">Order saved.</p> : null}
       <form action="/admin/orders" className="admin-filter">
         <input name="q" defaultValue={params?.q ?? ""} placeholder="Search order number, customer name, email, phone, location..." />
         <select name="status" defaultValue={params?.status ?? ""}>
@@ -84,8 +86,8 @@ export default async function AdminOrdersPage({
               <option value="CANCELLED">Cancelled</option>
             </select>
             <div className="order-admin-actions">
-              <button type="submit">Save</button>
-              <Link className="table-link" href={`/admin/walk-in-sale/${order.id}/receipt`}>Receipt</Link>
+              <PendingButton className="order-save-btn" pendingText="Saving...">Save</PendingButton>
+              <Link className="table-link receipt-link" href={`/admin/walk-in-sale/${order.id}/receipt`}>Receipt</Link>
             </div>
           </form>
         ))}
