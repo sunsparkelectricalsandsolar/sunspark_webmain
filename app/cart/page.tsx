@@ -25,7 +25,7 @@ export default async function CartPage() {
               {cart.items.map((item) => {
                 const image = getPrimaryImage(item.product.images);
                 return (
-                  <article className="cart-row" key={`${item.product.id}-${item.option?.id ?? "default"}`}>
+                  <article className="cart-row" key={`${item.product.id}-${item.cartOptionId ?? "default"}`}>
                     <Link className="cart-thumb" href={`/product/${item.product.slug}`}>
                       {image ? (
                         <Image src={publicImageUrl(image.url)} alt={image.alt ?? item.product.name} fill sizes="90px" />
@@ -46,14 +46,14 @@ export default async function CartPage() {
                     <div className="cart-stepper" aria-label={`Quantity for ${item.product.name}`}>
                       <form action={updateCartAction}>
                         <input name="slug" type="hidden" value={item.product.slug} />
-                        <input name="optionId" type="hidden" value={item.option?.id ?? ""} />
+                        <input name="optionId" type="hidden" value={item.cartOptionId ?? ""} />
                         <input name="quantity" type="hidden" value={Math.max(0, item.quantity - 1)} />
                         <PendingButton aria-label={`Reduce ${item.product.name}`} pendingText="...">-</PendingButton>
                       </form>
                       <strong>{item.quantity}</strong>
                       <form action={updateCartAction}>
                         <input name="slug" type="hidden" value={item.product.slug} />
-                        <input name="optionId" type="hidden" value={item.option?.id ?? ""} />
+                        <input name="optionId" type="hidden" value={item.cartOptionId ?? ""} />
                         <input name="quantity" type="hidden" value={item.quantity + 1} />
                         <PendingButton aria-label={`Add one ${item.product.name}`} pendingText="...">+</PendingButton>
                       </form>
@@ -64,7 +64,7 @@ export default async function CartPage() {
                     </div>
                     <form action={updateCartAction} className="cart-remove">
                       <input name="slug" type="hidden" value={item.product.slug} />
-                      <input name="optionId" type="hidden" value={item.option?.id ?? ""} />
+                      <input name="optionId" type="hidden" value={item.cartOptionId ?? ""} />
                       <input name="quantity" type="hidden" value="0" />
                       <PendingButton pendingText="Removing...">Remove</PendingButton>
                     </form>

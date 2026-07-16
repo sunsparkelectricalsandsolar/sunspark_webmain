@@ -64,9 +64,13 @@ export async function addCartItem(slug: string, quantity = 1, optionId?: string 
 export async function updateCartItem(slug: string, quantity: number, optionId?: string | null) {
   const items = await readCartCookie();
   const target = { slug, optionId: optionId || null };
+  const matchesTarget = (item: CartCookieItem) => {
+    if (cartKey(item) === cartKey(target)) return true;
+    return item.slug === slug && (!item.optionId || !target.optionId);
+  };
   const nextItems = quantity <= 0
-    ? items.filter((item) => cartKey(item) !== cartKey(target))
-    : items.map((item) => cartKey(item) === cartKey(target) ? { ...item, quantity } : item);
+    ? items.filter((item) => !matchesTarget(item))
+    : items.map((item) => matchesTarget(item) ? { ...item, quantity } : item);
   await writeCartCookie(nextItems);
 }
 
@@ -102,6 +106,7 @@ export async function getCart() {
             {
               product,
               option,
+              cartOptionId: item.optionId ?? null,
               quantity,
               lineTotalCents: priceCents * quantity
             }

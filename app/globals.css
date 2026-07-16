@@ -1083,12 +1083,12 @@ textarea {
 
 .cart-row {
   display: grid;
-  grid-template-columns: 84px minmax(0, 1fr) auto auto auto;
-  gap: 14px;
+  grid-template-columns: 68px minmax(0, 1fr) auto auto auto;
+  gap: 10px;
   align-items: center;
   border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 12px;
+  border-radius: 7px;
+  padding: 9px;
   background: #fff;
 }
 
@@ -1106,14 +1106,23 @@ textarea {
 }
 
 .cart-row h2 {
-  margin: 0 0 6px;
-  font-size: 16px;
+  display: -webkit-box;
+  margin: 0 0 4px;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.25;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .cart-item-main p {
   margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
   font-weight: 800;
   color: var(--spark);
+  font-size: 13px;
 }
 
 .cart-item-main small {
@@ -1124,16 +1133,17 @@ textarea {
 .cart-stepper {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px;
+  gap: 4px;
+  padding: 3px;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: var(--soft);
 }
 
 .cart-stepper strong {
-  min-width: 28px;
+  min-width: 24px;
   text-align: center;
+  font-size: 13px;
 }
 
 .cart-stepper button,
@@ -1144,8 +1154,8 @@ textarea {
 }
 
 .cart-stepper button {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   color: var(--spark);
   font-size: 20px;
@@ -1167,7 +1177,11 @@ textarea {
 
 .cart-remove button {
   color: #b91c1c;
+  border: 1px solid #fecaca;
+  border-radius: 999px;
   font-weight: 800;
+  min-height: 30px;
+  padding: 0 10px;
 }
 
 .cart-stepper button:hover,

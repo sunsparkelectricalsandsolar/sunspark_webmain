@@ -21,7 +21,10 @@ function limitWords(value: string, count: number) {
 }
 
 function categoryErrorUrl(path: string, error: unknown) {
-  if (!(error instanceof ApiError)) throw error;
+  if (!(error instanceof ApiError)) {
+    const message = encodeURIComponent(error instanceof Error ? error.message : "The category could not be saved.");
+    return `${path}?error=save&message=${message}`;
+  }
   const reason = error.status === 409 ? "duplicate" : error.status === 413 ? "image" : "save";
   const message = encodeURIComponent(error.message || "The category could not be saved.");
   return `${path}?error=${reason}&message=${message}`;
@@ -91,7 +94,7 @@ export async function updateCategoryAction(categoryId: string, formData: FormDat
         description: description || null,
         sortOrder: Number.isFinite(sortOrder) ? sortOrder : 0,
         isActive: formData.get("isActive") === "on",
-        images,
+        images: images.map((image, index) => ({ ...image, isPrimary: false, sortOrder: index })),
         deleteImageIds,
         primaryImageId: primaryImageId || null
       })

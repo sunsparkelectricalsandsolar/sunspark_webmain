@@ -44,7 +44,6 @@ export default async function CheckoutPage() {
               Payment method
               <select name="paymentMethod" defaultValue="WHATSAPP">
                 <option value="WHATSAPP">WhatsApp checkout</option>
-                <option value="MPESA">M-Pesa</option>
               </select>
             </label>
             <PendingButton disabled={!cart.items.length} pendingText="Submitting order...">Place order</PendingButton>

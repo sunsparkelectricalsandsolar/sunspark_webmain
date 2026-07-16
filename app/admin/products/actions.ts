@@ -150,7 +150,7 @@ export async function updateProductAction(productId: string, formData: FormData)
         slug: slugifyProductName(input.name),
         options: parseOptionRows(formData),
         deleteOptionIds: getDeleteOptionIds(formData),
-        images,
+        images: images.map((image, index) => ({ ...image, isPrimary: false, sortOrder: index })),
         deleteImageIds,
         primaryImageId: primaryImageId || null
       })
