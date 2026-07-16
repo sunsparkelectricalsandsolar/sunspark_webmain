@@ -26,6 +26,10 @@ body:has(.admin-page) > footer {
   display: none;
 }
 
+body:has(.policy-experiment-page) > header {
+  display: none;
+}
+
 body:has(.admin-page) .campaign-modal-backdrop { display: none; }
 body:has(.admin-page) .support-chat { display: none; }
 
@@ -1248,33 +1252,188 @@ summary {
   text-align: right;
 }
 
-.policy-page {
+.policy-experiment-page {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(243, 111, 33, 0.16), transparent 31%),
+    radial-gradient(circle at 88% 15%, rgba(14, 82, 164, 0.18), transparent 30%),
+    linear-gradient(135deg, #fff7e8 0%, #f7fbff 44%, #fffaf1 100%);
+}
+
+.policy-experiment-page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(120deg, rgba(14, 82, 164, 0.06) 0 1px, transparent 1px 72px),
+    linear-gradient(30deg, rgba(243, 111, 33, 0.05) 0 1px, transparent 1px 86px);
+  animation: policy-sheen 18s linear infinite;
+}
+
+.policy-experiment-header,
+.policy-experiment-shell {
+  position: relative;
+  z-index: 1;
+}
+
+.policy-experiment-header {
+  border-bottom: 1px solid rgba(14, 82, 164, 0.14);
+  background: linear-gradient(180deg, rgba(255, 248, 236, 0.96), rgba(255, 255, 255, 0.76));
+  box-shadow: 0 12px 38px rgba(15, 23, 42, 0.08);
+}
+
+.policy-experiment-nav {
+  background: linear-gradient(90deg, #0e52a4, #0b3f7e);
+  color: #fff;
+}
+
+.policy-experiment-nav .container {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.policy-experiment-nav a {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.policy-experiment-nav a:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.policy-experiment-brandbar {
   display: grid;
-  gap: 18px;
+  grid-template-columns: minmax(280px, 1fr) minmax(320px, 440px);
+  gap: 22px;
+  align-items: center;
+  padding-block: 14px;
+}
+
+.policy-experiment-logo {
+  display: block;
+  min-width: 0;
+}
+
+.policy-experiment-logo img {
+  display: block;
+  width: min(100%, 640px);
+  height: auto;
+  mix-blend-mode: multiply;
+}
+
+.policy-experiment-search {
+  display: grid;
+  gap: 7px;
+  border: 1px solid rgba(14, 82, 164, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.72);
+  padding: 11px;
+  box-shadow: 0 12px 28px rgba(14, 82, 164, 0.08);
+}
+
+.policy-experiment-search label {
+  color: var(--brand);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.policy-experiment-search div {
+  display: flex;
+  height: 42px;
+}
+
+.policy-experiment-search input {
+  min-width: 0;
+  flex: 1;
+  border: 1px solid var(--line);
+  border-right: 0;
+  border-radius: 21px 0 0 21px;
+  padding: 0 14px;
+}
+
+.policy-experiment-search button {
+  width: 92px;
+  border: 0;
+  border-radius: 0 21px 21px 0;
+  background: var(--spark);
+  color: #fff;
+  font-weight: 900;
+}
+
+.policy-experiment-shell {
+  display: grid;
+  gap: 20px;
+  padding-block: 28px 42px;
+}
+
+.policy-experiment-hero {
+  width: min(760px, 100%);
+}
+
+.policy-experiment-hero h1 {
+  margin: 6px 0 8px;
+  color: #102033;
+  font-size: clamp(30px, 5vw, 56px);
+  line-height: 1.02;
+}
+
+.policy-experiment-hero > p:not(.eyebrow) {
+  max-width: 640px;
+  color: #4b5563;
+  font-size: 17px;
+  line-height: 1.55;
+}
+
+.policy-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
 }
 
 .policy-tabs {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  border-block: 1px solid var(--line);
+  border-block: 1px solid rgba(14, 82, 164, 0.12);
   padding-block: 12px;
 }
 
 .policy-tabs a {
-  border: 1px solid var(--line);
+  border: 1px solid rgba(14, 82, 164, 0.16);
   border-radius: 999px;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.72);
   color: var(--brand);
   font-weight: 800;
   padding: 9px 13px;
 }
 
+.policy-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
 .policy-card {
-  border: 1px solid var(--line);
+  border: 1px solid rgba(14, 82, 164, 0.14);
   border-radius: 8px;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.8);
   padding: 22px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.07);
+  backdrop-filter: blur(10px);
+}
+
+.policy-card-wide {
+  grid-column: 1 / -1;
 }
 
 .policy-card h2,
@@ -1294,6 +1453,11 @@ summary {
 .policy-card p {
   color: var(--muted);
   line-height: 1.6;
+}
+
+@keyframes policy-sheen {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-72px, 0, 0); }
 }
 
 .empty-state {
@@ -3441,9 +3605,28 @@ summary:focus-visible {
   .checkout-layout,
   .admin-page,
   .product-editor,
+  .policy-experiment-brandbar,
+  .policy-card-grid,
   .form-grid.two,
   .form-grid.three {
     grid-template-columns: 1fr;
+  }
+
+  .policy-experiment-brandbar {
+    gap: 10px;
+    padding-block: 10px;
+  }
+
+  .policy-experiment-logo img {
+    width: min(100%, 430px);
+  }
+
+  .policy-experiment-search {
+    padding: 9px;
+  }
+
+  .policy-experiment-shell {
+    padding-block: 18px 30px;
   }
 
   .admin-sidebar {
@@ -3553,6 +3736,51 @@ summary:focus-visible {
 }
 
 @media (max-width: 560px) {
+  .policy-experiment-nav .container {
+    min-height: 38px;
+    gap: 5px;
+  }
+
+  .policy-experiment-nav a {
+    padding: 7px 9px;
+    font-size: 12px;
+  }
+
+  .policy-experiment-logo img {
+    width: min(100%, 320px);
+  }
+
+  .policy-experiment-search label {
+    display: none;
+  }
+
+  .policy-experiment-search div {
+    height: 36px;
+  }
+
+  .policy-experiment-search input {
+    border-radius: 18px 0 0 18px;
+    font-size: 12px;
+  }
+
+  .policy-experiment-search button {
+    width: 66px;
+    border-radius: 0 18px 18px 0;
+    font-size: 12px;
+  }
+
+  .policy-experiment-hero h1 {
+    font-size: 30px;
+  }
+
+  .policy-experiment-hero > p:not(.eyebrow) {
+    font-size: 14px;
+  }
+
+  .policy-card {
+    padding: 16px;
+  }
+
   .mini-product-panel {
     display: none;
   }
