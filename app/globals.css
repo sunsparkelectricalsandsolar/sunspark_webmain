@@ -764,6 +764,19 @@ textarea {
   -webkit-box-orient: vertical;
 }
 
+.category-tile-copy em {
+  width: fit-content;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--brand);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 900;
+  padding: 4px 7px;
+  text-shadow: none;
+  text-transform: uppercase;
+}
+
 .product-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
@@ -3455,6 +3468,11 @@ summary:focus-visible {
 
   .category-tile-copy small {
     display: none;
+  }
+
+  .category-tile-copy em {
+    font-size: 9px;
+    padding: 3px 6px;
   }
 
   .product-slider {

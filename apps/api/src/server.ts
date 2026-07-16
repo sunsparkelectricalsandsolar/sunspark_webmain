@@ -22,6 +22,7 @@ type CategoryRow = {
   sort_order: number;
   created_at: Date;
   updated_at: Date;
+  product_count?: number | string;
 };
 
 type ProductRow = {
@@ -116,6 +117,8 @@ function publicImageUrl(url: string) {
 }
 
 function mapCategory(row: CategoryRow, images: ImageRow[] = [], products: unknown[] = [], children: unknown[] = []) {
+  const productCount = Number(row.product_count ?? products.length ?? 0);
+
   return {
     id: row.id,
     name: row.name,
@@ -126,6 +129,7 @@ function mapCategory(row: CategoryRow, images: ImageRow[] = [], products: unknow
     sortOrder: row.sort_order,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    productCount,
     images: images.map((image) => ({
       id: image.id,
       categoryId: image.category_id,
@@ -575,7 +579,16 @@ app.patch("/admin/settings", asyncRoute(async (request, response) => {
 
 app.get("/categories", asyncRoute(async (_request, response) => {
   const rows = await query<CategoryRow>(
-    "SELECT * FROM categories WHERE parent_id IS NULL AND is_active = TRUE ORDER BY sort_order ASC, name ASC"
+    `SELECT c.*, COALESCE(pc.product_count, 0) AS product_count
+     FROM categories c
+     LEFT JOIN (
+       SELECT category_id, COUNT(*) AS product_count
+       FROM products
+       WHERE is_active = TRUE
+       GROUP BY category_id
+     ) pc ON pc.category_id = c.id
+     WHERE c.parent_id IS NULL AND c.is_active = TRUE
+     ORDER BY c.sort_order ASC, c.name ASC`
   );
   const imageMap = await imagesForCategories(rows.map((row) => row.id));
   response.json(rows.map((row) => mapCategory(row, imageMap.get(row.id) ?? [])));
@@ -595,18 +608,22 @@ app.get("/admin/categories", asyncRoute(async (request, response) => {
   if (status === "hidden") where.push("is_active = FALSE");
 
   const rows = await query<CategoryRow>(
-    `SELECT * FROM categories WHERE ${where.join(" AND ")} ORDER BY sort_order ASC, name ASC`,
+    `SELECT c.*, COALESCE(pc.product_count, 0) AS product_count
+     FROM categories c
+     LEFT JOIN (
+       SELECT category_id, COUNT(*) AS product_count
+       FROM products
+       GROUP BY category_id
+     ) pc ON pc.category_id = c.id
+     WHERE ${where.map((condition) => condition.replace(/\bparent_id\b/g, "c.parent_id").replace(/\bname\b/g, "c.name").replace(/\bslug\b/g, "c.slug").replace(/\bdescription\b/g, "c.description").replace(/\bis_active\b/g, "c.is_active")).join(" AND ")}
+     ORDER BY c.sort_order ASC, c.name ASC`,
     values
   );
-  const [imageMap, counts] = await Promise.all([
-    imagesForCategories(rows.map((row) => row.id)),
-    query<{ category_id: string; count: number }>(
-      `SELECT category_id, COUNT(*) AS count FROM products WHERE category_id IN (${rows.length ? rows.map(() => "?").join(",") : "''"}) GROUP BY category_id`,
-      rows.map((row) => row.id)
-    )
-  ]);
-  const countMap = new Map(counts.map((row) => [row.category_id, Number(row.count)]));
-  response.json(rows.map((row) => ({ ...mapCategory(row, imageMap.get(row.id) ?? []), _count: { products: countMap.get(row.id) ?? 0 } })));
+  const imageMap = await imagesForCategories(rows.map((row) => row.id));
+  response.json(rows.map((row) => {
+    const category = mapCategory(row, imageMap.get(row.id) ?? []);
+    return { ...category, _count: { products: category.productCount } };
+  }));
 }));
 
 app.get("/admin/categories/:id", asyncRoute(async (request, response) => {
@@ -720,7 +737,16 @@ app.get("/products/:id/companions", asyncRoute(async (request, response) => {
 
 app.get("/home", asyncRoute(async (_request, response) => {
   const categoryRows = await query<CategoryRow>(
-    "SELECT * FROM categories WHERE parent_id IS NULL AND is_active = TRUE ORDER BY sort_order ASC, name ASC"
+    `SELECT c.*, COALESCE(pc.product_count, 0) AS product_count
+     FROM categories c
+     LEFT JOIN (
+       SELECT category_id, COUNT(*) AS product_count
+       FROM products
+       WHERE is_active = TRUE
+       GROUP BY category_id
+     ) pc ON pc.category_id = c.id
+     WHERE c.parent_id IS NULL AND c.is_active = TRUE
+     ORDER BY c.sort_order ASC, c.name ASC`
   );
   const categoryImages = await imagesForCategories(categoryRows.map((row) => row.id));
   const categories = categoryRows.map((row) => mapCategory(row, categoryImages.get(row.id) ?? []));

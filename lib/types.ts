@@ -27,6 +27,7 @@ export type Category = {
   sortOrder: number;
   createdAt: string | Date;
   updatedAt: string | Date;
+  productCount: number;
   images: CategoryImage[];
   products: Product[];
   children: Category[];

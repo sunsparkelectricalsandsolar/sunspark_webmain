@@ -53,7 +53,7 @@ export default async function AdminCategoriesPage({
         {categories.map((category) => (
           <div className="admin-table-row category-admin-row" key={category.id}>
             <strong>{category.name}<small>{category.description ?? "No description"}</small></strong>
-            <span>{category._count.products}</span>
+            <span>{category.productCount}</span>
             <span>{category.images.length}</span>
             <span><i className={category.isActive ? "status-dot active" : "status-dot"} />{category.isActive ? "Active" : "Hidden"}</span>
             <span>{new Date(category.updatedAt).toLocaleDateString("en-KE")}</span>
@@ -65,7 +65,7 @@ export default async function AdminCategoriesPage({
                 </form>
               ) : null}
               <form action={deleteCategoryAction.bind(null, category.id)}>
-                <button className="danger-btn" title={category._count.products > 0 ? "Deletes this category and its products if they are not used on draft documents" : "Delete category"} type="submit">Delete</button>
+                <button className="danger-btn" title={category.productCount > 0 ? "Deletes this category and its products if they are not used on draft documents" : "Delete category"} type="submit">Delete</button>
               </form>
             </span>
           </div>
