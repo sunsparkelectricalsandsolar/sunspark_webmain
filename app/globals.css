@@ -1311,10 +1311,10 @@ summary {
 
 .policy-experiment-brandbar {
   display: grid;
-  grid-template-columns: minmax(280px, 1fr) minmax(320px, 440px);
-  gap: 22px;
+  grid-template-columns: minmax(420px, 1fr) minmax(320px, 430px);
+  gap: 28px;
   align-items: center;
-  padding-block: 14px;
+  padding-block: 10px;
 }
 
 .policy-experiment-logo {
@@ -1331,39 +1331,41 @@ summary {
 
 .policy-experiment-search {
   display: grid;
-  gap: 7px;
-  border: 1px solid rgba(14, 82, 164, 0.16);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.72);
-  padding: 11px;
-  box-shadow: 0 12px 28px rgba(14, 82, 164, 0.08);
+  justify-self: end;
+  width: min(100%, 430px);
+  gap: 6px;
 }
 
 .policy-experiment-search label {
+  padding-left: 16px;
   color: var(--brand);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 900;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
 }
 
 .policy-experiment-search div {
   display: flex;
-  height: 42px;
+  height: 44px;
+  border: 1px solid rgba(14, 82, 164, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 10px 24px rgba(14, 82, 164, 0.1);
+  overflow: hidden;
 }
 
 .policy-experiment-search input {
   min-width: 0;
   flex: 1;
-  border: 1px solid var(--line);
-  border-right: 0;
-  border-radius: 21px 0 0 21px;
-  padding: 0 14px;
+  border: 0;
+  background: transparent;
+  padding: 0 16px;
 }
 
 .policy-experiment-search button {
-  width: 92px;
+  width: 96px;
   border: 0;
-  border-radius: 0 21px 21px 0;
   background: var(--spark);
   color: #fff;
   font-weight: 900;
