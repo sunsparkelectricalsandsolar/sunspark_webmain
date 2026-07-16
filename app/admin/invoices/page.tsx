@@ -34,7 +34,7 @@ type DraftDocument = {
   items: unknown[];
 };
 
-export default async function InvoicesPage({ searchParams }: { searchParams?: Promise<{ q?: string; create?: string; error?: string; notice?: string }> }) {
+export default async function InvoicesPage({ searchParams }: { searchParams?: Promise<{ q?: string; create?: string; error?: string; notice?: string; message?: string }> }) {
   await requireAdmin("/admin/invoices");
   const params = await searchParams;
   const createMode = params?.create === "quotation" ? "quotation" : params?.create === "invoice" ? "invoice" : "";
@@ -42,7 +42,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams?: Pr
     apiFetch<Product[]>("/products?limit=500").catch(() => []),
     getInvoices(params?.q)
   ]);
-  const message = params?.error ? feedback[params.error] : params?.notice ? feedback[params.notice] : null;
+  const message = params?.message ?? (params?.error ? feedback[params.error] : params?.notice ? feedback[params.notice] : null);
   return <AdminLayout title="Invoices & Quotations" subtitle="Create printable customer documents. Only finalized invoices update stock and orders.">
     {message ? <p className={`admin-feedback ${params?.error ? "error" : "success"}`} role="status">{message}</p> : null}
     <div className="document-create-actions">

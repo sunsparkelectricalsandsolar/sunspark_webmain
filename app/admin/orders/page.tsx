@@ -83,7 +83,10 @@ export default async function AdminOrdersPage({
               <option value="COMPLETED">Completed</option>
               <option value="CANCELLED">Cancelled</option>
             </select>
-            <button type="submit">Save</button>
+            <div className="order-admin-actions">
+              <button type="submit">Save</button>
+              <Link className="table-link" href={`/admin/walk-in-sale/${order.id}/receipt`}>Receipt</Link>
+            </div>
           </form>
         ))}
         {!orders.length ? <p className="empty-state">No orders yet.</p> : null}

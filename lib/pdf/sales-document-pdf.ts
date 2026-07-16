@@ -69,6 +69,9 @@ function buildPageContent(input: PdfDocumentInput, _logoObject: number, logoWidt
   const text = (x: number, y: number, value: string, size = 10, bold = false, color = rgb(24, 32, 45)) => {
     lines.push("BT", `/${bold ? "F2" : "F1"} ${size} Tf`, `${color} rg`, `${x.toFixed(2)} ${y.toFixed(2)} Td`, `(${escapePdf(value)}) Tj`, "ET");
   };
+  const fitText = (x: number, y: number, value: string, maxWidth: number, size = 10, bold = false, color = rgb(24, 32, 45)) => {
+    text(x, y, truncateByWidth(value, maxWidth, size), size, bold, color);
+  };
   const rect = (x: number, y: number, w: number, h: number, color: string) => {
     lines.push("q", `${color} rg`, `${x.toFixed(2)} ${y.toFixed(2)} ${w.toFixed(2)} ${h.toFixed(2)} re f`, "Q");
   };
@@ -78,16 +81,18 @@ function buildPageContent(input: PdfDocumentInput, _logoObject: number, logoWidt
   lines.push("q", `${logoW.toFixed(2)} 0 0 ${logoH.toFixed(2)} ${margin} ${(pageHeight - margin - logoH).toFixed(2)} cm`, "/Logo Do", "Q");
 
   let y = pageHeight - margin - 12;
-  text(146, y, siteConfig.name, 15, true, rgb(14, 82, 164));
+  fitText(146, y, siteConfig.name, 250, 15, true, rgb(14, 82, 164));
   y -= 15;
-  text(146, y, siteConfig.location, 8.8, false, rgb(82, 91, 107));
-  y -= 12;
-  text(146, y, `${siteConfig.phone} | ${siteConfig.email} | ${siteConfig.url.replace(/^https?:\/\//, "")}`, 8.8, false, rgb(82, 91, 107));
+  wrapText(siteConfig.location, 55, 2).forEach((line) => {
+    fitText(146, y, line, 255, 8.2, false, rgb(82, 91, 107));
+    y -= 10;
+  });
+  fitText(146, y, `${siteConfig.phone} | ${siteConfig.email} | ${siteConfig.url.replace(/^https?:\/\//, "")}`, 255, 8.2, false, rgb(82, 91, 107));
 
   rect(426, pageHeight - 110, 130, 72, rgb(239, 246, 255));
   rect(426, pageHeight - 110, 5, 72, rgb(14, 82, 164));
   text(444, pageHeight - 60, titleCase(input.kind), 18, true, rgb(14, 82, 164));
-  text(444, pageHeight - 78, input.number || "Pending", 9.5, true);
+  fitText(444, pageHeight - 78, input.number || "Pending", 96, 9.5, true);
   text(444, pageHeight - 94, date, 8.8, false, rgb(82, 91, 107));
   rect(margin, pageHeight - 126, pageWidth - margin * 2, 2.5, rgb(243, 111, 33));
 
@@ -95,12 +100,15 @@ function buildPageContent(input: PdfDocumentInput, _logoObject: number, logoWidt
   rect(margin, summaryTop - 49, 250, 52, rgb(248, 250, 252));
   rect(308, summaryTop - 49, 249, 52, rgb(248, 250, 252));
   text(margin + 10, summaryTop - 12, "Bill to", 8, true, rgb(82, 91, 107));
-  text(margin + 10, summaryTop - 27, input.customerName, 11, true);
-  if (input.customerPhone) text(margin + 10, summaryTop - 40, input.customerPhone, 9);
-  if (input.customerEmail) text(155, summaryTop - 40, input.customerEmail, 9);
+  fitText(margin + 10, summaryTop - 27, input.customerName, 220, 11, true);
+  if (input.customerPhone) fitText(margin + 10, summaryTop - 40, input.customerPhone, 96, 9);
+  if (input.customerEmail) fitText(155, summaryTop - 40, input.customerEmail, 122, 9);
   text(318, summaryTop - 12, "Document details", 8, true, rgb(82, 91, 107));
-  text(318, summaryTop - 29, `Payment: ${input.paymentLabel ?? "Cash"}`, 9.5);
-  text(318, summaryTop - 43, `Status: ${input.statusLabel ?? "Draft"}`, 9.5);
+  const detailLines = [
+    input.paymentLabel ? `Payment: ${input.paymentLabel}` : null,
+    input.statusLabel ? `Status: ${input.statusLabel}` : null
+  ].filter(Boolean) as string[];
+  detailLines.slice(0, 2).forEach((line, index) => fitText(318, summaryTop - 29 - index * 14, line, 216, 9.5));
 
   let tableY = summaryTop - 76;
   rect(margin, tableY - 19, pageWidth - margin * 2, 22, rgb(14, 82, 164));
@@ -114,22 +122,26 @@ function buildPageContent(input: PdfDocumentInput, _logoObject: number, logoWidt
   input.items.slice(0, 18).forEach((item, index) => {
     if (index % 2 === 0) rect(margin, tableY - 16, pageWidth - margin * 2, 24, rgb(250, 252, 255));
     text(margin + 10, tableY, String(index + 1), 9);
-    text(margin + 48, tableY, truncate(item.productName, 46), 9.5, true);
-    if (item.optionLabel) text(margin + 48, tableY - 10, truncate(item.optionLabel, 32), 7.5, false, rgb(82, 91, 107));
+    fitText(margin + 48, tableY, item.productName, 238, 9.5, true);
+    if (item.optionLabel) fitText(margin + 48, tableY - 10, item.optionLabel, 205, 7.5, false, rgb(82, 91, 107));
     text(340, tableY, String(item.quantity), 9);
     text(390, tableY, formatMoney(item.unitCents), 9);
     text(492, tableY, formatMoney(item.totalCents), 9, true);
     tableY -= 25;
   });
 
-  const bottomY = Math.max(92, tableY - 8);
-  text(margin, bottomY + 30, "Notes", 9, true);
-  text(margin, bottomY + 16, truncate(input.note ?? "Thank you for choosing Sunspark Electrical and Solar.", 68), 8.5, false, rgb(82, 91, 107));
-  rect(372, bottomY, 184, 58, rgb(248, 250, 252));
-  text(386, bottomY + 37, "Subtotal", 9);
-  text(492, bottomY + 37, formatMoney(input.subtotalCents), 9, true);
-  text(386, bottomY + 16, "Total", 13, true, rgb(14, 82, 164));
-  text(478, bottomY + 16, formatMoney(input.totalCents), 13, true, rgb(14, 82, 164));
+  const totalsTop = Math.max(152, tableY - 20);
+  const totalsY = totalsTop - 58;
+  rect(372, totalsY, 184, 58, rgb(248, 250, 252));
+  text(386, totalsY + 37, "Subtotal", 9);
+  fitText(474, totalsY + 37, formatMoney(input.subtotalCents), 74, 9, true);
+  text(386, totalsY + 16, "Total", 13, true, rgb(14, 82, 164));
+  fitText(462, totalsY + 16, formatMoney(input.totalCents), 86, 13, true, rgb(14, 82, 164));
+
+  text(margin, totalsTop - 14, "Notes", 9, true);
+  wrapText(input.note ?? "Thank you for choosing Sunspark Electrical and Solar.", 72, 2).forEach((line, index) => {
+    fitText(margin, totalsTop - 29 - index * 11, line, 300, 8.5, false, rgb(82, 91, 107));
+  });
   text(margin, 34, "This document is computer generated by Sunspark Electrical and Solar.", 7.5, false, rgb(100, 116, 139));
 
   const content = lines.join("\n");
@@ -188,6 +200,29 @@ function escapePdf(value: string) {
 
 function truncate(value: string, length: number) {
   return value.length > length ? `${value.slice(0, length - 1)}...` : value;
+}
+
+function truncateByWidth(value: string, width: number, fontSize: number) {
+  const maxChars = Math.max(6, Math.floor(width / (fontSize * 0.52)));
+  return truncate(value, maxChars);
+}
+
+function wrapText(value: string, length: number, maxLines: number) {
+  const words = value.split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let current = "";
+  for (const word of words) {
+    const next = current ? `${current} ${word}` : word;
+    if (next.length > length && current) {
+      lines.push(current);
+      current = word;
+      if (lines.length === maxLines) break;
+    } else {
+      current = next;
+    }
+  }
+  if (current && lines.length < maxLines) lines.push(current);
+  return lines.length ? lines : [value];
 }
 
 function titleCase(value: string) {

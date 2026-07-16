@@ -28,7 +28,7 @@ export default async function AdminInvoiceDocumentPage({ params }: { params: Pro
   }>(`/admin/draft-documents/${id}`).catch(() => null);
   if (!document) notFound();
   const title = document.kind === "QUOTATION" ? "Quotation" : "Invoice";
-  const paymentLabel = document.paymentMethod === "CASH" ? "Cash" : document.paymentMethod === "MPESA" ? "M-Pesa" : "WhatsApp";
+  const statusLabel = document.kind === "QUOTATION" ? "Quotation" : document.status === "DRAFT" ? "Invoiced" : "Completed";
 
   return (
     <AdminLayout title={title} subtitle="Review the customer document before printing or sharing.">
@@ -41,8 +41,7 @@ export default async function AdminInvoiceDocumentPage({ params }: { params: Pro
         items={document.items ?? []}
         kind={document.kind}
         number={document.reference}
-        paymentLabel={paymentLabel}
-        statusLabel={document.status}
+        statusLabel={statusLabel}
         subtotalCents={document.subtotalCents}
         totalCents={document.totalCents}
       />

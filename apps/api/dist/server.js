@@ -1094,15 +1094,16 @@ app.post("/admin/draft-documents/:id/finalize", asyncRoute(async (request, respo
     if (!items.length)
         throw new HttpError(400, "This invoice has no items.");
     const order = await transaction(async (connection) => {
-        const productIds = items.map((item) => String(item.product_id));
+        const productIds = [...new Set(items.map((item) => String(item.product_id)))];
         const products = await connection.query(`SELECT * FROM products WHERE is_active = TRUE AND id IN (${productIds.map(() => "?").join(",")})`, productIds);
-        if (products.length !== items.length)
+        if (products.length !== productIds.length)
             throw new HttpError(400, "One or more selected products are unavailable.");
         const productMap = new Map(products.map((product) => [product.id, product]));
         for (const item of items) {
             const product = productMap.get(String(item.product_id));
-            if (!product || Number(product.stock_quantity) < Number(item.stock_deducted ?? item.quantity))
-                throw new HttpError(400, "Stock changed before finalization.");
+            const stockNeeded = Number(item.stock_deducted ?? item.quantity);
+            if (!product || Number(product.stock_quantity) < stockNeeded)
+                throw new HttpError(400, `${item.product_name} has only ${product?.stock_quantity ?? 0} in stock. Edit the invoice quantity or update stock before finalizing.`);
         }
         const orderId = id("ord");
         const orderNumber = `SUN-${Date.now().toString().slice(-8)}`;

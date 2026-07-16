@@ -2838,6 +2838,7 @@ summary:focus-visible {
   display: flex;
   gap: 12px;
   align-items: center;
+  min-width: 0;
 }
 
 .sales-document-brand img {
@@ -2849,6 +2850,10 @@ summary:focus-visible {
   font-size: 16px;
 }
 
+.sales-document-brand > div {
+  min-width: 0;
+}
+
 .sales-document-brand p,
 .sales-document-summary p,
 .sales-document-note p {
@@ -2856,6 +2861,10 @@ summary:focus-visible {
   color: var(--muted);
   font-size: 13px;
   line-height: 1.35;
+}
+
+.sales-document-brand p {
+  overflow-wrap: anywhere;
 }
 
 .sales-document-title {
@@ -2897,16 +2906,17 @@ summary:focus-visible {
   border: 1px solid var(--line);
   background: var(--soft);
   padding: 8px 10px;
+  min-width: 0;
 }
 
 .sales-document-summary strong {
-  display: inline;
+  display: block;
   margin: 0;
 }
 
 .sales-document-summary p {
-  display: inline;
-  margin-left: 8px;
+  display: block;
+  margin-top: 3px;
 }
 
 .sales-document-table {
@@ -3015,7 +3025,7 @@ summary:focus-visible {
 
 .order-admin-heading,
 .order-admin-row {
-  grid-template-columns: 1fr 1.4fr 0.8fr 1fr 1fr 90px;
+  grid-template-columns: 1fr 1.4fr 0.8fr 1fr 1fr 116px;
 }
 
 .payment-heading,
@@ -3039,6 +3049,17 @@ summary:focus-visible {
   color: #fff;
   font-weight: 800;
   min-height: 36px;
+}
+
+.order-admin-actions {
+  display: grid;
+  gap: 5px;
+  justify-items: stretch;
+}
+
+.order-admin-actions .table-link {
+  justify-content: center;
+  text-align: center;
 }
 
 @media (max-width: 860px) {

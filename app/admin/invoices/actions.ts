@@ -98,7 +98,7 @@ export async function updateDraftDocumentAction(draftId: string, formData: FormD
 export async function finalizeDraftInvoiceAction(draftId: string) {
   await requireAdmin("/admin/invoices");
   const order = await apiFetch<{ id: string }>(`/admin/draft-documents/${draftId}/finalize`, { method: "POST" }).catch((error: unknown) => {
-    if (error instanceof ApiError) redirect("/admin/invoices?error=stock");
+    if (error instanceof ApiError) redirect(`/admin/invoices?error=stock&message=${encodeURIComponent(error.message)}`);
     throw error;
   });
   revalidatePath("/"); revalidatePath("/store"); revalidatePath("/admin/invoices"); revalidatePath("/admin/orders"); revalidatePath("/admin/products");

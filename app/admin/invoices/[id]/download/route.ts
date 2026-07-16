@@ -24,7 +24,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     items: OrderItem[];
   }>(`/admin/draft-documents/${id}`);
 
-  const paymentLabel = document.paymentMethod === "CASH" ? "Cash" : document.paymentMethod === "MPESA" ? "M-Pesa" : "WhatsApp";
+  const statusLabel = document.kind === "QUOTATION" ? "Quotation" : document.status === "DRAFT" ? "Invoiced" : "Completed";
   const pdf = createSalesDocumentPdf({
     customerEmail: document.customerEmail,
     customerName: document.customerName,
@@ -33,8 +33,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     items: document.items ?? [],
     kind: document.kind,
     number: document.reference,
-    paymentLabel,
-    statusLabel: document.status,
+    statusLabel,
     subtotalCents: document.subtotalCents,
     totalCents: document.totalCents
   });
