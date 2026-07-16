@@ -44,8 +44,8 @@ export async function getStoreCategories() {
   return categories.sort((a, b) => storefrontCategoryRank(a.slug) - storefrontCategoryRank(b.slug));
 }
 
-export async function getStoreProducts(input: { q?: string; category?: string }) {
-  return withFallback(apiFetch<Product[]>(`/products${toQueryString({ q: input.q, category: input.category })}`), []);
+export async function getStoreProducts(input: { q?: string; category?: string; limit?: number }) {
+  return withFallback(apiFetch<Product[]>(`/products${toQueryString({ q: input.q, category: input.category, limit: input.limit ?? 50 })}`), []);
 }
 
 export async function getCategoryBySlug(slug: string) {

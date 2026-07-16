@@ -5,7 +5,7 @@ import type { Product } from "@/lib/types";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const products = await apiFetch<Product[]>("/products?limit=500");
+  const products = await apiFetch<Product[]>("/products?limit=2000");
 
   return new Response(buildMerchantFeed(products), {
     headers: {

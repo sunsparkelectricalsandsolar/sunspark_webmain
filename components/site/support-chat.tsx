@@ -9,7 +9,21 @@ export function SupportChat() {
   const whatsappUrl = `https://wa.me/${siteConfig.whatsappPhone}?text=${encodeURIComponent(message)}`;
 
   return <aside className="support-chat">
-    {open ? <div className="support-chat-panel"><button aria-label="Close support chat" className="support-chat-close" onClick={() => setOpen(false)} type="button">Close</button><strong>Sunspark Support</strong><p>Need help choosing an electrical, electronics, or solar product?</p><small>{message}</small><a className="primary-btn" href={whatsappUrl} rel="noreferrer" target="_blank">Chat on WhatsApp</a></div> : null}
-    <button className="support-chat-trigger" onClick={() => setOpen((value) => !value)} type="button">Help</button>
+    {open ? (
+      <div className="support-chat-panel">
+        <div className="support-chat-head">
+          <span>Support</span>
+          <button aria-label="Close support chat" className="support-chat-close" onClick={() => setOpen(false)} type="button">×</button>
+        </div>
+        <strong>Sunspark Electrical and Solar</strong>
+        <p>Ask about stock, cable sizes, quotations, invoices, delivery, or product combinations.</p>
+        <small>{message}</small>
+        <a className="primary-btn" href={whatsappUrl} rel="noreferrer" target="_blank">Chat on WhatsApp</a>
+      </div>
+    ) : null}
+    <button className="support-chat-trigger" aria-label="Open Sunspark help" onClick={() => setOpen((value) => !value)} type="button">
+      <span>?</span>
+      <strong>Help</strong>
+    </button>
   </aside>;
 }

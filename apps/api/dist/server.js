@@ -337,7 +337,7 @@ async function countProducts(filters = {}) {
 }
 async function listProducts(filters = {}) {
     const { where, values } = productWhere(filters);
-    const maxLimit = filters.includeInactive ? 2000 : 500;
+    const maxLimit = 2000;
     const limit = Math.min(Math.max(filters.limit ?? 100, 1), maxLimit);
     const offset = Math.max(filters.offset ?? 0, 0);
     values.push(limit, offset);
@@ -449,7 +449,7 @@ app.get("/categories/:slug", asyncRoute(async (request, response) => {
         throw new HttpError(404, "Category not found.");
     const [childrenRows, products, imageMap] = await Promise.all([
         query("SELECT * FROM categories WHERE parent_id = ? AND is_active = TRUE ORDER BY sort_order ASC, name ASC", [category.id]),
-        listProducts({ categoryId: category.id, limit: 200 }),
+        listProducts({ categoryId: category.id, limit: 60 }),
         imagesForCategories([category.id])
     ]);
     response.json(mapCategory(category, imageMap.get(category.id) ?? [], products, childrenRows.map((row) => mapCategory(row))));
@@ -546,7 +546,7 @@ app.get("/home", asyncRoute(async (_request, response) => {
         ...mapCategory(row, categoryImages.get(row.id) ?? []),
         products: await listProducts({ categoryId: row.id, limit: 24 })
     })));
-    const products = await listProducts({ limit: 48 });
+    const products = await listProducts({ limit: 24 });
     const brandRows = await query("SELECT DISTINCT brand FROM products WHERE is_active = TRUE AND brand IS NOT NULL AND brand <> '' ORDER BY brand ASC LIMIT 20");
     response.json({ categories, categorySections, products, brands: brandRows.map((row) => row.brand) });
 }));

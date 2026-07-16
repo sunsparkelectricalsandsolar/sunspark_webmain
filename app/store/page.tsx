@@ -1,7 +1,17 @@
 import { ProductCard } from "@/components/site/product-card";
 import { getStoreCategories, getStoreProducts } from "@/lib/products/queries";
+import { siteConfig } from "@/lib/site-config";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Store",
+  description: "Shop electricals, electronics, cables, breakers, switches, sockets and solar accessories from Sunspark in Nairobi CBD.",
+  alternates: {
+    canonical: `${siteConfig.url}/store`
+  }
+};
 
 export default async function StorePage({
   searchParams
@@ -10,7 +20,7 @@ export default async function StorePage({
 }) {
   const params = await searchParams;
   const [products, categories] = await Promise.all([
-    getStoreProducts({ q: params?.q, category: params?.category }),
+    getStoreProducts({ q: params?.q, category: params?.category, limit: 50 }),
     getStoreCategories()
   ]);
 
@@ -43,7 +53,8 @@ export default async function StorePage({
         </aside>
         <div>
           <div className="store-toolbar">
-            <strong>{products.length} product{products.length === 1 ? "" : "s"}</strong>
+            <strong>{products.length} product{products.length === 1 ? "" : "s"} shown</strong>
+            <span>Search by name, brand, or description to narrow the catalogue.</span>
           </div>
           {products.length ? (
             <div className="product-grid">

@@ -10,7 +10,7 @@ export async function Footer() {
       <div className="container footer-grid">
         <section>
           <h2>Sunspark Electrical and Solar</h2>
-          <p>{siteConfig.location}</p>
+          <p><a className="footer-location" href={siteConfig.mapUrl} rel="noreferrer" target="_blank">{siteConfig.location}</a></p>
           <p>
             <a href={`https://wa.me/${siteConfig.whatsappPhone}`}>WhatsApp {siteConfig.phone}</a>
           </p>
@@ -26,8 +26,14 @@ export async function Footer() {
           <h2>Support</h2>
           <Link href="/account">My account</Link>
           <Link href="/checkout">Checkout</Link>
+          <Link href="/policies#delivery">Delivery</Link>
+          <Link href="/policies#privacy">Privacy</Link>
+          <Link href="/policies#faq">FAQ</Link>
           <a href={siteConfig.facebookUrl}>Facebook</a>
         </section>
+      </div>
+      <div className="container footer-bottom">
+        <span>Copyright 2026 Sunspark Electrical and Solar.</span>
       </div>
     </footer>
   );

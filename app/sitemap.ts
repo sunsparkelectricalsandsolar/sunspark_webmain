@@ -4,7 +4,7 @@ import { siteConfig } from "@/lib/site-config";
 import type { Category, Product } from "@/lib/types";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseRoutes = ["", "/store", "/login", "/register", "/cart", "/checkout"].map((route) => ({
+  const baseRoutes = ["", "/store", "/policies", "/login", "/register", "/cart", "/checkout"].map((route) => ({
     url: `${siteConfig.url}${route}`,
     lastModified: new Date(),
     changeFrequency: "weekly" as const,
@@ -14,7 +14,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const [categories, products] = await Promise.all([
       apiFetch<Category[]>("/categories"),
-      apiFetch<Product[]>("/products?limit=500")
+      apiFetch<Product[]>("/products?limit=2000")
     ]);
 
     return [

@@ -34,4 +34,6 @@ export async function updateCartAction(formData: FormData) {
 
   await updateCartItem(slug, Number.isFinite(quantity) ? quantity : 0, optionId);
   revalidatePath("/", "layout");
+  revalidatePath("/cart");
+  redirect("/cart");
 }
