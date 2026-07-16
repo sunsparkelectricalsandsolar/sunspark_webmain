@@ -941,6 +941,15 @@ textarea {
   -webkit-box-orient: vertical;
 }
 
+.product-body h2 a {
+  display: -webkit-box;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: inherit;
+}
+
 .price-row,
 .detail-price {
   display: flex;
@@ -3567,14 +3576,14 @@ summary:focus-visible {
   }
 
   .product-slider {
-    grid-auto-columns: minmax(150px, 48vw);
+    grid-auto-columns: minmax(164px, 52vw);
     gap: 12px;
     padding-bottom: 8px;
   }
 
   .product-body {
     align-content: start;
-    gap: 3px;
+    gap: 2px;
     padding: 8px;
   }
 
@@ -3592,34 +3601,40 @@ summary:focus-visible {
   }
 
   .product-body h2 {
-    min-height: 0;
+    min-height: auto;
     font-size: 11px;
-    line-height: 1.2;
+    line-height: 1.16;
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
 
+  .product-body h2 a {
+    -webkit-line-clamp: 3;
+  }
+
   .price-row {
     gap: 4px;
     font-size: 12px;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
+    line-height: 1.08;
+    row-gap: 1px;
   }
 
   .price-row span {
     display: inline;
-    font-size: 9px;
+    font-size: 8.5px;
     white-space: nowrap;
   }
 
   .price-row strong {
-    font-size: 13px;
+    font-size: 12.5px;
     white-space: nowrap;
   }
 
   .price-row small {
-    font-size: 9px;
+    font-size: 8px;
   }
 
   .product-body > small {
@@ -3628,7 +3643,7 @@ summary:focus-visible {
 
   .product-actions {
     gap: 5px;
-    margin-top: 5px;
+    margin-top: 3px;
     grid-template-columns: 0.9fr 1fr;
     min-width: 0;
   }
