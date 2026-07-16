@@ -3566,11 +3566,6 @@ summary:focus-visible {
     display: none;
   }
 
-  .category-tile-copy em {
-    font-size: 9px;
-    padding: 3px 6px;
-  }
-
   .product-slider {
     grid-auto-columns: minmax(150px, 48vw);
     gap: 12px;
@@ -3578,8 +3573,8 @@ summary:focus-visible {
   }
 
   .product-body {
-    align-content: center;
-    gap: 5px;
+    align-content: start;
+    gap: 3px;
     padding: 8px;
   }
 
@@ -3597,7 +3592,7 @@ summary:focus-visible {
   }
 
   .product-body h2 {
-    min-height: 40px;
+    min-height: 0;
     font-size: 11px;
     line-height: 1.2;
     display: -webkit-box;
@@ -3607,7 +3602,7 @@ summary:focus-visible {
   }
 
   .price-row {
-    gap: 5px;
+    gap: 4px;
     font-size: 12px;
     flex-wrap: nowrap;
   }
