@@ -17,6 +17,11 @@ export function HeaderMenu({
 }) {
   const [open, setOpen] = useState(false);
 
+  function closeMenu() {
+    setOpen(false);
+    window.setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 0);
+  }
+
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
@@ -46,19 +51,17 @@ export function HeaderMenu({
           <button aria-label="Close menu" onClick={() => setOpen(false)} type="button">Close</button>
         </div>
         <nav aria-label="Mobile shop menu">
-          <Link href="/" onClick={() => setOpen(false)}>Home</Link>
-          <Link href="/store" onClick={() => setOpen(false)}>Store</Link>
+          <Link href="/#top" onClick={closeMenu}>Home</Link>
+          <Link href="/store#top" onClick={closeMenu}>Store</Link>
+          <Link className="side-action-link" href="/cart#top" onClick={closeMenu}>Cart <span>{cartCount}</span></Link>
+          <Link className="side-action-link" href="/wishlist#top" onClick={closeMenu}>Wishlist</Link>
+          <Link className="side-action-link" href="/account#top" onClick={closeMenu}>My Account</Link>
           {categories.map((category) => (
-            <Link href={`/category/${category.slug}`} key={category.slug} onClick={() => setOpen(false)}>
+            <Link href={`/category/${category.slug}#top`} key={category.slug} onClick={closeMenu}>
               {category.name}
             </Link>
           ))}
         </nav>
-        <div className="site-side-actions">
-          <Link href="/cart" onClick={() => setOpen(false)}>Cart <span>{cartCount}</span></Link>
-          <Link href="/wishlist" onClick={() => setOpen(false)}>Wishlist</Link>
-          <Link href="/account" onClick={() => setOpen(false)}>My Account</Link>
-        </div>
       </aside>
     </>
   );

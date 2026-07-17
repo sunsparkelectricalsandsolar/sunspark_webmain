@@ -7,6 +7,14 @@ import { siteConfig } from "@/lib/site-config";
 
 export const dynamic = "force-dynamic";
 
+function trimWords(value: string, count: number) {
+  const words = value.trim().split(/\s+/).filter(Boolean);
+  return {
+    text: words.slice(0, count).join(" "),
+    isTrimmed: words.length > count
+  };
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const category = await getCategoryBySlug(slug);
@@ -38,6 +46,8 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   if (!category) {
     notFound();
   }
+  const fullDescription = category.description ?? "Browse available products in this Sunspark category.";
+  const shortDescription = trimWords(fullDescription, 10);
   const categorySchema = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
@@ -66,7 +76,15 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
         <div className="section-heading">
           <p className="eyebrow">Category</p>
           <h1>{category.name}</h1>
-          <p>{category.description ?? "Browse products in this Sunspark category."}</p>
+          <p>
+            {shortDescription.text}
+            {shortDescription.isTrimmed ? (
+              <>
+                {" "}
+                <a className="inline-read-more" href="#category-description">Read more</a>
+              </>
+            ) : null}
+          </p>
         </div>
         {category.children.length ? (
           <div className="category-grid">
@@ -84,9 +102,14 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
         ) : (
           <div className="empty-state">
             <h2>{category.name} products</h2>
-            <p>Use the store search to browse available stock, or contact Sunspark for current pricing and availability.</p>
+            <p>Search the store or contact Sunspark for current pricing and availability.</p>
           </div>
         )}
+        {shortDescription.isTrimmed ? (
+          <div className="category-description-note" id="category-description">
+            <p>{fullDescription}</p>
+          </div>
+        ) : null}
         </div>
       </section>
     </>

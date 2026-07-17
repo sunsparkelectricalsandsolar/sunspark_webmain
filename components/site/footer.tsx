@@ -18,14 +18,14 @@ export async function Footer() {
         <section className="footer-links">
           <h2>Shop</h2>
           {categories.slice(0, 5).map((category) => (
-            <Link href={`/category/${category.slug}`} key={category.id}>{category.name}</Link>
+            <Link href={`/category/${category.slug}#top`} key={category.id}>{category.name}</Link>
           ))}
-          {!categories.length ? <Link href="/store">Store</Link> : null}
+          {!categories.length ? <Link href="/store#top">Store</Link> : null}
         </section>
         <section className="footer-links">
           <h2>Support</h2>
-          <Link href="/account">My account</Link>
-          <Link href="/checkout">Checkout</Link>
+          <Link href="/account#top">My account</Link>
+          <Link href="/checkout#top">Checkout</Link>
           <Link href="/policies#delivery">Delivery</Link>
           <Link href="/policies#privacy">Privacy</Link>
           <Link href="/policies#faq">FAQ</Link>

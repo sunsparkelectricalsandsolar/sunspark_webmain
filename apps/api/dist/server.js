@@ -184,7 +184,8 @@ function safeUploadName(value) {
     return value.toLowerCase().replace(/[^a-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80) || "image";
 }
 function frontendOrigin() {
-    return env("FRONTEND_ORIGIN", env("NEXT_PUBLIC_SITE_URL", "http://localhost:3000")).replace(/\/+$/, "");
+    const configured = env("NEXT_PUBLIC_SITE_URL", env("SITE_URL", env("FRONTEND_ORIGIN", "http://localhost:3000")));
+    return configured.split(",")[0].trim().replace(/\/+$/, "");
 }
 function routeParam(value) {
     return Array.isArray(value) ? value[0] : value;

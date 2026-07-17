@@ -1,21 +1,30 @@
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { HeaderMenu } from "@/components/site/header-menu";
 import { getCart } from "@/lib/cart/cart-service";
 import { getStoreCategories } from "@/lib/products/queries";
+import { clearSession, getSession } from "@/lib/auth/session";
+
+async function customerLogoutAction() {
+  "use server";
+
+  await clearSession();
+  redirect("/");
+}
 
 export async function Header() {
-  const [cart, categories] = await Promise.all([getCart(), getStoreCategories()]);
+  const [cart, categories, session] = await Promise.all([getCart(), getStoreCategories(), getSession()]);
   const cartCount = cart.items.reduce((total, item) => total + item.quantity, 0);
   const navItems = [
-    { label: "Home", href: "/" },
-    { label: "Store", href: "/store" },
-    ...categories.slice(0, 5).map((category) => ({ label: category.name, href: `/category/${category.slug}` })),
-    { label: "Account", href: "/account" }
+    { label: "Home", href: "/#top" },
+    { label: "Store", href: "/store#top" },
+    ...categories.slice(0, 5).map((category) => ({ label: category.name, href: `/category/${category.slug}#top` })),
+    { label: "Account", href: "/account#top" }
   ];
 
   return (
-    <header className="site-header">
+    <header className="site-header" id="top">
       <nav aria-label="Main navigation" className="navigation">
         <div className="container nav-scroll">
           {navItems.map((item) => (
@@ -52,6 +61,33 @@ export async function Header() {
               </span>
               <strong>Wishlist</strong>
             </Link>
+            <details className="account-menu">
+              <summary aria-label="Account menu">
+                <span aria-hidden="true">
+                  <svg viewBox="0 0 24 24" focusable="false">
+                    <path d="M12 12a4.2 4.2 0 1 0 0-8.4 4.2 4.2 0 0 0 0 8.4Zm0 2c-4.1 0-7.4 2.2-7.4 5v1h14.8v-1c0-2.8-3.3-5-7.4-5Z" />
+                  </svg>
+                </span>
+              </summary>
+              <div className="account-menu-panel">
+                {session ? (
+                  <>
+                    <strong>{session.name}</strong>
+                    <Link href="/account">My account</Link>
+                    <Link href="/account/orders">Orders</Link>
+                    <Link href="/forgot-password">Change password</Link>
+                    <form action={customerLogoutAction}>
+                      <button type="submit">Log out</button>
+                    </form>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/login">Sign in</Link>
+                    <Link href="/register">Create account</Link>
+                  </>
+                )}
+              </div>
+            </details>
           </nav>
           <HeaderMenu cartCount={cartCount} categories={categories.map((category) => ({ name: category.name, slug: category.slug }))} />
         </div>
