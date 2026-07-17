@@ -8,12 +8,20 @@ type HeaderMenuCategory = {
   slug: string;
 };
 
+type HeaderMenuSession = {
+  name: string;
+} | null;
+
 export function HeaderMenu({
   cartCount,
-  categories
+  categories,
+  logoutAction,
+  session
 }: {
   cartCount: number;
   categories: HeaderMenuCategory[];
+  logoutAction: () => Promise<void>;
+  session: HeaderMenuSession;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -44,25 +52,36 @@ export function HeaderMenu({
         <span />
         <span />
       </button>
-      {open ? <button aria-label="Close menu" className="site-menu-backdrop" onClick={() => setOpen(false)} type="button" /> : null}
-      <aside className={`site-side-menu${open ? " open" : ""}`} aria-hidden={!open}>
-        <div className="site-side-menu-head">
-          <strong>Sunspark</strong>
-          <button aria-label="Close menu" onClick={() => setOpen(false)} type="button">Close</button>
-        </div>
-        <nav aria-label="Mobile shop menu">
-          <Link href="/#top" onClick={closeMenu}>Home</Link>
-          <Link href="/store#top" onClick={closeMenu}>Store</Link>
-          <Link className="side-action-link" href="/cart#top" onClick={closeMenu}>Cart <span>{cartCount}</span></Link>
-          <Link className="side-action-link" href="/wishlist#top" onClick={closeMenu}>Wishlist</Link>
-          <Link className="side-action-link" href="/account#top" onClick={closeMenu}>My Account</Link>
-          {categories.map((category) => (
-            <Link href={`/category/${category.slug}#top`} key={category.slug} onClick={closeMenu}>
-              {category.name}
-            </Link>
-          ))}
-        </nav>
-      </aside>
+      {open ? (
+        <>
+          <button aria-label="Close menu" className="site-menu-backdrop" onClick={() => setOpen(false)} type="button" />
+          <aside className="site-side-menu open" aria-hidden={false}>
+            <div className="site-side-menu-head">
+              <strong>Sunspark</strong>
+              <button aria-label="Close menu" onClick={() => setOpen(false)} type="button">Close</button>
+            </div>
+            <nav aria-label="Mobile shop menu">
+              <Link href="/#top" onClick={closeMenu}>Home</Link>
+              <Link href="/store#top" onClick={closeMenu}>Store</Link>
+              {categories.map((category) => (
+                <Link href={`/category/${category.slug}#top`} key={category.slug} onClick={closeMenu}>
+                  {category.name}
+                </Link>
+              ))}
+              <Link className="side-action-link" href="/cart#top" onClick={closeMenu}>Cart <span>{cartCount}</span></Link>
+              <Link className="side-action-link" href="/wishlist#top" onClick={closeMenu}>Wishlist</Link>
+              <Link className="side-action-link" href="/account#top" onClick={closeMenu}>My Account</Link>
+              {session ? (
+                <form action={logoutAction}>
+                  <button className="side-action-button" type="submit">Log out</button>
+                </form>
+              ) : (
+                <Link className="side-action-link" href="/login#top" onClick={closeMenu}>Log in</Link>
+              )}
+            </nav>
+          </aside>
+        </>
+      ) : null}
     </>
   );
 }

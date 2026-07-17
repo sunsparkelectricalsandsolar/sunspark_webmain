@@ -14,12 +14,20 @@
   box-sizing: border-box;
 }
 
+html {
+  max-width: 100%;
+  overflow-x: hidden;
+  overflow-x: clip;
+}
+
 body {
   margin: 0;
   color: var(--ink);
   background: #fff;
   font-family: Montserrat, Arial, Helvetica, sans-serif;
+  max-width: 100%;
   overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body:has(.admin-page) > header,
@@ -195,7 +203,7 @@ summary {
 
 .site-header {
   position: sticky;
-  top: 0;
+  top: -40px;
   z-index: 40;
   background: linear-gradient(180deg, #fff7e8, #fffdf8);
   box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
@@ -310,33 +318,42 @@ summary {
   position: relative;
 }
 
-.account-menu summary {
-  display: grid;
-  width: 38px;
+.account-menu > button {
+  display: inline-grid;
+  grid-template-columns: 22px 8px;
+  gap: 2px;
+  width: 42px;
   height: 38px;
-  place-items: center;
+  align-items: center;
+  justify-content: center;
+  border: 0;
   border-radius: 50%;
+  background: transparent;
   color: var(--brand);
-  list-style: none;
 }
 
-.account-menu summary::-webkit-details-marker {
-  display: none;
-}
-
-.account-menu summary span,
-.account-menu summary svg {
+.account-menu-icon,
+.account-menu-icon svg {
   display: block;
   width: 22px;
   height: 22px;
 }
 
-.account-menu summary svg {
+.account-menu-icon svg {
   fill: currentColor;
 }
 
-.account-menu[open] summary,
-.account-menu summary:hover {
+.account-menu-arrow {
+  width: 0;
+  height: 0;
+  border-top: 4px solid currentColor;
+  border-right: 4px solid transparent;
+  border-left: 4px solid transparent;
+  transform: translateY(1px);
+}
+
+.account-menu.open > button,
+.account-menu > button:hover {
   color: var(--spark);
 }
 
@@ -414,7 +431,9 @@ summary {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   gap: 14px;
-  width: min(calc(100vw - 16px), 326px);
+  width: fit-content;
+  min-width: 218px;
+  max-width: min(300px, calc(100vw - 16px));
   max-height: calc(100dvh - 16px);
   padding: 18px;
   background: #fffaf2;
@@ -422,16 +441,11 @@ summary {
   border-radius: 14px;
   box-shadow: 0 18px 42px rgba(15, 23, 42, 0.2);
   overflow-y: auto;
-  transform: translateX(105%);
-  transition: transform 0.22s ease;
-  visibility: hidden;
-  pointer-events: none;
+  transform: translateX(0);
 }
 
 .site-side-menu.open {
-  transform: translateX(0);
-  visibility: visible;
-  pointer-events: auto;
+  animation: side-menu-enter 0.18s ease both;
 }
 
 .site-side-menu-head {
@@ -456,11 +470,15 @@ summary {
 }
 
 .site-side-menu nav a {
+  min-width: 0;
   border: 1px solid rgba(14, 82, 164, 0.12);
   border-radius: 8px;
   background: #fff;
   padding: 11px 12px;
   font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .site-side-menu nav a:hover {
@@ -475,6 +493,32 @@ summary {
   border-color: rgba(14, 82, 164, 0.2);
   background: linear-gradient(135deg, #f8fbff, #fff7ed);
   color: var(--brand);
+}
+
+.site-side-menu nav form {
+  margin: 0;
+}
+
+.side-action-button {
+  width: 100%;
+  border: 1px solid rgba(243, 111, 33, 0.28);
+  border-radius: 8px;
+  background: #fff4e8;
+  padding: 11px 12px;
+  color: var(--spark);
+  font-weight: 900;
+  text-align: left;
+}
+
+@keyframes side-menu-enter {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .eyebrow {
@@ -3924,6 +3968,10 @@ summary:focus-visible {
 }
 
 @media (max-width: 560px) {
+  .site-header {
+    top: -36px;
+  }
+
   .site-header .nav-scroll {
     min-height: 36px;
     gap: 5px;

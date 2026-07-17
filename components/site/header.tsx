@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { AccountMenu } from "@/components/site/account-menu";
 import { HeaderMenu } from "@/components/site/header-menu";
 import { getCart } from "@/lib/cart/cart-service";
 import { getStoreCategories } from "@/lib/products/queries";
@@ -61,35 +62,14 @@ export async function Header() {
               </span>
               <strong>Wishlist</strong>
             </Link>
-            <details className="account-menu">
-              <summary aria-label="Account menu">
-                <span aria-hidden="true">
-                  <svg viewBox="0 0 24 24" focusable="false">
-                    <path d="M12 12a4.2 4.2 0 1 0 0-8.4 4.2 4.2 0 0 0 0 8.4Zm0 2c-4.1 0-7.4 2.2-7.4 5v1h14.8v-1c0-2.8-3.3-5-7.4-5Z" />
-                  </svg>
-                </span>
-              </summary>
-              <div className="account-menu-panel">
-                {session ? (
-                  <>
-                    <strong>{session.name}</strong>
-                    <Link href="/account">My account</Link>
-                    <Link href="/account/orders">Orders</Link>
-                    <Link href="/forgot-password">Change password</Link>
-                    <form action={customerLogoutAction}>
-                      <button type="submit">Log out</button>
-                    </form>
-                  </>
-                ) : (
-                  <>
-                    <Link href="/login">Sign in</Link>
-                    <Link href="/register">Create account</Link>
-                  </>
-                )}
-              </div>
-            </details>
+            <AccountMenu logoutAction={customerLogoutAction} session={session ? { name: session.name } : null} />
           </nav>
-          <HeaderMenu cartCount={cartCount} categories={categories.map((category) => ({ name: category.name, slug: category.slug }))} />
+          <HeaderMenu
+            cartCount={cartCount}
+            categories={categories.map((category) => ({ name: category.name, slug: category.slug }))}
+            logoutAction={customerLogoutAction}
+            session={session ? { name: session.name } : null}
+          />
         </div>
       </div>
     </header>
