@@ -15,7 +15,7 @@ function imageBaseUrl() {
 
 export function publicImageUrl(url: string | null | undefined) {
   if (!url) return "";
-  if (/^https?:\/\//i.test(url) || url.startsWith("data:")) return url;
+  if (/^https?:\/\//i.test(url)) return url;
   if (url.startsWith("/uploads/")) return `${imageBaseUrl()}${url}`;
   if (url.startsWith("uploads/")) return `${imageBaseUrl()}/${url}`;
   return url;

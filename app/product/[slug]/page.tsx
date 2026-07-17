@@ -25,6 +25,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   const image = getPrimaryImage(product.images);
   const url = productUrl(product.slug);
+  const shareImageUrl = `${url}/opengraph-image`;
   const description =
     product.seoDescription || product.shortDescription || product.description || `Buy ${product.name} from ${siteConfig.name}.`;
 
@@ -38,14 +39,23 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       title: product.name,
       description,
       url,
+      siteName: siteConfig.name,
       type: "website",
-      images: image ? [{ url: absoluteUrl(publicImageUrl(image.url)) }] : undefined
+      images: [
+        {
+          url: shareImageUrl,
+          width: 1200,
+          height: 630,
+          alt: `${product.name} at ${siteConfig.name}`
+        },
+        ...(image ? [{ url: absoluteUrl(publicImageUrl(image.url)), alt: product.name }] : [])
+      ]
     },
     twitter: {
       card: "summary_large_image",
       title: product.name,
       description,
-      images: image ? [absoluteUrl(publicImageUrl(image.url))] : undefined
+      images: [shareImageUrl]
     }
   };
 }

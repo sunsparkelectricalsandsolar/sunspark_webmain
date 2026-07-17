@@ -14,9 +14,92 @@ import { HttpError, asyncRoute, errorHandler } from "./response.js";
 const app = express();
 const appRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const uploadRoot = path.join(appRoot, "public", "uploads");
-app.use(cors({ origin: env("FRONTEND_ORIGIN", "*"), credentials: true }));
+const adminApiToken = env("API_ADMIN_TOKEN", env("ADMIN_API_TOKEN", ""));
+const serverApiToken = env("API_SERVER_TOKEN", adminApiToken);
+function cleanOrigins(value) {
+    return value
+        .split(",")
+        .map((origin) => origin.trim().replace(/\/+$/, ""))
+        .filter(Boolean);
+}
+const allowedOrigins = cleanOrigins(env("FRONTEND_ORIGIN", env("NEXT_PUBLIC_SITE_URL", "")));
+function sameSecret(left, right) {
+    const leftBuffer = Buffer.from(left);
+    const rightBuffer = Buffer.from(right);
+    return leftBuffer.length === rightBuffer.length && crypto.timingSafeEqual(leftBuffer, rightBuffer);
+}
+function clientKey(request) {
+    return String(request.headers["cf-connecting-ip"] || request.headers["x-forwarded-for"] || request.socket.remoteAddress || "unknown")
+        .split(",")[0]
+        .trim();
+}
+function rateLimit({ windowMs, max, label }) {
+    const hits = new Map();
+    return (request, _response, next) => {
+        const now = Date.now();
+        const key = `${label}:${clientKey(request)}`;
+        const current = hits.get(key);
+        if (!current || current.resetAt <= now) {
+            hits.set(key, { count: 1, resetAt: now + windowMs });
+            next();
+            return;
+        }
+        current.count += 1;
+        if (current.count > max) {
+            next(new HttpError(429, "Too many attempts. Please try again shortly."));
+            return;
+        }
+        next();
+    };
+}
+app.disable("x-powered-by");
+app.use((_request, response, next) => {
+    response.setHeader("X-Content-Type-Options", "nosniff");
+    response.setHeader("X-Frame-Options", "DENY");
+    response.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+    response.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+    response.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    next();
+});
+app.use(cors({
+    origin(origin, callback) {
+        if (!origin || !allowedOrigins.length || allowedOrigins.includes(origin.replace(/\/+$/, ""))) {
+            callback(null, true);
+            return;
+        }
+        callback(new HttpError(403, "This origin is not allowed."));
+    },
+    credentials: true
+}));
 app.use(express.json({ limit: "24mb" }));
 app.use("/uploads", express.static(uploadRoot, { maxAge: "30d", immutable: true }));
+app.use(["/auth/login", "/auth/register", "/auth/forgot-password", "/auth/reset-password"], rateLimit({ windowMs: 15 * 60 * 1000, max: 20, label: "auth" }));
+app.use(["/orders/checkout"], rateLimit({ windowMs: 10 * 60 * 1000, max: 30, label: "checkout" }));
+app.use(["/admin/uploads"], rateLimit({ windowMs: 10 * 60 * 1000, max: 40, label: "uploads" }));
+app.use(["/auth", "/orders", "/users"], (request, _response, next) => {
+    if (!serverApiToken) {
+        next(new HttpError(503, "API server protection is not configured."));
+        return;
+    }
+    const supplied = String(request.headers["x-sunspark-server-token"] ?? "");
+    if (!supplied || !sameSecret(supplied, serverApiToken)) {
+        next(new HttpError(401, "This request is not authorized."));
+        return;
+    }
+    next();
+});
+app.use("/admin", (request, _response, next) => {
+    if (!adminApiToken) {
+        next(new HttpError(503, "Admin API protection is not configured."));
+        return;
+    }
+    const supplied = String(request.headers["x-sunspark-admin-token"] ?? "");
+    if (!supplied || !sameSecret(supplied, adminApiToken)) {
+        next(new HttpError(401, "Admin access is not authorized."));
+        return;
+    }
+    next();
+});
 function truthy(value) {
     return value === true || value === 1;
 }
@@ -24,7 +107,7 @@ function apiPublicBase() {
     return env("API_PUBLIC_URL", env("NEXT_PUBLIC_API_URL", "http://localhost:4000")).replace(/\/+$/, "");
 }
 function publicImageUrl(url) {
-    if (/^https?:\/\//i.test(url) || url.startsWith("data:"))
+    if (/^https?:\/\//i.test(url))
         return url;
     if (url.startsWith("/uploads/"))
         return `${apiPublicBase()}${url}`;
@@ -190,6 +273,19 @@ function frontendOrigin() {
 function routeParam(value) {
     return Array.isArray(value) ? value[0] : value;
 }
+const cleanText = (max = 255) => z.string().trim().max(max);
+const optionalText = (max = 1000) => z.preprocess((value) => (typeof value === "string" && value.trim() === "" ? null : value), z.string().trim().max(max).optional().nullable());
+const optionalEmail = z.preprocess((value) => (typeof value === "string" && value.trim() === "" ? null : value), z.string().trim().email().max(160).optional().nullable());
+const slugInput = z.string().trim().toLowerCase().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Use a clean URL slug.");
+const idInput = z.string().trim().min(2).max(80);
+const imageUrlInput = z.string().trim().refine((value) => value.startsWith("/uploads/") || value.startsWith("uploads/") || /^https:\/\/[^/]+/i.test(value), "Image URLs must be HTTPS or uploaded files.");
+const optionalUrl = z.preprocess((value) => (typeof value === "string" && value.trim() === "" ? null : value), z.string().trim().url().optional().nullable());
+const uploadedImageInput = z.object({
+    url: imageUrlInput,
+    alt: optionalText(160),
+    isPrimary: z.boolean().default(false),
+    sortOrder: z.number().int().min(0).max(1000).default(0)
+});
 async function assertUniqueCategorySlug(slug, currentId) {
     if (currentId) {
         const current = await query("SELECT slug FROM categories WHERE id = ? LIMIT 1", [currentId]);
@@ -383,11 +479,11 @@ app.get("/settings", asyncRoute(async (_request, response) => {
 }));
 app.patch("/admin/settings", asyncRoute(async (request, response) => {
     const input = z.object({
-        storeName: z.string().min(2),
+        storeName: cleanText(120).min(2),
         supportEmail: z.string().email(),
         reportEmail: z.string().email(),
-        whatsappPhone: z.string().min(6),
-        currency: z.string().default("KSH")
+        whatsappPhone: cleanText(30).min(6),
+        currency: cleanText(10).default("KSH")
     }).parse(request.body);
     await execute(`INSERT INTO site_settings (id, store_name, support_email, report_email, whatsapp_phone, currency)
      VALUES ('default', ?, ?, ?, ?, ?)
@@ -645,12 +741,12 @@ app.get("/admin/customers", asyncRoute(async (request, response) => {
 }));
 app.post("/admin/categories", asyncRoute(async (request, response) => {
     const input = z.object({
-        name: z.string().min(2),
-        slug: z.string().min(2),
-        description: z.string().optional().nullable(),
-        sortOrder: z.number().int().default(0),
+        name: cleanText(120).min(2),
+        slug: slugInput,
+        description: optionalText(800),
+        sortOrder: z.number().int().min(0).max(1000).default(0),
         isActive: z.boolean().default(true),
-        images: z.array(z.object({ url: z.string(), alt: z.string().optional().nullable(), isPrimary: z.boolean(), sortOrder: z.number().int() })).default([])
+        images: z.array(uploadedImageInput).max(8).default([])
     }).parse(request.body);
     await assertUniqueCategorySlug(input.slug);
     const categoryId = id("cat");
@@ -664,14 +760,14 @@ app.post("/admin/categories", asyncRoute(async (request, response) => {
 }));
 app.patch("/admin/categories/:id", asyncRoute(async (request, response) => {
     const input = z.object({
-        name: z.string().min(2),
-        slug: z.string().min(2),
-        description: z.string().optional().nullable(),
-        sortOrder: z.number().int().default(0),
+        name: cleanText(120).min(2),
+        slug: slugInput,
+        description: optionalText(800),
+        sortOrder: z.number().int().min(0).max(1000).default(0),
         isActive: z.boolean().default(true),
-        images: z.array(z.object({ url: z.string(), alt: z.string().optional().nullable(), isPrimary: z.boolean(), sortOrder: z.number().int() })).default([]),
-        deleteImageIds: z.array(z.string()).default([]),
-        primaryImageId: z.string().optional().nullable()
+        images: z.array(uploadedImageInput).max(8).default([]),
+        deleteImageIds: z.array(idInput).max(20).default([]),
+        primaryImageId: idInput.optional().nullable()
     }).parse(request.body);
     await assertUniqueCategorySlug(input.slug, routeParam(request.params.id));
     await transaction(async (connection) => {
@@ -799,38 +895,38 @@ app.post("/admin/uploads", asyncRoute(async (request, response) => {
     response.status(201).json({ images });
 }));
 const productOptionSchema = z.object({
-    id: z.string().optional().nullable(),
-    label: z.string().min(1),
-    sellingUnit: z.string().default("UNIT"),
+    id: idInput.optional().nullable(),
+    label: cleanText(80).min(1),
+    sellingUnit: cleanText(30).default("UNIT"),
     priceCents: z.number().int().min(0),
     compareAtCents: z.number().int().optional().nullable(),
     costCents: z.number().int().min(0).default(0),
-    stockMultiplier: z.number().positive().default(1),
+    stockMultiplier: z.number().positive().max(100000).default(1),
     isDefault: z.boolean().default(false),
-    sortOrder: z.number().int().default(0)
+    sortOrder: z.number().int().min(0).max(1000).default(0)
 });
 app.post("/admin/products", asyncRoute(async (request, response) => {
     const input = z.object({
-        name: z.string().min(2),
-        slug: z.string().min(2),
-        brand: z.string().optional().nullable(),
-        categoryId: z.string(),
-        shortDescription: z.string().optional().nullable(),
-        description: z.string().optional().nullable(),
-        priceCents: z.number().int(),
+        name: cleanText(180).min(2),
+        slug: slugInput,
+        brand: optionalText(80),
+        categoryId: idInput,
+        shortDescription: optionalText(260),
+        description: optionalText(5000),
+        priceCents: z.number().int().min(0),
         compareAtCents: z.number().int().optional().nullable(),
-        costCents: z.number().int().default(0),
-        sellingUnit: z.string().default("UNIT"),
-        stockQuantity: z.number().int().default(0),
-        lowStockThreshold: z.number().int().default(5),
+        costCents: z.number().int().min(0).default(0),
+        sellingUnit: cleanText(30).default("UNIT"),
+        stockQuantity: z.number().int().min(0).default(0),
+        lowStockThreshold: z.number().int().min(0).default(5),
         isActive: z.boolean().default(true),
         isFeatured: z.boolean().default(false),
         isHotDeal: z.boolean().default(false),
-        seoTitle: z.string().optional().nullable(),
-        seoDescription: z.string().optional().nullable(),
-        seoKeywords: z.string().optional().nullable(),
-        options: z.array(productOptionSchema).default([]),
-        images: z.array(z.object({ url: z.string(), alt: z.string().optional().nullable(), isPrimary: z.boolean(), sortOrder: z.number().int() })).default([])
+        seoTitle: optionalText(180),
+        seoDescription: optionalText(320),
+        seoKeywords: optionalText(300),
+        options: z.array(productOptionSchema).max(12).default([]),
+        images: z.array(uploadedImageInput).max(8).default([])
     }).parse(request.body);
     await assertUniqueProductSlug(input.slug);
     const productId = id("prd");
@@ -864,29 +960,29 @@ app.post("/admin/products", asyncRoute(async (request, response) => {
 }));
 app.patch("/admin/products/:id", asyncRoute(async (request, response) => {
     const input = z.object({
-        name: z.string().min(2),
-        slug: z.string().min(2),
-        brand: z.string().optional().nullable(),
-        categoryId: z.string(),
-        shortDescription: z.string().optional().nullable(),
-        description: z.string().optional().nullable(),
-        priceCents: z.number().int(),
+        name: cleanText(180).min(2),
+        slug: slugInput,
+        brand: optionalText(80),
+        categoryId: idInput,
+        shortDescription: optionalText(260),
+        description: optionalText(5000),
+        priceCents: z.number().int().min(0),
         compareAtCents: z.number().int().optional().nullable(),
-        costCents: z.number().int().default(0),
-        sellingUnit: z.string().default("UNIT"),
-        stockQuantity: z.number().int().default(0),
-        lowStockThreshold: z.number().int().default(5),
+        costCents: z.number().int().min(0).default(0),
+        sellingUnit: cleanText(30).default("UNIT"),
+        stockQuantity: z.number().int().min(0).default(0),
+        lowStockThreshold: z.number().int().min(0).default(5),
         isActive: z.boolean().default(true),
         isFeatured: z.boolean().default(false),
         isHotDeal: z.boolean().default(false),
-        seoTitle: z.string().optional().nullable(),
-        seoDescription: z.string().optional().nullable(),
-        seoKeywords: z.string().optional().nullable(),
-        options: z.array(productOptionSchema).default([]),
-        deleteOptionIds: z.array(z.string()).default([]),
-        images: z.array(z.object({ url: z.string(), alt: z.string().optional().nullable() })).default([]),
-        deleteImageIds: z.array(z.string()).default([]),
-        primaryImageId: z.string().optional().nullable()
+        seoTitle: optionalText(180),
+        seoDescription: optionalText(320),
+        seoKeywords: optionalText(300),
+        options: z.array(productOptionSchema).max(12).default([]),
+        deleteOptionIds: z.array(idInput).max(20).default([]),
+        images: z.array(uploadedImageInput.pick({ url: true, alt: true })).max(8).default([]),
+        deleteImageIds: z.array(idInput).max(20).default([]),
+        primaryImageId: idInput.optional().nullable()
     }).parse(request.body);
     await assertUniqueProductSlug(input.slug, routeParam(request.params.id));
     await transaction(async (connection) => {
@@ -945,13 +1041,13 @@ app.delete("/admin/products/:id", asyncRoute(async (request, response) => {
 }));
 app.post("/admin/campaigns", asyncRoute(async (request, response) => {
     const input = z.object({
-        title: z.string().min(2),
-        description: z.string().optional().nullable(),
-        imageUrl: z.string().optional().nullable(),
-        badge: z.string().optional().nullable(),
-        offerLabel: z.string().optional().nullable(),
-        ctaLabel: z.string().optional().nullable(),
-        ctaUrl: z.string().optional().nullable(),
+        title: cleanText(140).min(2),
+        description: optionalText(900),
+        imageUrl: imageUrlInput.optional().nullable(),
+        badge: optionalText(60),
+        offerLabel: optionalText(100),
+        ctaLabel: optionalText(60),
+        ctaUrl: optionalUrl,
         endsAt: z.string().optional().nullable(),
         isActive: z.boolean().default(true)
     }).parse(request.body);
@@ -961,13 +1057,13 @@ app.post("/admin/campaigns", asyncRoute(async (request, response) => {
 }));
 app.patch("/admin/campaigns/:id", asyncRoute(async (request, response) => {
     const input = z.object({
-        title: z.string().min(2),
-        description: z.string().optional().nullable(),
-        imageUrl: z.string().optional().nullable(),
-        badge: z.string().optional().nullable(),
-        offerLabel: z.string().optional().nullable(),
-        ctaLabel: z.string().optional().nullable(),
-        ctaUrl: z.string().optional().nullable(),
+        title: cleanText(140).min(2),
+        description: optionalText(900),
+        imageUrl: imageUrlInput.optional().nullable(),
+        badge: optionalText(60),
+        offerLabel: optionalText(100),
+        ctaLabel: optionalText(60),
+        ctaUrl: optionalUrl,
         endsAt: z.string().optional().nullable(),
         isActive: z.boolean().default(true)
     }).parse(request.body);
@@ -981,7 +1077,10 @@ app.delete("/admin/campaigns/:id", asyncRoute(async (request, response) => {
     response.status(204).send();
 }));
 app.patch("/admin/orders/:id", asyncRoute(async (request, response) => {
-    const input = z.object({ status: z.string(), paymentStatus: z.string() }).parse(request.body);
+    const input = z.object({
+        status: z.enum(["PENDING", "CONFIRMED", "PROCESSING", "READY", "COMPLETED", "CANCELLED"]),
+        paymentStatus: z.enum(["UNPAID", "PENDING", "PAID", "FAILED", "REFUNDED"])
+    }).parse(request.body);
     await execute("UPDATE orders SET status = ?, payment_status = ? WHERE id = ?", [input.status, input.paymentStatus, request.params.id]);
     response.json({ ok: true });
 }));
@@ -1029,11 +1128,11 @@ app.get("/admin/draft-documents/:id", asyncRoute(async (request, response) => {
 app.post("/admin/draft-documents", asyncRoute(async (request, response) => {
     const input = z.object({
         kind: z.enum(["INVOICE", "QUOTATION"]),
-        customerName: z.string().min(2),
-        customerEmail: z.string().optional().nullable(),
-        customerPhone: z.string().optional().nullable(),
+        customerName: cleanText(140).min(2),
+        customerEmail: optionalEmail,
+        customerPhone: optionalText(40),
         paymentMethod: z.enum(["WHATSAPP", "MPESA", "CASH"]).default("CASH"),
-        items: z.array(z.object({ productId: z.string(), productOptionId: z.string().optional().nullable(), quantity: z.number().int().positive() })).min(1)
+        items: z.array(z.object({ productId: idInput, productOptionId: idInput.optional().nullable(), quantity: z.number().int().positive().max(100000) })).min(1).max(100)
     }).parse(request.body);
     const productIds = [...new Set(input.items.map((item) => item.productId))];
     const rows = await query(`SELECT * FROM products WHERE is_active = TRUE AND id IN (${productIds.map(() => "?").join(",")})`, productIds);
@@ -1086,11 +1185,11 @@ app.post("/admin/draft-documents", asyncRoute(async (request, response) => {
 }));
 app.patch("/admin/draft-documents/:id", asyncRoute(async (request, response) => {
     const input = z.object({
-        customerName: z.string().min(2),
-        customerEmail: z.string().optional().nullable(),
-        customerPhone: z.string().optional().nullable(),
+        customerName: cleanText(140).min(2),
+        customerEmail: optionalEmail,
+        customerPhone: optionalText(40),
         paymentMethod: z.enum(["WHATSAPP", "MPESA", "CASH"]).default("CASH"),
-        items: z.array(z.object({ productId: z.string(), productOptionId: z.string().optional().nullable(), quantity: z.number().int().positive() })).min(1)
+        items: z.array(z.object({ productId: idInput, productOptionId: idInput.optional().nullable(), quantity: z.number().int().positive().max(100000) })).min(1).max(100)
     }).parse(request.body);
     const documents = await query("SELECT * FROM draft_documents WHERE id = ? LIMIT 1", [request.params.id]);
     const document = documents[0];
@@ -1196,7 +1295,7 @@ app.post("/admin/draft-documents/:id/finalize", asyncRoute(async (request, respo
 }));
 const authSchema = z.object({
     email: z.string().email().transform((value) => value.toLowerCase()),
-    password: z.string().min(1)
+    password: z.string().min(1).max(200)
 });
 app.post("/auth/login", asyncRoute(async (request, response) => {
     const input = authSchema.parse(request.body);
@@ -1209,9 +1308,9 @@ app.post("/auth/login", asyncRoute(async (request, response) => {
 }));
 app.post("/auth/register", asyncRoute(async (request, response) => {
     const input = z.object({
-        name: z.string().min(2),
+        name: cleanText(120).min(2),
         email: z.string().email().transform((value) => value.toLowerCase()),
-        password: z.string().min(8)
+        password: z.string().min(8).max(200)
     }).parse(request.body);
     const existing = await query("SELECT id FROM users WHERE email = ? LIMIT 1", [input.email]);
     if (existing.length)
@@ -1251,7 +1350,7 @@ app.post("/auth/forgot-password", asyncRoute(async (request, response) => {
     response.json({ ok: true });
 }));
 app.post("/auth/reset-password", asyncRoute(async (request, response) => {
-    const input = z.object({ token: z.string().min(10), password: z.string().min(8) }).parse(request.body);
+    const input = z.object({ token: z.string().min(10).max(200), password: z.string().min(8).max(200) }).parse(request.body);
     const rows = await query("SELECT id, user_id FROM password_reset_tokens WHERE token_hash = ? AND used_at IS NULL AND expires_at > NOW() LIMIT 1", [hashToken(input.token)]);
     if (!rows[0])
         throw new HttpError(400, "Password reset link is invalid or expired.");
@@ -1263,17 +1362,17 @@ app.post("/auth/reset-password", asyncRoute(async (request, response) => {
 }));
 app.post("/orders/checkout", asyncRoute(async (request, response) => {
     const input = z.object({
-        userId: z.string().optional().nullable(),
-        customerName: z.string().min(2),
+        userId: idInput.optional().nullable(),
+        customerName: cleanText(140).min(2),
         customerEmail: z.string().email(),
-        customerPhone: z.string().optional().nullable(),
-        deliveryNote: z.string().optional().nullable(),
-        deliveryLocation: z.string().optional().nullable(),
-        deliveryMapUrl: z.string().optional().nullable(),
-        deliveryLatitude: z.string().optional().nullable(),
-        deliveryLongitude: z.string().optional().nullable(),
+        customerPhone: optionalText(40),
+        deliveryNote: optionalText(900),
+        deliveryLocation: optionalText(240),
+        deliveryMapUrl: optionalUrl,
+        deliveryLatitude: optionalText(40),
+        deliveryLongitude: optionalText(40),
         paymentMethod: z.enum(["WHATSAPP", "MPESA", "CASH"]),
-        items: z.array(z.object({ productId: z.string(), productOptionId: z.string().optional().nullable(), quantity: z.number().int().positive() })).min(1)
+        items: z.array(z.object({ productId: idInput, productOptionId: idInput.optional().nullable(), quantity: z.number().int().positive().max(100000) })).min(1).max(100)
     }).parse(request.body);
     const productIds = [...new Set(input.items.map((item) => item.productId))];
     const rows = await query(`SELECT * FROM products WHERE is_active = TRUE AND id IN (${productIds.map(() => "?").join(",")})`, productIds);
