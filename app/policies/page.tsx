@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
 import { siteConfig } from "@/lib/site-config";
 
 export const metadata: Metadata = {
@@ -9,39 +8,8 @@ export const metadata: Metadata = {
 };
 
 export default function PoliciesPage() {
-  const navItems = [
-    { label: "Home", href: "/" },
-    { label: "Store", href: "/store" },
-    { label: "Electricals", href: "/category/electricals" },
-    { label: "Electronics", href: "/category/electronics" },
-    { label: "Solar & Accessories", href: "/category/solar-accessories" },
-    { label: "Account", href: "/account" }
-  ];
-
   return (
     <section className="policy-experiment-page">
-      <header className="policy-experiment-header">
-        <nav className="policy-experiment-nav" aria-label="Experimental Sunspark navigation">
-          <div className="container">
-            {navItems.map((item) => (
-              <Link href={item.href} key={item.href}>{item.label}</Link>
-            ))}
-          </div>
-        </nav>
-        <div className="container policy-experiment-brandbar">
-          <Link aria-label="Sunspark home" className="policy-experiment-logo" href="/">
-            <Image alt="Sunspark Electricals and Solar" height={300} priority src="/logo-header.png" width={900} />
-          </Link>
-          <form action="/store" className="policy-experiment-search">
-            <label htmlFor="policy-search">Find products</label>
-            <div>
-              <input id="policy-search" name="q" placeholder="Search cables, breakers, sockets..." />
-              <button type="submit">Search</button>
-            </div>
-          </form>
-        </div>
-      </header>
-
       <div className="container policy-experiment-shell">
         <div className="policy-experiment-hero">
           <p className="eyebrow">Sunspark support</p>

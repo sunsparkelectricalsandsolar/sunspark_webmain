@@ -6,9 +6,10 @@ import { addWishlistAction } from "@/app/wishlist/actions";
 import { ProductCard } from "@/components/site/product-card";
 import { ProductGallery } from "@/components/site/product-gallery";
 import { ProductOptionPurchase } from "@/components/site/product-option-purchase";
+import { ProductShareButton } from "@/components/site/product-share-button";
 import { PendingButton } from "@/components/ui/pending-button";
 import { absoluteUrl, productUrl } from "@/lib/merchant/feed";
-import { getPrimaryImage } from "@/lib/products/images";
+import { getPrimaryImage, publicImageUrl } from "@/lib/products/images";
 import { getProductBySlug, getProductCompanions, getRelatedProducts } from "@/lib/products/queries";
 import { siteConfig } from "@/lib/site-config";
 
@@ -38,7 +39,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       description,
       url,
       type: "website",
-      images: image ? [{ url: absoluteUrl(image.url) }] : undefined
+      images: image ? [{ url: absoluteUrl(publicImageUrl(image.url)) }] : undefined
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: product.name,
+      description,
+      images: image ? [absoluteUrl(publicImageUrl(image.url))] : undefined
     }
   };
 }
@@ -65,7 +72,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     },
     category: product.category.name,
     description: product.description || product.shortDescription || product.name,
-    image: product.images.map((image) => absoluteUrl(image.url)),
+    image: product.images.map((image) => absoluteUrl(publicImageUrl(image.url))),
     offers: {
       "@type": "Offer",
       url: productUrl(product.slug),
@@ -98,6 +105,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               <form action={addWishlistAction.bind(null, product.slug)}>
                 <PendingButton className="secondary-btn" pendingText="Saving...">Wishlist</PendingButton>
               </form>
+              <ProductShareButton
+                text={`Check this product from ${siteConfig.name}: ${product.name}`}
+                title={product.name}
+                url={productUrl(product.slug)}
+              />
             </div>
           </div>
         </div>

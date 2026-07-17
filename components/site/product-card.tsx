@@ -66,7 +66,7 @@ export function ProductCard({ product }: { product: ProductCardProduct }) {
         <div className="product-actions">
           <Link href={`/product/${product.slug}`}>View</Link>
           <form action={addToCartAction.bind(null, product.slug)}>
-            <PendingButton className="" disabled={product.stockQuantity <= 0} pendingText="...">Cart</PendingButton>
+            <PendingButton className="" disabled={product.stockQuantity <= 0} pendingText="Adding...">Cart</PendingButton>
           </form>
         </div>
       </div>

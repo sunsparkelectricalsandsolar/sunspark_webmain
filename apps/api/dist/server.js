@@ -317,7 +317,12 @@ function productWhere(filters) {
         where.push("p.id <> ?");
         values.push(filters.excludeId);
     }
-    const terms = filters.q?.trim().split(/\s+/).filter(Boolean) ?? [];
+    const normalizedQuery = filters.q?.trim().toLowerCase() ?? "";
+    const isHotDealSearch = /^(hot\s*)?deals?$/.test(normalizedQuery) || normalizedQuery === "offers" || normalizedQuery === "promotions";
+    const terms = isHotDealSearch ? [] : filters.q?.trim().split(/\s+/).filter(Boolean) ?? [];
+    if (isHotDealSearch) {
+        where.push("p.is_hot_deal = TRUE");
+    }
     for (const term of terms) {
         where.push(`(
       p.name LIKE ? OR p.slug LIKE ? OR p.brand LIKE ? OR p.short_description LIKE ? OR
