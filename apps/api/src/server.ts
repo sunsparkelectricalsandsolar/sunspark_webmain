@@ -664,6 +664,15 @@ function money(cents: number) {
   return new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 }).format(cents / 100);
 }
 
+function htmlEscape(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
 function reportWindow(date: string) {
   return {
     start: new Date(`${date}T00:00:00+03:00`),
@@ -1682,6 +1691,25 @@ app.post("/auth/register", asyncRoute(async (request, response) => {
     "INSERT INTO users (id, name, email, password_hash, role) VALUES (?, ?, ?, ?, 'CUSTOMER')",
     [userId, input.name, input.email, await bcrypt.hash(input.password, 12)]
   );
+  const safeName = htmlEscape(input.name);
+
+  sendEmail({
+    to: input.email,
+    subject: "Welcome to Sunspark Electrical and Solar",
+    text: `Hello ${input.name}, welcome to Sunspark Electrical and Solar. You can now save your wishlist, place orders, and track your purchases at ${frontendOrigin()}.`,
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.5;color:#172033">
+        <h2 style="margin:0 0 12px">Welcome to Sunspark Electrical and Solar</h2>
+        <p>Hello ${safeName}, your account is ready.</p>
+        <p>You can now save products, place orders, request invoices, and track purchases from your account.</p>
+        <p><a href="${frontendOrigin()}/store" style="display:inline-block;background:#0f65c8;color:#fff;padding:12px 18px;border-radius:6px;text-decoration:none">Browse Sunspark products</a></p>
+        <p>For help, reply to this email or WhatsApp ${env("SUPPORT_PHONE", "0703586562")}.</p>
+      </div>
+    `
+  }).catch((error) => {
+    console.error("Welcome email failed", error);
+  });
+
   response.status(201).json({ user: { id: userId, name: input.name, email: input.email, phone: null, role: "CUSTOMER" } });
 }));
 
@@ -1726,8 +1754,12 @@ app.post("/auth/forgot-password", asyncRoute(async (request, response) => {
 
 app.post("/auth/reset-password", asyncRoute(async (request, response) => {
   const input = z.object({ token: z.string().min(10).max(200), password: z.string().min(8).max(200) }).parse(request.body);
-  const rows = await query<{ id: string; user_id: string }>(
-    "SELECT id, user_id FROM password_reset_tokens WHERE token_hash = ? AND used_at IS NULL AND expires_at > NOW() LIMIT 1",
+  const rows = await query<{ id: string; user_id: string; role: string }>(
+    `SELECT prt.id, prt.user_id, u.role
+     FROM password_reset_tokens prt
+     INNER JOIN users u ON u.id = prt.user_id
+     WHERE prt.token_hash = ? AND prt.used_at IS NULL AND prt.expires_at > NOW()
+     LIMIT 1`,
     [hashToken(input.token)]
   );
   if (!rows[0]) throw new HttpError(400, "Password reset link is invalid or expired.");
@@ -1737,7 +1769,7 @@ app.post("/auth/reset-password", asyncRoute(async (request, response) => {
     await connection.query("UPDATE password_reset_tokens SET used_at = NOW() WHERE id = ?", [rows[0].id]);
   });
 
-  response.json({ ok: true });
+  response.json({ ok: true, role: rows[0].role });
 }));
 
 app.post("/orders/checkout", asyncRoute(async (request, response) => {

@@ -12,19 +12,44 @@ type SendEmailInput = {
 type SmtpSocket = Socket | TLSSocket;
 
 export async function sendEmail({ to, subject, text, html }: SendEmailInput) {
-  const host = env("SMTP_HOST");
-  const port = Number(env("SMTP_PORT", "465"));
-  const user = env("SMTP_USER");
-  const pass = env("SMTP_PASSWORD");
-  const from = env("SMTP_FROM", `Sunspark Electricals <${env("SUPPORT_EMAIL", "support@sunsparkelectricals.co.ke")}>`);
+  const host = firstEnv("SMTP_HOST", "MAIL_HOST", "EMAIL_HOST");
+  const port = Number(firstEnv("SMTP_PORT", "MAIL_PORT", "EMAIL_PORT") || "465");
+  const user = firstEnv("SMTP_USER", "MAIL_USER", "EMAIL_USER");
+  const pass = firstEnv("SMTP_PASSWORD", "SMTP_PASS", "MAIL_PASSWORD", "MAIL_PASS", "EMAIL_PASSWORD");
+  const from = firstEnv("SMTP_FROM", "MAIL_FROM", "EMAIL_FROM") || `Sunspark Electricals <${env("SUPPORT_EMAIL", "support@sunsparkelectricals.co.ke")}>`;
 
   if (!host || !user || !pass) {
-    console.info(`[email disabled] ${subject} -> ${to}\n${text}`);
+    if (env("EMAIL_DISABLE_DELIVERY") === "true") {
+      console.info(`[email disabled] ${subject} -> ${to}\n${text}`);
+      return;
+    }
+    throw new Error("SMTP is not configured. Set SMTP_HOST, SMTP_USER, and SMTP_PASSWORD.");
+  }
+
+  if (!Number.isFinite(port) || port <= 0) {
+    throw new Error("SMTP_PORT must be a valid port number.");
+  }
+
+  const fromEmail = extractEmail(from);
+  if (!fromEmail.includes("@")) {
+    throw new Error("SMTP_FROM or EMAIL_FROM must contain a valid sender email address.");
+  }
+
+  if (!to.includes("@")) {
+    console.warn(`[email skipped] Invalid recipient for ${subject}`);
     return;
   }
 
   const message = buildEmailMessage({ from, to, subject, text, html });
-  await sendSmtp({ host, port, user, pass, from: extractEmail(from), to, message });
+  await sendSmtp({ host, port, user, pass, from: fromEmail, to, message });
+}
+
+function firstEnv(...names: string[]) {
+  for (const name of names) {
+    const value = env(name);
+    if (value) return value;
+  }
+  return "";
 }
 
 function buildEmailMessage({ from, to, subject, text, html }: SendEmailInput & { from: string }) {

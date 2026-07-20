@@ -15,10 +15,13 @@ async function resetPasswordAction(formData: FormData) {
   }
 
   try {
-    await apiFetch("/auth/reset-password", {
+    const result = await apiFetch<{ role?: string }>("/auth/reset-password", {
       method: "POST",
       body: JSON.stringify({ token, password })
     });
+    if (result.role === "ADMIN" || result.role === "STAFF") {
+      redirect("/admin/login?reset=1");
+    }
   } catch (error) {
     if (!(error instanceof ApiError)) throw error;
     redirect("/reset-password?error=expired");
