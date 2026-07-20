@@ -56,6 +56,17 @@ export async function getProductBySlug(slug: string) {
   return withFallback(apiFetch<Product>(`/products/${encodeURIComponent(slug)}`), null);
 }
 
+export async function getProductBySlugStrict(slug: string) {
+  try {
+    return await apiFetch<Product>(`/products/${encodeURIComponent(slug)}`);
+  } catch (error) {
+    if (error instanceof Error && "status" in error && (error as { status?: number }).status === 404) {
+      return null;
+    }
+    throw error;
+  }
+}
+
 export async function getRelatedProducts(_categoryId: string, productId: string) {
   return withFallback(apiFetch<Product[]>(`/products/${encodeURIComponent(productId)}/related`), []);
 }

@@ -10,14 +10,14 @@ import { ProductShareButton } from "@/components/site/product-share-button";
 import { PendingButton } from "@/components/ui/pending-button";
 import { absoluteUrl, productUrl } from "@/lib/merchant/feed";
 import { getPrimaryImage, publicImageUrl } from "@/lib/products/images";
-import { getProductBySlug, getProductCompanions, getRelatedProducts } from "@/lib/products/queries";
+import { getProductBySlugStrict, getProductCompanions, getRelatedProducts } from "@/lib/products/queries";
 import { siteConfig } from "@/lib/site-config";
 
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const product = await getProductBySlug(slug);
+  const product = await getProductBySlugStrict(slug);
 
   if (!product) {
     return {};
@@ -62,7 +62,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const product = await getProductBySlug(slug);
+  const product = await getProductBySlugStrict(slug);
 
   if (!product || !product.isActive) {
     notFound();

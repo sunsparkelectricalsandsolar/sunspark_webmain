@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 import { notFound } from "next/navigation";
 import { getPrimaryImage, publicImageUrl } from "@/lib/products/images";
-import { getProductBySlug } from "@/lib/products/queries";
+import { getProductBySlugStrict } from "@/lib/products/queries";
 import { siteConfig } from "@/lib/site-config";
 
 export const runtime = "nodejs";
@@ -17,7 +17,7 @@ function price(cents: number) {
 
 export default async function ProductOpenGraphImage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const product = await getProductBySlug(slug);
+  const product = await getProductBySlugStrict(slug);
 
   if (!product || !product.isActive) {
     notFound();
