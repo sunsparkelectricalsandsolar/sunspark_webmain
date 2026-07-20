@@ -38,7 +38,7 @@ export async function Header() {
       <div className="main-header">
         <div className="container main-header-inner">
           <Link aria-label="Sunspark home" className="logo-link" href="/">
-            <Image alt="Sunspark Electricals and Solar" height={300} priority src="/logo-header.png" width={900} />
+            <Image alt="Sunspark Electricals and Solar" height={293} priority src="/logo-header.webp" width={1100} />
           </Link>
           <form action="/store" className="header-search">
             <input aria-label="Search products" name="q" placeholder="Search products, hot deals..." />

@@ -16,24 +16,51 @@ export class ApiError extends Error {
   }
 }
 
+const defaultTimeoutMs = 10000;
+
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const url = new URL(path, getApiBaseUrl());
   const headers = new Headers(init.headers);
   const adminToken = process.env.API_ADMIN_TOKEN ?? process.env.ADMIN_API_TOKEN;
+  const isAdminRequest = url.pathname.startsWith("/admin/");
 
   if (init.body && !headers.has("content-type") && !(init.body instanceof FormData)) {
     headers.set("content-type", "application/json");
   }
 
-  if (url.pathname.startsWith("/admin/") && adminToken && !headers.has("x-sunspark-admin-token")) {
+  if (isAdminRequest && !adminToken) {
+    throw new ApiError("Admin API access is not configured on this server.", 503);
+  }
+
+  if (isAdminRequest && adminToken && !headers.has("x-sunspark-admin-token")) {
     headers.set("x-sunspark-admin-token", adminToken);
   }
 
-  const response = await fetch(url, {
-    ...init,
-    headers,
-    cache: init.cache ?? "no-store"
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), Number(process.env.API_FETCH_TIMEOUT_MS ?? defaultTimeoutMs));
+
+  if (init.signal) {
+    init.signal.addEventListener("abort", () => controller.abort(), { once: true });
+  }
+
+  let response: Response;
+
+  try {
+    response = await fetch(url, {
+      ...init,
+      headers,
+      signal: controller.signal,
+      cache: init.cache ?? "no-store"
+    });
+  } catch (error) {
+    if (controller.signal.aborted) {
+      throw new ApiError("The backend is taking too long to respond.", 504);
+    }
+
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
 
   if (!response.ok) {
     let message = "The request could not be completed.";
