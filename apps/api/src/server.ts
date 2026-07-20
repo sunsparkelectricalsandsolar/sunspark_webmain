@@ -97,7 +97,6 @@ const app = express();
 const appRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const uploadRoot = path.join(appRoot, "public", "uploads");
 const adminApiToken = env("API_ADMIN_TOKEN", env("ADMIN_API_TOKEN", ""));
-const serverApiToken = env("API_SERVER_TOKEN", adminApiToken);
 
 function cleanOrigins(value: string) {
   return value
@@ -167,20 +166,6 @@ app.use("/uploads", express.static(uploadRoot, { maxAge: "30d", immutable: true 
 app.use(["/auth/login", "/auth/register", "/auth/forgot-password", "/auth/reset-password"], rateLimit({ windowMs: 15 * 60 * 1000, max: 20, label: "auth" }));
 app.use(["/orders/checkout"], rateLimit({ windowMs: 10 * 60 * 1000, max: 30, label: "checkout" }));
 app.use(["/admin/uploads"], rateLimit({ windowMs: 10 * 60 * 1000, max: 40, label: "uploads" }));
-app.use(["/auth", "/orders", "/users"], (request, _response, next) => {
-  if (!serverApiToken) {
-    next(new HttpError(503, "API server protection is not configured."));
-    return;
-  }
-
-  const supplied = String(request.headers["x-sunspark-server-token"] ?? "");
-  if (!supplied || !sameSecret(supplied, serverApiToken)) {
-    next(new HttpError(401, "This request is not authorized."));
-    return;
-  }
-
-  next();
-});
 app.use("/admin", (request, _response, next) => {
   if (!adminApiToken) {
     next(new HttpError(503, "Admin API protection is not configured."));

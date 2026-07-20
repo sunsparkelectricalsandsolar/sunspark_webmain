@@ -20,7 +20,6 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   const url = new URL(path, getApiBaseUrl());
   const headers = new Headers(init.headers);
   const adminToken = process.env.API_ADMIN_TOKEN ?? process.env.ADMIN_API_TOKEN;
-  const serverToken = process.env.API_SERVER_TOKEN ?? adminToken;
 
   if (init.body && !headers.has("content-type") && !(init.body instanceof FormData)) {
     headers.set("content-type", "application/json");
@@ -28,10 +27,6 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
 
   if (url.pathname.startsWith("/admin/") && adminToken && !headers.has("x-sunspark-admin-token")) {
     headers.set("x-sunspark-admin-token", adminToken);
-  }
-
-  if (serverToken && !headers.has("x-sunspark-server-token")) {
-    headers.set("x-sunspark-server-token", serverToken);
   }
 
   const response = await fetch(url, {
